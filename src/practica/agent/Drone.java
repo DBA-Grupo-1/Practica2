@@ -2,8 +2,7 @@ package practica.agent;
 
 import java.util.ArrayList;
 
-//NOTA_INTEGRACION (Daniel) A mi esto si me funciona
-//import java.util.Random;
+import java.util.Random;
 
 //NOTA_INTEGRACION (Ismael) ni de coña va esto en la version final
 import java.util.*;
@@ -66,7 +65,7 @@ public class Drone extends SingleAgent {
 	 * @return dirección a la que se moverá.
 	 */
 	public int think(){
-		java.util.Random r = new java.util.Random(); //Por algún motivo no se traga un import, así que lo he tenido que hacer a pelo.
+		java.util.Random r = new Random();
 		float direccion;
 		boolean rango;
 		int ran;
