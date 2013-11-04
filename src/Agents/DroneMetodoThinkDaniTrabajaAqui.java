@@ -19,7 +19,7 @@ public class DroneMetodoThinkDaniTrabajaAqui{
 	private final int OESTE = 2;
 	private final int SUR = 1;
 	private final int ESTE = 0;
-	int a = 0;
+	int a = 1;
 
 	public DroneMetodoThinkDaniTrabajaAqui(float angulo, int [] alrededores, Map mapa, int posXinicial, int posYinicial){
 		angle = angulo;
