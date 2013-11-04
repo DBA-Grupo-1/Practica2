@@ -17,7 +17,7 @@ public class Drone extends SingleAgent {
 	private final int SUR = 1;
 	private final int ESTE = 0;
 	private final int END = -1;
-	private final int patata = 0;
+	private final int patata = -100;
 
 	public Drone(AgentID aid) throws Exception {
 		super(aid);
