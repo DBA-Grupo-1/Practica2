@@ -36,12 +36,11 @@ public class Drone extends SingleAgent {
 	private float angle;
 	private int [] surroundings;
 	private Map droneMap;
-	//POST DIAGRAMA DE CLASES
-	//NOTA_INTEGRACION (Daniel) deberian ser public static final y falta END
-	private final int NORTE = 3;
-	private final int OESTE = 2;
-	private final int SUR = 1;
-	private final int ESTE = 0;
+	public final int NORTE = 3;
+	public final int OESTE = 2;
+	public final int SUR = 1;
+	public final int ESTE = 0;
+	public final int END = -1;
 
 	//NOTA_INTEGRACION (Ismael) no entiendo por que esto esta declarado como atributo si despues
 	//se declara como variable local del execute. De hecho el Eclipse avisa de que no se usa.
