@@ -68,8 +68,8 @@ public class Drone extends SingleAgent {
 	 */
 	public int think(){
 		java.util.Random r = new java.util.Random(); //Por algún motivo no se traga un import, así que lo he tenido que hacer a pelo.
-		boolean direccion;
-		float rango;
+		float direccion;
+		boolean rango;
 		int ran;
 		ArrayList <Integer> movimientos = new ArrayList <Integer> (4);
 		int movLibres [] = new int [4];
@@ -77,24 +77,26 @@ public class Drone extends SingleAgent {
 		//NOTA_INTEGRACION (Daniel) Dafuq?? esto lo has cambiado raro. En clase quedamos en:
 		//direccion = angle / 90;
 		//rango = (angle % 90) != 0;
-		direccion = (angle / 90) == 0;
-		rango = angle % 90;
+		
+		//NOTA_DANI Cambiado, se me fue la pinza un poco mucho =/
+		direccion = angle / 90;
+		rango = (angle % 90) != 0;
 		ran = r.nextInt(2); //Generar un número entre 0 y 1.
 		
 		System.out.println(direccion + " " + rango);
 		
 		
-		if (direccion){
-			movimientos.add(0, (int) ((ran + rango) % 4));
-			movimientos.add(1, (int) ((1 - ran + rango) % 4));
-			movimientos.add(2, (int) ((ran + rango + 2) % 4));
-			movimientos.add(3, (int) ((3 - ran + rango) % 4));
+		if (rango){
+			movimientos.add(0, (int) ((ran + direccion) % 4));
+			movimientos.add(1, (int) ((1 - ran + direccion) % 4));
+			movimientos.add(2, (int) ((ran + direccion + 2) % 4));
+			movimientos.add(3, (int) ((3 - ran + direccion) % 4));
 		}
 		else{
-			movimientos.add(0, (int) rango);
-			movimientos.add(1, (int) ((rango + 2 - ran) % 4)); //En lugar de que lo aleatorio sea donde pongo cada cosa, hago
-			movimientos.add(2, (int) ((rango + 1 + ran) % 4)); //que lo aleatorio sea que pongo en donde. Culpa del ArrayList y sus indices.
-			movimientos.add(3, (int) ((rango + 2) % 4));
+			movimientos.add(0, (int) direccion);
+			movimientos.add(1, (int) ((direccion + 2 - ran) % 4)); //En lugar de que lo aleatorio sea donde pongo cada cosa, hago
+			movimientos.add(2, (int) ((direccion + 1 + ran) % 4)); //que lo aleatorio sea que pongo en donde. Culpa del ArrayList y sus indices.
+			movimientos.add(3, (int) ((direccion + 2) % 4));
 		}		
 		
 		movLibres = getValidMovements();
