@@ -17,7 +17,7 @@ public class Drone extends SingleAgent {
 	private final int SUR = 1;
 	private final int ESTE = 0;
 	private final int END = -1;
-	private final int patata = 42; //La respuesta a la pregunta sobre la vida el universo y todo lo demas
+	private final int patata = -100; //La respuesta a la pregunta sobre la vida el universo y todo lo demas
 
 	public Drone(AgentID aid) throws Exception {
 		super(aid);
