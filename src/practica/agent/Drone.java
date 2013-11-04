@@ -74,11 +74,6 @@ public class Drone extends SingleAgent {
 		ArrayList <Integer> movimientos = new ArrayList <Integer> (4);
 		int movLibres [] = new int [4];
 		
-		//NOTA_INTEGRACION (Daniel) Dafuq?? esto lo has cambiado raro. En clase quedamos en:
-		//direccion = angle / 90;
-		//rango = (angle % 90) != 0;
-		
-		//NOTA_DANI Cambiado, se me fue la pinza un poco mucho =/
 		direccion = angle / 90;
 		rango = (angle % 90) != 0;
 		ran = r.nextInt(2); //Generar un número entre 0 y 1.
@@ -119,7 +114,6 @@ public class Drone extends SingleAgent {
 	private int [] getValidMovements(){
 		int movimientosLibres [] = new int [4];
 		
-		//CAMBIO_INTEGRACION (Daniel) cambia "surroindings" por "surroundings"
 		movimientosLibres [NORTE] = surroundings [1] + droneMap.getValue(posX, posY + 1);
 		movimientosLibres [OESTE] = surroundings [3] + droneMap.getValue(posX - 1, posY);
 		movimientosLibres [SUR] = surroundings [7] + droneMap.getValue(posX, posY - 1);
