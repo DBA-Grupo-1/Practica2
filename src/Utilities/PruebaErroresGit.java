@@ -5,7 +5,7 @@ public class PruebaErroresGit {
 	//Esta es la branch master
 	private void metodoDani(){
 		
-		int a = 0;
+		int a =42;
 		
 		
 	}
