@@ -120,10 +120,10 @@ public class Drone extends SingleAgent {
 		int movimientosLibres [] = new int [4];
 		
 		//CAMBIO_INTEGRACION (Daniel) cambia "surroindings" por "surroundings"
-		movimientosLibres [NORTE] = surroindings [1] + droneMap.getValue(posX, posY + 1);
-		movimientosLibres [OESTE] = surroindings [3] + droneMap.getValue(posX - 1, posY);
-		movimientosLibres [SUR] = surroindings [7] + droneMap.getValue(posX, posY - 1);
-		movimientosLibres [ESTE] = surroindings [5] + droneMap.getValue(posX + 1, posY);
+		movimientosLibres [NORTE] = surroundings [1] + droneMap.getValue(posX, posY + 1);
+		movimientosLibres [OESTE] = surroundings [3] + droneMap.getValue(posX - 1, posY);
+		movimientosLibres [SUR] = surroundings [7] + droneMap.getValue(posX, posY - 1);
+		movimientosLibres [ESTE] = surroundings [5] + droneMap.getValue(posX + 1, posY);
 		
 		return movimientosLibres;		
 	}
