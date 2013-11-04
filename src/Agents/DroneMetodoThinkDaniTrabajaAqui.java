@@ -44,7 +44,7 @@ public class DroneMetodoThinkDaniTrabajaAqui{
 		rango = angle % 90;
 		ran = r.nextInt(2); //Generar un número entre 0 y 1.
 		
-		System.out.println(direccion + " " + rango)
+		System.out.println(direccion + " " + rango);
 		
 		
 		if (direccion){
