@@ -104,6 +104,7 @@ public class Satelite extends SingleAgent {
 		msg.setSender(this.getAid());
 		msg.addReceiver(id);
 		msg.setContent(datas.toString());
+		this.send(msg);
 	}
 	
 	/**
