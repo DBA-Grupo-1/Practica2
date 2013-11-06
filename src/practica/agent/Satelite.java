@@ -6,6 +6,7 @@ import es.upv.dsic.gti_ia.core.ACLMessage;
 import es.upv.dsic.gti_ia.core.AgentID;
 import es.upv.dsic.gti_ia.core.SingleAgent;
 
+
 //NOTA_INTEGRACION (Jahiel) Esto no se usa. Como en el codigo de Ismael.
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -29,6 +30,7 @@ public class Satelite extends SingleAgent {
 		mapSeguimiento= new Map(mapa);
         state=SolicitudStatus;
 		gps = new GPSLocation();
+		mapSeguimiento.setvalue(0, 0, Map.VISITADO); //añadido esto que faltaba
 	}
 	
 	/**
@@ -44,7 +46,7 @@ public class Satelite extends SingleAgent {
 	private JSONObject createStatus() throws JSONException{
 		
 		 ArrayList<Integer> casillas = new ArrayList<Integer>();
-		 float grado = 0, distancia = 0;
+		 float grado = 0, distancia = 0; //distancia = raiz( pow(x0-x1) + pow(y0-y1)) angulo = atan (y0-y1 / x0-x1 )
 		 
 		 /*
 		  Version 2:
@@ -108,31 +110,86 @@ public class Satelite extends SingleAgent {
 	}
 	
 	/**
-	 * Se actualiza el mapa interno del satelite con la posición del drone.
-	 * @param ob Objeto JSon con los valores de la posición del drone:
-	 *  - PosX : posición x del drone en el mapa
-	 *  - PosY : posición y del drone en el mapa
-	 * @return Se devuelve "true" si la operación falla y "false" en caso contrario.
+	 * En función del valor recibido por el dron se actualiza el mapa interno del satelite con la nueva posición
+	 *  del drone (x, y en funcion de la dirección elegida) o se da por finalizada la comunicación.
+	 *  
+	 * @param dron Identificador del agente dron. 
+	 * @param ob Objeto JSon con los valores de la decision del drone:
+	 *  - 0 : El dron decide ir al Este.
+	 *  - 1 : El dorn decide ir al Sur.
+	 *  - 2 : El dorn decide ir al Oeste.
+	 *  - 3 : El dorn decide ir al Norte.
+	 *  - -1: Fin de la comunicación
+	 * @return Se devuelve "true" si se debe finalizar la comunicación y "false" en caso contrario.
 	 */
-	private boolean updateMap(JSONObject ob){
-		int x, y;
+	private boolean evalueDecision(AgentID dron, JSONObject ob){
+		int decision, x, y;
 		
 		try{
-			x = ob.getInt("PosX");
-			y = ob.getInt("PosY");
-			gps.setPositionX(x);
-			gps.setPositionY(y);
-			mapSeguimiento.setvalue(x, y, Map.VISITADO);
-		}catch (Exception e){
-			System.err.println("Agente "+this.getName()+" Error de parametros Posición");
+			decision = ob.getInt("decision");
+		}catch(JSONException e){
+			
+			sendError(dron, "Error de parametros en la decisión");
 			return true;
 		}
+		
+		switch (decision){
+		
+		case '0':  //Este
+			x = gps.getPositionX() + 1;
+			y = gps.getPositionY();
+			break;
+		
+		case '1':  //Sur
+			x = gps.getPositionX();
+			y = gps.getPositionY() + 1;
+			break;
+		
+		case '2':  //Oeste
+			x = gps.getPositionX() - 1;
+			y = gps.getPositionY();
+			break;
+		
+		case '3':  //Norte
+			x = gps.getPositionX();
+			y = gps.getPositionY() - 1;
+			break;
+		
+		default:  //Fin, No me guta, prefiero un case para el fin 
+				  //y en el default sea un caso de error pero no me deja poner -1 en el case.
+			return true;
+		}
+		
+		gps.setPositionX(x);
+		gps.setPositionY(y);
+		mapSeguimiento.setvalue(x, y, Map.VISITADO);
 			
 		return false;
 	}
 	
 	/**
-	 * Método con la secuencia de acciones del satelite. Ver diagrama de secuencia
+	 * Se crea un mensaje del tipo FAIL para informar de algun fallo al agente dron.
+	 * @param dron Identificador del agente dron.
+	 * @param cad_error Cadena descriptiva del error producido.
+	 */
+	private void sendError(AgentID dron, String cad_error){
+		JSONObject error = new JSONObject();
+		
+		try {
+			error.put("fail", cad_error);
+		} catch (JSONException e) {
+			e.printStackTrace();  // esta excepcion nunca va a suceder porque la clave siempre es fail
+								  // aun asi hay que capturarla y por eso no se lo comunico al dron
+		}
+		
+		System.err.println("Agente "+this.getName()+cad_error);
+		
+		send(ACLMessage.FAILURE, dron, error);
+		
+	}
+	
+	/**
+	 * Secuencia de acciones del satelite. Ver diagrama de secuencia
 	 * para ver la secuencia de acciones.
 	 */
 	@Override
@@ -151,8 +208,7 @@ public class Satelite extends SingleAgent {
 				try{
 					message = receiveACLMessage();
 				} catch(InterruptedException e){
-					System.err.println("Agente "+this.getName()+" Error de comuncicación");
-					send(ACLMessage.FAILURE, dron, null);
+					sendError(dron, "Error en la comunicación");
 					exit = true;
 				}
 				
@@ -166,8 +222,7 @@ public class Satelite extends SingleAgent {
 						try{
 							status = createStatus();
 						}catch(JSONException e){
-							System.err.println("Agente "+this.getName()+"Error al crear Status");
-							send(ACLMessage.FAILURE, dron, null);
+							sendError(dron, "Error al crear Status");
 							exit = true;
 						}
 						if(status != null){
@@ -177,7 +232,7 @@ public class Satelite extends SingleAgent {
 					}else{
 						//El mensaje recibido es de tipo distinto a Request por tanto error
 						
-						System.err.println("Agente "+this.getName()+" Error de secuencia en la comunicacion");
+						sendError(dron, "Error de secuencia en la comunicación. El mensaje debe ser de tipo REQUEST");
 						exit = true;
 					}
 				}
@@ -190,35 +245,32 @@ public class Satelite extends SingleAgent {
 				try{
 					message = receiveACLMessage();
 				} catch(InterruptedException e){
-					System.err.println("Agente "+this.getName()+" Error de comuncicación");
-					send(ACLMessage.FAILURE, dron, null);
+					sendError(dron, "Error de comunicación");
 					exit = true;
 				}
-				if(message.getPerformative().equals("INFORM")){
+				if(message.getPerformative().equals("REQUEST")){
 					
 					JSONObject aux=null;
 					try {
 						aux = new JSONObject(message.getContent());
 					} catch (JSONException e) {
-						e.printStackTrace();
+						sendError(dron, "Error al crear objeto JSON con la decision");
 					}
-					if(aux.has("fin")){
-						exit = true;
-						//TODO Combertir mapa a imagen
-					}else{
-						exit = updateMap(aux);
-						
-						//Si ha habido algún fallo al actualizar el mapa se le informa al drone y se finaliza 
-						if(exit)
-							send(ACLMessage.FAILURE, dron, null);
-						else
-							state = SolicitudStatus;
-					}
+					
+					exit = evalueDecision(dron, aux);
+					
+					//Si ha habido algún fallo al actualizar el mapa se le informa al drone y se finaliza 
+					if(exit)
+						sendError(dron, "Error al actualizar el mapa");
+					else
+						state = SolicitudStatus;
+				
 					send(ACLMessage.INFORM, dron, null);
 				}else{
-					//El mensaje recibido es de tipo distinto a Inform por tanto error
+					//El mensaje recibido es de tipo distinto a Request por tanto error
 					
-					System.err.println("Agente "+this.getName()+" Error de secuencia en la comunicacion");
+					sendError(dron, "Error de secuencia en la comunicación. El mensaje debe ser de tipo REQUEST");
+					
 					exit = true;
 				}
 				break;
