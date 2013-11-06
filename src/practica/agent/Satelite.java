@@ -125,6 +125,7 @@ public class Satelite extends SingleAgent {
 	private boolean evalueDecision(AgentID dron, JSONObject ob){
 		int decision, x, y;
 		
+	
 		try{
 			decision = ob.getInt("decision");
 		}catch(JSONException e){
