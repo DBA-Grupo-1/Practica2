@@ -22,6 +22,7 @@ public class Satelite extends SingleAgent {
 	private int state;
 	private Map mapOriginal, mapSeguimiento;
 	private GPSLocation gps;
+	//(Andres) Faltan los atributos goalPosX y goalPosY (ambos private float)
 	
 	
 	public Satelite(AgentID sat, Map mapa)throws Exception{
@@ -30,6 +31,8 @@ public class Satelite extends SingleAgent {
 		mapSeguimiento= new Map(mapa);
         state=SolicitudStatus;
 		gps = new GPSLocation();
+		//(Andres) Inicializar goalPosX y goalPosY a la posicion media de las casillas rojas del mapa
+		
 		mapSeguimiento.setvalue(0, 0, Map.VISITADO); //añadido esto que faltaba
 	}
 	
