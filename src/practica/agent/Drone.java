@@ -4,8 +4,6 @@ import java.util.ArrayList;
 
 import java.util.Random;
 
-//NOTA_INTEGRACION (Ismael) ni de coña va esto en la version final
-import java.util.*;
 import practica.util.Map;
 import es.upv.dsic.gti_ia.core.AgentID;
 import es.upv.dsic.gti_ia.core.SingleAgent;
@@ -15,15 +13,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
-//NOTA_INTEGRACION (Ismael) Esto no se usa
-import javax.json.Json;
-import javax.json.JsonObject;
-
 import org.json.JSONException;
 import org.json.JSONObject;
-//NOTA_INTEGRACION (Ismael) ¿¿Esto que es??
-//Usamos Magentix y no Jason asi que no se por que esta aqui (ademas no se usa)
-import jason.functions.Random;
 
 public class Drone extends SingleAgent {
     private final int ESTADOREQUEST=0,ESTADOINFORM=1;
@@ -40,14 +31,7 @@ public class Drone extends SingleAgent {
 	public final int SUR = 1;
 	public final int ESTE = 0;
 	public final int END = -1;
-
-	//NOTA_INTEGRACION (Ismael) no entiendo por que esto esta declarado como atributo si despues
-	//se declara como variable local del execute. De hecho el Eclipse avisa de que no se usa.
-    private int decision=0;
 	
-	//CAMBIO_INTEGRACION (Ismael) Esto es fallo mio. Se me olvido añadir esta variable al
-	//diagrama de clases y Jonay la ha llamado de una forma e Ismael de otra.
-	//Me quedo con la de Jonay asi que cambia el nombre en tu codigo (satelite por sateliteID).
 	private AgentID sateliteID;
 
 	public Drone(AgentID aid, int mapWidth, int mapHeight, AgentID sateliteID) throws Exception{     
@@ -138,153 +122,144 @@ public class Drone extends SingleAgent {
 
     }
 	
-	/**
-	 * sendInform se envia señal de confrimación al agente junto con su acción.
-	 * @param id
-	 * @param dec
-	 */
-	 private void sendInform(AgentID id, JSONObject dec){
-	       ACLMessage msg= new ACLMessage(ACLMessage.REQUEST);
-	       msg.setSender(this.getAid());
-	       msg.addReceiver(id);
-	       //jsonobject
-	       msg.setContent(dec.toString());
+    /**
+     * sendInform se envia señal de confrimación al agente junto con su acción.
+     * @param id
+     * @param dec
+     */
+
+     private void sendInform(AgentID id,JSONObject dec){
+         ACLMessage msg= new ACLMessage(ACLMessage.REQUEST);
+         msg.setSender(this.getAid());
+         msg.addReceiver(id);
+         //jsonobject
+         msg.setContent(dec.toString());
+         //NOTA_INTEGRACION (Ismael) no llegas a mandar el mensaje. Tienes que llamar a la funcion send().
+
+          try {
+              msg = receiveACLMessage();
+          } catch (InterruptedException ex) {
+              System.err.println("Agente "+this.getName()+" Error de comuncicación");
+              Logger.getLogger(Drone.class.getName()).log(Level.SEVERE, null, ex);
+          }
+        if(msg.getPerformative().equals("INFORM")){
+              System.out.println("Confirmo continuacion");
+
+         }
+          else{
+             exit=true;
+          
+          }
+     }
+
+     /**
+      * receiveStatus metodo para comunicar al satélite que le envie información.
+      * @param id
+      * @param dec
+      */
+     private void receiveStatus(AgentID id,JSONObject dec){
+         ACLMessage msg= new ACLMessage(ACLMessage.REQUEST);
+
+         msg.setSender(this.getAid());
+         msg.addReceiver(id);
+         msg.setContent(null);
+          try {
+              msg = receiveACLMessage();
 
 
-	        try {
-	            msg = receiveACLMessage();
-	        } catch (InterruptedException ex) {
-	            System.err.println("Agente "+this.getName()+" Error de comuncicación");
-	            Logger.getLogger(Drone.class.getName()).log(Level.SEVERE, null, ex);
-	        }
-	      if(msg.getPerformative().equals("INFORM")){
-	            System.out.println("Confirmo continuacion");
+          } catch (InterruptedException ex) {
+              System.err.println("Agente "+this.getName()+" Error de comuncicación");
+              Logger.getLogger(Drone.class.getName()).log(Level.SEVERE, null, ex);
+          }
+         if(msg.getPerformative().equals("INFORM")){
+             
+             JSONObject contenido=null;
+              try {
+                  contenido = new JSONObject(msg.getContent());
+              } catch (JSONException ex) {
+                  ex.printStackTrace();
+                  Logger.getLogger(Drone.class.getName()).log(Level.SEVERE, null, ex);
+              }
+              try {
+                  JSONObject aux= new JSONObject();
+                  aux=contenido.getJSONObject("gps");
+                  posX=aux.getInt("x");
+                  posY=aux.getInt("y");
 
-	       }
-	        else{
-	        	//NOTA_INTEGRACION (Ismael) exit aqui no tiene sentido
-	           exit=true;
-	        	//NOTA_INTEGRACION (Ismael) no se debe llamar al metodo finalize().
-	        	//El sistema lo llama automaticamente al salirse del execute()
-	           finalize();
-	        }
-	   }
+                  aux=contenido.getJSONObject("gonio");
+                  angle=(float)contenido.getInt("alpha");
 
-	   /**
-	    * receiveStatus metodo para comunicar al satélite que le envie información.
-	    * @param id
-	    * @param dec
-	    */
-	   private void receiveStatus(AgentID id,JSONObject dec){
-	       ACLMessage msg= new ACLMessage(ACLMessage.REQUEST);
+                  surroundings=(int[]) contenido.get("radar");
 
-	       msg.setSender(this.getAid());
-	       msg.addReceiver(id);
-	       msg.setContent(null);
-	        try {
-	            msg = receiveACLMessage();
+                  
+              } catch (JSONException ex) {
+                  ex.printStackTrace();
+                  Logger.getLogger(Drone.class.getName()).log(Level.SEVERE, null, ex);
+              }
 
 
-	        } catch (InterruptedException ex) {
-	            System.err.println("Agente "+this.getName()+" Error de comuncicación");
-	            Logger.getLogger(Drone.class.getName()).log(Level.SEVERE, null, ex);
-	        }
-	       if(msg.getPerformative().equals("INFORM")){
-	           
-	           JSONObject contenido=null;
-	            try {
-	                contenido = new JSONObject(msg.getContent());
-	            } catch (JSONException ex) {
-	                ex.printStackTrace();
-	                Logger.getLogger(Drone.class.getName()).log(Level.SEVERE, null, ex);
-	            }
-	            try {
-	                JSONObject aux= new JSONObject();
-	                aux=contenido.getJSONObject("gps");
-	                posX=aux.getInt("x");
-	                posY=aux.getInt("y");
+         }
+          else{
+             exit=true;
+             
+          }
 
-	                aux=contenido.getJSONObject("gonio");
-	                angle=(float)contenido.getInt("alpha");
+     }
+     
 
-	                //CAMBIO_INTEGRACION (Ismael) cambia de ArrayList<Integer> a int[]
-	                //surroundings=(int[]) contenido.get("radar");
-	                surroundings=(ArrayList<Integer>) contenido.get("radar");
+     @Override
+     public void finalize(){
+         System.out.println("Agente "+this.getName()+" ha finalizado");
+         super.finalize();
+  }
 
-	                
-	            } catch (JSONException ex) {
-	                ex.printStackTrace();
-	                Logger.getLogger(Drone.class.getName()).log(Level.SEVERE, null, ex);
-	            }
+     /*
+      * Método para las acciones del drone.
+      *
+      */
+     @Override
+      protected void execute(){
+          ACLMessage message = new ACLMessage();
+          
+          JSONObject status= null;
+  	
+          int decision=0;
 
-
-	       }
-	        else{
-	        	//NOTA_INTEGRACION (Ismael) exit aqui no tiene sentido
-		       exit=true;
-		       	//NOTA_INTEGRACION (Ismael) no se debe llamar al metodo finalize().
-		       	//El sistema lo llama automaticamente al salirse del execute()
-	           finalize();
-	        }
-
-	   }
-	   
-
-	   //CAMBIO_INTEGRACION (Ismael) es public
-	   @Override
-	   private void finalize(){
-	       System.out.println("Agente "+this.getName()+" ha finalizado");
-	       super.finalize();
-	}
-	   
-	   /*
-	    * Método para las acciones del drone.
-	    *
-	    */
-	 //CAMBIO_INTEGRACION (Ismael) es protected
-	   @Override
-	   private void execute(){
-	        ACLMessage message = new ACLMessage();
-	        
-	        JSONObject status= null;
-		
-	        int decision=0;
-
-	        try {
-	            status = createStatus();
-	        } catch (JSONException ex) {
-	            ex.printStackTrace();
-	            Logger.getLogger(Drone.class.getName()).log(Level.SEVERE, null, ex);
-	        }
-	        while(!exit){
-	            switch(estado){
-	                case ESTADOREQUEST:
-	                          receiveStatus(satelite,null);
-	                          estado=ESTADOINFORM;
-	                         break;
-	                case ESTADOINFORM:
-	                    decision=think();
-	                    if(decision<0||decision>4){
-	                        ACLMessage fallo = new ACLMessage(ACLMessage.FAILURE);
-	                        fallo.setSender(this.getAid());
-	                        fallo.addReceiver(satelite);
-	                        fallo.setContent(null);
-	                    }
-	                    else{
-	                            try {
-	                                status.remove("movimiento");
-	                                status.put("movimiento", String.valueOf(decision));
-	                            } catch (JSONException ex) {
-	                                 ex.printStackTrace();
-	                                 Logger.getLogger(Drone.class.getName()).log(Level.SEVERE, null, ex);
-	                            }
-	                        sendInform(satelite,status);
-	                        estado=ESTADOREQUEST;
-	                    
-	                    }
-	                    break;
-	            }
-	            
-	       }
-	    }
+          try {
+              status = createStatus();
+          } catch (JSONException ex) {
+              ex.printStackTrace();
+              Logger.getLogger(Drone.class.getName()).log(Level.SEVERE, null, ex);
+          }
+          while(!exit){
+              switch(estado){
+                  case ESTADOREQUEST:
+                            receiveStatus(sateliteID,null);
+                            estado=ESTADOINFORM;
+                           break;
+                  case ESTADOINFORM:
+                      decision=think();
+                      if(decision<0||decision>4){
+                          ACLMessage fallo = new ACLMessage(ACLMessage.FAILURE);
+                          fallo.setSender(this.getAid());
+                          fallo.addReceiver(sateliteID);
+                          fallo.setContent(null);
+                      }
+                      else{
+                              try {
+                                  status.remove("movimiento");
+                                  status.put("movimiento", String.valueOf(decision));
+                              } catch (JSONException ex) {
+                                   ex.printStackTrace();
+                                   Logger.getLogger(Drone.class.getName()).log(Level.SEVERE, null, ex);
+                              }
+                          sendInform(sateliteID,status);
+                          estado=ESTADOREQUEST;
+                      
+                      }
+                      break;
+              }
+              
+         }
+      }
 }
