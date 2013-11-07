@@ -12,7 +12,7 @@ import es.upv.dsic.gti_ia.core.AgentsConnection;
 public class Launcher {
 
 	public static void main(String[] args) {
-		DOMConfigurator.configure("src/thematrix/configuration/loggin.xml"); // ERR
+		DOMConfigurator.configure("src/Configuration/loggin.xml"); // ERR
         Logger logger = Logger.getLogger(Launcher.class);
         
         // QPID
