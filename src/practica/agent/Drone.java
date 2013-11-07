@@ -134,7 +134,7 @@ public class Drone extends SingleAgent {
          msg.addReceiver(id);
          //jsonobject
          msg.setContent(dec.toString());
-         //NOTA_INTEGRACION (Ismael) no llegas a mandar el mensaje. Tienes que llamar a la funcion send().
+         this.send(msg);
 
           try {
               msg = receiveACLMessage();
@@ -163,6 +163,7 @@ public class Drone extends SingleAgent {
          msg.setSender(this.getAid());
          msg.addReceiver(id);
          msg.setContent(null);
+         this.send(msg);
           try {
               msg = receiveACLMessage();
 
