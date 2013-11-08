@@ -22,6 +22,7 @@ public class Satelite extends SingleAgent {
 	private int state;
 	private Map mapOriginal, mapSeguimiento;
 	private GPSLocation gps;
+	private double goalPosX, goalPosY;
 	//(Andres) Faltan los atributos goalPosX y goalPosY (ambos private float)
 	
 	
@@ -47,9 +48,10 @@ public class Satelite extends SingleAgent {
 	 * @throws JSONException Si la clave es null
 	 */
 	private JSONObject createStatus() throws JSONException{
-		
 		 ArrayList<Integer> casillas = new ArrayList<Integer>();
-		 float grado = 0, distancia = 0; //distancia = raiz( pow(x0-x1) + pow(y0-y1)) angulo = atan (y0-y1 / x0-x1 )
+		 int posXDrone = gps.getPositionX(), posYDrone = gps.getPositionY();
+		 double distancia = Math.sqrt(Math.pow(posXDrone, goalPosX) + Math.pow(posYDrone, goalPosY)),
+				grado = Math.atan((posYDrone - goalPosY) / (posXDrone - goalPosX)) ; //distancia = raiz( pow(x0-x1) + pow(y0-y1)) angulo = atan (y0-y1 / x0-x1 )
 		 
 		 /*
 		  Version 2:
