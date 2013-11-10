@@ -123,6 +123,14 @@ public class Drone extends SingleAgent {
     }
 	
     /**
+     * Getter del mapa, usado para el visualizador.
+     * @return el mapa del drone.
+     */
+    public Map getDroneMap() {
+		return droneMap;
+	}
+
+	/**
      * sendInform se envia señal de confrimación al agente junto con su acción.
      * @param id
      * @param dec

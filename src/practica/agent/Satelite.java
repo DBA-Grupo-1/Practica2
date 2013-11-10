@@ -290,5 +290,13 @@ public class Satelite extends SingleAgent {
 		
 		System.out.println("Agente "+this.getName()+" ha finalizado");
 	}
+
+	/**
+	 * Getter del mapa original.
+	 * @return el mapa original.
+	 */
+	public Map getMapOriginal() {
+		return mapOriginal;
+	}
 	
 }
