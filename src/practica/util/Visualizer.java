@@ -41,8 +41,7 @@ public class Visualizer extends JFrame {
 	private void initialize() {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 275, 275);
-		setVisible(true);
-		
+		setVisible(true);		
 		
 		//Meter los nombres de los mapas
 		File f = new File ("src/maps");
