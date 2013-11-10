@@ -123,4 +123,16 @@ public abstract class ImgMapConverter {
 			   System.out.println("Error de escritura");
 		}
 	}
+	
+	/**
+	 * Crea una imagen escalada a partir de un mapa de datos
+	 * @param map Mapa de datos del que se obtendrá la imagen.
+	 * @param width Ancho de la imagen
+	 * @param height Alto de la imagen
+	 * @return Imagen correspondiente al mapa.
+	 */
+	public static Image mapToScalatedImg (Map map, int width, int height){
+		BufferedImage bf = mapToBufferedImage(map);		
+		return bf.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+	}
 }
