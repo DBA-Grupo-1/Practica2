@@ -1,7 +1,6 @@
 package practica.agent;
 
 import java.util.ArrayList;
-
 import java.util.Random;
 
 import practica.util.Map;
@@ -36,8 +35,7 @@ public class Drone extends SingleAgent {
 
 	private AgentID sateliteID;
 
-	public Drone(AgentID aid, int mapWidth, int mapHeight, AgentID sateliteID)
-			throws Exception {
+	public Drone(AgentID aid, int mapWidth, int mapHeight, AgentID sateliteID) throws Exception {
 		super(aid);
 		surroundings = new int[9];
 		droneMap = new Map(mapWidth, mapHeight);
@@ -46,8 +44,6 @@ public class Drone extends SingleAgent {
 		posY = 0;
 	}
 	
-	
-
 	/**
 	 * Método donde el dron decide a qué dirección mover.
 	 * @return dirección a la que se moverá.
@@ -75,7 +71,6 @@ public class Drone extends SingleAgent {
 		int dec=decision(misCandi);
 
 		return dec;
-
 	}
 
 	/**
@@ -128,14 +123,16 @@ public class Drone extends SingleAgent {
 	// POST DIAGRAMA DE CLASES
 	private int[] getValidMovements() {
 		int movimientosLibres[] = new int[4];
-
+		/* TODO: Revisar la suma de valores. ¿Qué pasa si el drone ya ha guardado que es una posición
+		 * ocupada (un 1) y el satélite le envía otro 1 de que está ocupada? ¿Da un 2 de visitado?
+		 * Estos errores ocurrirán cuando el dron guarde en su mapa lo que hay en las posiciones.
+		 */
 		// CAMBIO REALIZADO: El norte puesto como posY-1 y sur posY+1 (estaba al revés)
 		movimientosLibres[NORTE] = surroundings[1] + droneMap.getValue(posX, posY - 1);
 		// La siguiente línea de código ¡PETA! porque intenta acceder a la posición X = -1 (arreglado)
 		movimientosLibres[OESTE] = surroundings[3] + droneMap.getValue(posX - 1, posY);
 		movimientosLibres[SUR] = surroundings[7] + droneMap.getValue(posX, posY + 1);
 		movimientosLibres[ESTE] = surroundings[5] + droneMap.getValue(posX + 1, posY);
-		System.out.println("N: " + movimientosLibres[NORTE] + "   O: " + movimientosLibres[OESTE] + "   S: " + movimientosLibres[SUR] + "   E: " + movimientosLibres[ESTE]);
 		return movimientosLibres;
 	}
 
@@ -234,7 +231,20 @@ public class Drone extends SingleAgent {
 				// surroundings=(int[]) contenido.get("radar"); // No se puede hacer así
 				// Una opción sería usando JSONArray, se tendría que mirar como pasarlo a un array normal tras sacarlo
 				JSONArray jsArray = contenido.getJSONArray("radar");
-
+				
+				/* TODO: recupera bien lo que tiene al rededor (lo muestro por consola bien) 
+				 * Pero parece que si lo pongo no termina en el mapa1 y si no lo pongo sí.
+				 */
+				
+				for (int i=0; i < jsArray.length(); i++){
+					surroundings[i] = jsArray.getInt(i);
+				}
+				// Compruebo si se reciben bien los alrededores:
+				System.out.println("Alrededores del Dron: ");
+				System.out.println("|"+surroundings[0]+", "+surroundings[1]+", "+surroundings[2]+"|");
+				System.out.println("|"+surroundings[3]+", "+surroundings[4]+", "+surroundings[5]+"|");
+				System.out.println("|"+surroundings[6]+", "+surroundings[7]+", "+surroundings[8]+"|");
+						
 			} catch (JSONException ex) {
 				System.out.println("numeritos");
 				ex.printStackTrace();
@@ -246,6 +256,7 @@ public class Drone extends SingleAgent {
 		}
 
 	}
+
 
 	@Override
 	public void finalize() {
@@ -259,8 +270,8 @@ public class Drone extends SingleAgent {
 	@Override
 	protected void execute() {
 		ACLMessage message = new ACLMessage();
-
 		JSONObject status = null;
+		System.out.println("Agente " + this.getName() + " en ejecución");
 
 		int decision = 0;
 

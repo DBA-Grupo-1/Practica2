@@ -6,6 +6,7 @@ import es.upv.dsic.gti_ia.core.ACLMessage;
 import es.upv.dsic.gti_ia.core.AgentID;
 import es.upv.dsic.gti_ia.core.SingleAgent;
 
+
 //NOTA_INTEGRACION (Jahiel) Esto no se usa. Como en el codigo de Ismael.
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -15,6 +16,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import practica.util.GPSLocation;
+import practica.util.ImgMapConverter;
 import practica.util.Map;
 
 public class Satelite extends SingleAgent {
@@ -70,7 +72,7 @@ public class Satelite extends SingleAgent {
 		JSONObject status2 = new JSONObject();
 		status2.put("connected", "Yes");
 		status2.put("ready", "Yes");
-
+		
 		JSONObject aux = new JSONObject();
 		aux.put("x", gps.getPositionX());
 		aux.put("y", gps.getPositionY());
@@ -88,15 +90,37 @@ public class Satelite extends SingleAgent {
 		aux2.put("dist", distancia);
 		status2.put("gonio", aux2);
 		status2.put("battery", 100);
-		// status2.put("radar", casillas); // No se puede enviar así
-
-		int[] pruebaArray = { 1, 2, 3 };
-		JSONArray jsArray = new JSONArray(pruebaArray);
+		
+		int[] surroundings = obtenerAlrededores();
+		JSONArray jsArray = new JSONArray(surroundings);
 		status2.put("radar", jsArray);
 
 		return status2;
 	}
 
+	/**
+	 * Este método obtiene los valores de las celdas en las 9 casillas que rodean el drone 
+	 * (incluyendo en la que se encuentra el drone)
+	 * @return Array de enteros con las 
+	 */
+	private int[] obtenerAlrededores(){
+		int[] surroundings = new int[9];
+		int posX = gps.getPositionX();
+		int posY = gps.getPositionY();
+		
+		// Recorre desde la posición dron -1  hasta la del dron + 1, tanto en X como en Y
+		for (int i = 0; i< 3; i++){
+			for(int j = 0; j < 3; j++){
+				/* TODO: ¿poner mapSeguimiento o mapOriginal? Depende del método getValidMoviments del drone
+				 * Se puede liar si aquí digo que está visitado, y allí le suma que también.
+				 */
+				surroundings[i+j*3] = mapOriginal.getValue(posX-1+i, posY-1+j);
+			}
+		}
+		
+		return surroundings;
+	}
+	
 	/**
 	 * Se envia un mensaje del tipo "typeMessag" al agente "id" con el contenido "datas".
 	 * @param typeMessage 	Tipo del mensaje: REQUEST, INFORM, FAIL
@@ -163,7 +187,7 @@ public class Satelite extends SingleAgent {
 
 		case Drone.END:
 			return true;
-		default: // Fin, No me guta, prefiero un case para el fin y en el default sea un caso de error pero no me deja poner -1 en el case.
+		default: // Fin, No me gusta, prefiero un case para el fin y en el default sea un caso de error pero no me deja poner -1 en el case.
 			sendError(dron, "Error al actualizar el mapa");
 			break;
 		}
@@ -204,7 +228,6 @@ public class Satelite extends SingleAgent {
 		boolean exit = false;
 		System.out.println("Agente " + this.getName() + " en ejecución");
 		while (!exit) {
-			System.out.println("Posicion: " + gps.getPositionX() + ", "+ gps.getPositionY());
 			switch (state) {
 
 			case SolicitudStatus:
@@ -218,27 +241,29 @@ public class Satelite extends SingleAgent {
 
 				if (!exit) {
 					dron = message.getSender();
-					if (dron == null)
-						// Una vez recibido el mensaje comprobamos el tipo y si es del tipo Request respondemos con Inform(status)
+					// Una vez recibido el mensaje comprobamos el tipo y si es del tipo Request respondemos con Inform(status)
 
-						if (message.getPerformative().equals("REQUEST")) {
-							JSONObject status = null;
-							try {
-								status = createStatus();
-							} catch (JSONException e) {
-								sendError(dron, "Error al crear Status");
-								exit = true;
-							}
-							if (status != null) {
-								send(ACLMessage.INFORM, dron, status);
-								state = EsperarInform;
-							}
-						} else {
-							// El mensaje recibido es de tipo distinto a Request por tanto error
-
-							sendError(dron,"Error de secuencia en la comunicación. El mensaje debe ser de tipo REQUEST");
+					if (message.getPerformative().equals("REQUEST")) {
+						
+						System.out.println("Posicion: " + gps.getPositionX() + ", "+ gps.getPositionY());
+						
+						JSONObject status = null;
+						try {
+							status = createStatus();
+						} catch (JSONException e) {
+							sendError(dron, "Error al crear Status");
 							exit = true;
 						}
+						if (status != null) {
+							send(ACLMessage.INFORM, dron, status);
+							state = EsperarInform;
+						}
+					} else {
+						// El mensaje recibido es de tipo distinto a Request por tanto error
+
+						sendError(dron,"Error de secuencia en la comunicación. El mensaje debe ser de tipo REQUEST");
+						exit = true;
+					}
 				}
 
 				break;
@@ -282,6 +307,8 @@ public class Satelite extends SingleAgent {
 	@Override
 	public void finalize() {
 		System.out.println("Agente " + this.getName() + " ha finalizado");
+		// TODO: he añadido la creación del mapa. Revisar si esto debería ir aquí o en el main de algún modo, u otro lugar
+		ImgMapConverter.mapToImg("src/maps/resutado.png", mapSeguimiento);
 	}
 
 	/**
@@ -292,4 +319,11 @@ public class Satelite extends SingleAgent {
 		return mapOriginal;
 	}
 
+	/**
+	 * Getter del mapa de seguimiento.
+	 * @return el mapa de seguimiento.
+	 */
+	public Map getMapSeguimiento() {
+		return mapSeguimiento;
+	}
 }
