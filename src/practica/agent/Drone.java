@@ -54,11 +54,30 @@ public class Drone extends SingleAgent {
 
 		int posiOX=0,posiOY=0;
 
+		/* FIXME
+		 * Los angulos son de 0 a 360 (mirate la practica) y angle%90 no tiene sentido. 
+		 * Ademas el coseno y el seno estan al reves. 
+		 * Lo correcto:
+		 * posiOX= (int) (posX + (Math.cos(angle) * distancia));
+		 * posiOY= (int) (posY + (Math.sin(angle) * distancia));
+		 */
 		//Supongo que los ángulos son entre 0 a 90 grados
 		posiOX= (int) (posX + (Math.sin(angle%90) * distancia));
 		posiOY= (int) (posY + (Math.cos(angle%90)*distancia));
 
 
+		/* FIXME
+		 * Estan todas las direcciones mal menos OESTE (mirate la practica).
+		 * Hay demasiados calculos ya que como minimo una de las direcciones no vale para nada. Eso es poco eficiente.
+		 * Ademas fijate que el tercer componente (por el que juzgas si es un movimiento valido) solo esta formado
+		 * por la componente del surroundings. No se comprueba si la posicion ya fue visitada.
+		 * Los componentes del surroundings se cojen mal (mirate la practica). 
+		 * Lo correcto:
+		 * 	Norte:	posX, posY-1		surroundings[1]
+		 * 	Este:	posX+1, posY		surroundings[5]
+		 * 	Sur:	posX, posY+1		surroundings[7]
+		 * 	Oeste:	posX-1, posY		surroundings[3]
+		 */
 		mispares.add(new Pair((float) Math.sqrt(Math.pow((posiOX-posX),2)+Math.pow((posiOY-(posY+1)), 2)),NORTE,surroundings[NORTE]));
 		mispares.add(new Pair((float) Math.sqrt(Math.pow((posiOX-(posX+1)),2)+Math.pow((posiOY-posY), 2)),SUR,surroundings[SUR]));
 		mispares.add(new Pair((float) Math.sqrt(Math.pow((posiOX-posX),2)+Math.pow((posiOY-(posY-1)), 2)),ESTE,surroundings[ESTE]));
@@ -126,6 +145,14 @@ public class Drone extends SingleAgent {
 		/* TODO: Revisar la suma de valores. ¿Qué pasa si el drone ya ha guardado que es una posición
 		 * ocupada (un 1) y el satélite le envía otro 1 de que está ocupada? ¿Da un 2 de visitado?
 		 * Estos errores ocurrirán cuando el dron guarde en su mapa lo que hay en las posiciones.
+		 */
+		/* TODO (Alberto)
+		 * El drone no guarda los obstaculos en el mapa, solo si los ha visitado o no.
+		 * Los posible valores de la suma serian:
+		 * Vacio y no visitado = 0
+		 * Vacio y visitado = 2
+		 * Obstaculo = 1
+		 * Para mi estan bien. No veo el fallo.
 		 */
 		// CAMBIO REALIZADO: El norte puesto como posY-1 y sur posY+1 (estaba al revés)
 		movimientosLibres[NORTE] = surroundings[1] + droneMap.getValue(posX, posY - 1);
