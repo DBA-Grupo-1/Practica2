@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import practica.util.Map;
+import practica.util.Pair;
 import es.upv.dsic.gti_ia.core.AgentID;
 import es.upv.dsic.gti_ia.core.SingleAgent;
 import es.upv.dsic.gti_ia.core.ACLMessage;
@@ -24,6 +25,7 @@ public class Drone extends SingleAgent {
 	private int posX;
 	private int posY;
 	private float angle;
+	private float distancia;
 	private int[] surroundings;
 	private Map droneMap;
 	public static final int NORTE = 3;
@@ -43,58 +45,82 @@ public class Drone extends SingleAgent {
 		posX = 0;
 		posY = 0;
 	}
+	
+	
 
 	/**
 	 * Método donde el dron decide a qué dirección mover.
 	 * @return dirección a la que se moverá.
 	 */
-	public int think() {
-		java.util.Random r = new Random();
-		float direccion;
-		boolean rango;
-		int ran;
-		ArrayList<Integer> movimientos = new ArrayList<Integer>(4);
-		int movLibres[] = new int[4];
+	public int think(){
+		ArrayList<Pair> mispares = new ArrayList<Pair>();
+		ArrayList<Pair> misCandi= new ArrayList<Pair>();
 
-		direccion = angle / 90;
-		rango = (angle % 90) != 0;
-		ran = r.nextInt(2); // Generar un número entre 0 y 1.
+		int posiOX=0,posiOY=0;
 
-		System.out.println(direccion + " " + rango);
+		//Supongo que los ángulos son entre 0 a 90 grados
+		posiOX= (int) (posX + (Math.sin(angle%90) * distancia));
+		posiOY= (int) (posY + (Math.cos(angle%90)*distancia));
 
-		if (rango) {
-			movimientos.add(0, (int) ((ran + direccion) % 4));
-			movimientos.add(1, (int) ((1 - ran + direccion) % 4));
-			movimientos.add(2, (int) ((ran + direccion + 2) % 4));
-			movimientos.add(3, (int) ((3 - ran + direccion) % 4));
-		} else {
-			movimientos.add(0, (int) direccion);
-			movimientos.add(1, (int) ((direccion + 2 - ran) % 4)); // En lugar de que lo aleatorio sea donde pongo cada cosa, hago
-			movimientos.add(2, (int) ((direccion + 1 + ran) % 4)); // que lo aleatorio sea que pongo en donde. Culpa del ArrayList y sus indices.
-			movimientos.add(3, (int) ((direccion + 2) % 4));
-		}
 
-		movLibres = getValidMovements();
+		mispares.add(new Pair((float) Math.sqrt(Math.pow((posiOX-posX),2)+Math.pow((posiOY-(posY+1)), 2)),NORTE,surroundings[NORTE]));
+		mispares.add(new Pair((float) Math.sqrt(Math.pow((posiOX-(posX+1)),2)+Math.pow((posiOY-posY), 2)),SUR,surroundings[SUR]));
+		mispares.add(new Pair((float) Math.sqrt(Math.pow((posiOX-posX),2)+Math.pow((posiOY-(posY-1)), 2)),ESTE,surroundings[ESTE]));
+		mispares.add(new Pair((float) Math.sqrt(Math.pow((posiOX-(posX-1)),2)+Math.pow((posiOY-posY), 2)),OESTE,surroundings[OESTE]));
 
-		/*
-		 * ¡ERROR! al borrar una posición de "movimientos", se hace más pequeño,
-		 * deja de existir la 4ª posición y cuando intenta comprobar la 4ª da
-		 * error de outOfBounds, se podrían guardar los movimientos a borrar y
-		 * guardarlos tras terminar el bucle (arreglado)
-		 */
-		for (int i = 0; i < movimientos.size(); i++) {
-			// CAMBIO: 0 por Map.Libre, me parece que queda más claro
-			if (movLibres[movimientos.get(i)] != Map.LIBRE) { // Si no es 0 la casilla o no está libre o se ha pasado por ella
-				movimientos.remove(i);
-			}
-		}
+		//Aquí se obtienen los candidatos a comprobar
+		misCandi=obtenerCandidatos(mispares);
 
-		if (movimientos.isEmpty())
-			return -1; // El agente no se puede mover.
-		else
-			return movimientos.get(0);
+		//Aquí se toma una decisión.
+		int dec=decision(misCandi);
+
+		return dec;
+
 	}
 
+	/**
+	 * decision funcion para tomar la decisión de movimiento
+	 * se busca la distancia mas pequeña al objetivo en caso de empate se coge siempre la primera.
+	 * @param datos
+	 * @return -1(error) o decision
+	 */
+	public int decision(ArrayList<Pair> datos){
+		float min=9999999;
+		int i=0;
+		int po=-1;
+		while(i<datos.size()){
+
+			if(datos.get(i).getFirst()<min){
+				po=i;
+				min=datos.get(i).getFirst();
+			}
+			i++;
+		}
+		if(min==9999999){
+			return -1;
+		}
+		else{
+			return datos.get(po).getSecond();
+		}
+	}
+
+	/**
+	 * ObtenerCandidatos devuelve un ArrayList con los candidatos de movimiento.
+	 * @return n
+	 */
+	public ArrayList obtenerCandidatos(ArrayList<Pair> mios){
+		ArrayList<Pair> n = new ArrayList<Pair>();
+		for(int i=0;i<4;i++){
+			if(mios.get(i).getT()==0){
+				n.add(mios.get(i));
+			}
+			else{
+				System.out.println("mala\n");
+			}
+		}
+		return n;
+	}
+	
 	/**
 	 * Método para obtener un array con los movimientos libres del drone usando la memoria del mismo.
 	 * @return Un array con lo que hay en las posiciones Este, Sur, Oeste y Norte a las que se podría mover, en ese orden.
