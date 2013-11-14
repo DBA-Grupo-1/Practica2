@@ -18,7 +18,7 @@ import org.json.JSONObject;
 
 public class Drone extends SingleAgent {
 	private final int ESTADOREQUEST = 0, ESTADOINFORM = 1;
-	// NOTA_INTEGRACION (Ismael) exit no tiene sentido fuera del execute.
+	// NOTA_INTEGRACION (Ismael) exit no tiene sentido fuera del execute
 	private boolean exit;
 	private int estado;
 	private int posX;

@@ -18,8 +18,7 @@ import practica.util.GPSLocation;
 import practica.util.Map;
 
 public class Satelite extends SingleAgent {
-	private final int SolicitudStatus = 0, EsperarInform = 1; // Estos nombres
-																// no me gustan
+	private final int SolicitudStatus = 0, EsperarInform = 1; // Estos nombres no me gustan
 	private int state;
 	private Map mapOriginal, mapSeguimiento;
 	private GPSLocation gps;
@@ -33,9 +32,9 @@ public class Satelite extends SingleAgent {
 		mapSeguimiento = new Map(mapa);
 		state = SolicitudStatus;
 		gps = new GPSLocation();
-		// (Andres) Inicializar goalPosX y goalPosY a la posicion media de las
-		// casillas rojas del mapa
-		// (Jonay) Inicialización de prueba
+		// (Andres) Inicializar goalPosX y goalPosY a la posicion media de las casillas rojas del mapa
+		
+		// Inicialización de prueba
 		goalPosX = 40;
 		goalPosY = 40;
 
@@ -44,36 +43,28 @@ public class Satelite extends SingleAgent {
 
 	/**
 	 * Creamos el objeto JSON status:
-	 * 
 	 * Status: {“connected”:”YES”, “ready”:”YES”, “gps”:{“x”:10,”y”:5},
 	 * “goal”:”No”, “gonio”:{“alpha”:0, “dist”:4.0}, “battery”:100,
 	 * “radar”:[0,0,0,0,0,0,0,1,1]}
 	 * 
 	 * @return Objeto JSon con el contenido de Status
-	 * @throws JSONException
-	 *             Si la clave es null
+	 * @throws JSONException  Si la clave es null
 	 */
 	private JSONObject createStatus() throws JSONException {
 		ArrayList<Integer> casillas = new ArrayList<Integer>();
 		int posXDrone = gps.getPositionX(), posYDrone = gps.getPositionY();
-		// double distancia = Math.sqrt(Math.pow(posYDrone, goalPosY) +
-		// Math.pow(posYDrone, goalPosY)); Esto estaba mal
-		double distancia = Math.sqrt(Math.pow(goalPosX - posXDrone, 2)
-				+ Math.pow(goalPosY - posYDrone, 2));
-		double grado = Math.atan((posYDrone - goalPosY)
-				/ (posXDrone - goalPosX)); // distancia = raiz( pow(x0-x1) +
-											// pow(y0-y1)) angulo = atan (y0-y1
-											// / x0-x1 )
+		// double distancia = Math.sqrt(Math.pow(posYDrone, goalPosY) + Math.pow(posYDrone, goalPosY)); Esto estaba mal
+		double distancia = Math.sqrt(Math.pow(goalPosX - posXDrone, 2) + Math.pow(goalPosY - posYDrone, 2));
+		double grado = Math.atan((posYDrone - goalPosY) / (posXDrone - goalPosX)); // distancia = raiz( pow(x0-x1) + pow(y0-y1)) angulo = atan (y0-y1 / x0-x1 )
 
 		/*
 		 * Version 2:
 		 * 
-		 * JsonObject status = Json.createObjectBuilder() .add("connected",
-		 * "Yes") .add("ready", "Yes") .add("gps", Json.createObjectBuilder()
-		 * .add("x", 10) .add("y", 5)) .add("goal", "No") .add("gonio",
-		 * Json.createObjectBuilder() .add("alpha", grado) .add("dist",
-		 * distancia)) .add("battery", 100) //.add("radar", casillas) no se
-		 * puede asociar un Collection al // value .build();
+		 * JsonObject status = Json.createObjectBuilder() 
+		 * .add("connected","Yes") .add("ready", "Yes") .add("gps", Json.createObjectBuilder()
+		 * .add("x", 10) .add("y", 5)) .add("goal", "No") .add("gonio", Json.createObjectBuilder() 
+		 * .add("alpha", grado) .add("dist", distancia)) .add("battery", 100)
+		 *  //.add("radar", casillas) no se puede asociar un Collection al // value .build();
 		 */
 
 		JSONObject status2 = new JSONObject();
@@ -107,15 +98,10 @@ public class Satelite extends SingleAgent {
 	}
 
 	/**
-	 * Se envia un mensaje del tipo "typeMessag" al agente "id" con el contenido
-	 * "datas".
-	 * 
-	 * @param typeMessage
-	 *            Tipo del mensaje: REQUEST, INFORM, FAIL
-	 * @param id
-	 *            Identificador del destinatario
-	 * @param datas
-	 *            Contenido del mensaje
+	 * Se envia un mensaje del tipo "typeMessag" al agente "id" con el contenido "datas".
+	 * @param typeMessage 	Tipo del mensaje: REQUEST, INFORM, FAIL
+	 * @param id   			Identificador del destinatario
+	 * @param datas			Contenido del mensaje
 	 */
 	private void send(int typeMessage, AgentID id, JSONObject datas) {
 
@@ -133,16 +119,14 @@ public class Satelite extends SingleAgent {
 	 * En función del valor recibido por el dron se actualiza el mapa interno
 	 * del satelite con la nueva posición del drone (x, y en funcion de la
 	 * dirección elegida) o se da por finalizada la comunicación.
-	 * 
-	 * @param dron
-	 *            Identificador del agente dron.
-	 * @param ob
-	 *            Objeto JSon con los valores de la decision del drone: - 0 : El
-	 *            dron decide ir al Este. - 1 : El dorn decide ir al Sur. - 2 :
-	 *            El dorn decide ir al Oeste. - 3 : El dorn decide ir al Norte.
-	 *            - -1: Fin de la comunicación
-	 * @return Se devuelve "true" si se debe finalizar la comunicación y "false"
-	 *         en caso contrario.
+	 * @param dron		Identificador del agente dron.
+	 * @param ob		Objeto JSon con los valores de la decision del drone: 
+	 * 					-  0 : El dron decide ir al Este. 
+	 * 					-  1 : El dorn decide ir al Sur. 
+	 * 					-  2 : El dorn decide ir al Oeste. 
+	 * 					-  3 : El dorn decide ir al Norte.
+	 *            		- -1: Fin de la comunicación
+	 * @return Se devuelve "true" si se debe finalizar la comunicación y "false" en caso contrario.
 	 */
 	private boolean evalueDecision(AgentID dron, JSONObject ob) {
 		int decision, x = -1, y = -1;
@@ -179,9 +163,7 @@ public class Satelite extends SingleAgent {
 
 		case Drone.END:
 			return true;
-		default: // Fin, No me guta, prefiero un case para el fin
-					// y en el default sea un caso de error pero no me deja
-					// poner -1 en el case.
+		default: // Fin, No me guta, prefiero un case para el fin y en el default sea un caso de error pero no me deja poner -1 en el case.
 			sendError(dron, "Error al actualizar el mapa");
 			break;
 		}
@@ -194,13 +176,9 @@ public class Satelite extends SingleAgent {
 	}
 
 	/**
-	 * Se crea un mensaje del tipo FAIL para informar de algun fallo al agente
-	 * dron.
-	 * 
-	 * @param dron
-	 *            Identificador del agente dron.
-	 * @param cad_error
-	 *            Cadena descriptiva del error producido.
+	 * Se crea un mensaje del tipo FAIL para informar de algun fallo al agente dron.
+	 * @param dron 			Identificador del agente dron.
+	 * @param cad_error 	Cadena descriptiva del error producido.
 	 */
 	private void sendError(AgentID dron, String cad_error) {
 		JSONObject error = new JSONObject();
@@ -208,10 +186,7 @@ public class Satelite extends SingleAgent {
 		try {
 			error.put("fail", cad_error);
 		} catch (JSONException e) {
-			e.printStackTrace(); // esta excepcion nunca va a suceder porque la
-									// clave siempre es fail
-									// aun asi hay que capturarla y por eso no
-									// se lo comunico al dron
+			e.printStackTrace(); // esta excepcion nunca va a suceder porque la clave siempre es fail aun asi hay que capturarla y por eso no se lo comunico al dron
 		}
 		System.err.println("Agente " + this.getName() + " " + cad_error);
 
@@ -220,8 +195,7 @@ public class Satelite extends SingleAgent {
 	}
 
 	/**
-	 * Secuencia de acciones del satelite. Ver diagrama de secuencia para ver la
-	 * secuencia de acciones.
+	 * Secuencia de acciones del satelite. Ver diagrama de secuencia para ver la secuencia de acciones.
 	 */
 	@Override
 	protected void execute() {
@@ -230,8 +204,7 @@ public class Satelite extends SingleAgent {
 		boolean exit = false;
 		System.out.println("Agente " + this.getName() + " en ejecución");
 		while (!exit) {
-			System.out.println("Posicion: " + gps.getPositionX() + ", "
-					+ gps.getPositionY());
+			System.out.println("Posicion: " + gps.getPositionX() + ", "+ gps.getPositionY());
 			switch (state) {
 
 			case SolicitudStatus:
@@ -246,9 +219,7 @@ public class Satelite extends SingleAgent {
 				if (!exit) {
 					dron = message.getSender();
 					if (dron == null)
-						// Una vez recibido el mensaje comprobamos el tipo y si
-						// es del tipo Request
-						// respondemos con Inform(status)
+						// Una vez recibido el mensaje comprobamos el tipo y si es del tipo Request respondemos con Inform(status)
 
 						if (message.getPerformative().equals("REQUEST")) {
 							JSONObject status = null;
@@ -263,11 +234,9 @@ public class Satelite extends SingleAgent {
 								state = EsperarInform;
 							}
 						} else {
-							// El mensaje recibido es de tipo distinto a Request
-							// por tanto error
+							// El mensaje recibido es de tipo distinto a Request por tanto error
 
-							sendError(dron,
-									"Error de secuencia en la comunicación. El mensaje debe ser de tipo REQUEST");
+							sendError(dron,"Error de secuencia en la comunicación. El mensaje debe ser de tipo REQUEST");
 							exit = true;
 						}
 				}
@@ -289,22 +258,18 @@ public class Satelite extends SingleAgent {
 					try {
 						aux = new JSONObject(message.getContent());
 					} catch (JSONException e) {
-						sendError(dron,
-								"Error al crear objeto JSON con la decision");
+						sendError(dron,"Error al crear objeto JSON con la decision");
 					}
 
 					exit = evalueDecision(dron, aux);
-					// Si ha habido algún fallo al actualizar el mapa se le
-					// informa al drone y se finaliza
+					// Si ha habido algún fallo al actualizar el mapa se le informa al drone y se finaliza
 					if (!exit)
 						state = SolicitudStatus;
 					send(ACLMessage.INFORM, dron, null);
 				} else {
-					// El mensaje recibido es de tipo distinto a Request por
-					// tanto error
+					// El mensaje recibido es de tipo distinto a Request por tanto error
 
-					sendError(dron,
-							"Error de secuencia en la comunicación. El mensaje debe ser de tipo REQUEST");
+					sendError(dron,"Error de secuencia en la comunicación. El mensaje debe ser de tipo REQUEST");
 
 					exit = true;
 				}
@@ -316,13 +281,11 @@ public class Satelite extends SingleAgent {
 
 	@Override
 	public void finalize() {
-
 		System.out.println("Agente " + this.getName() + " ha finalizado");
 	}
 
 	/**
 	 * Getter del mapa original.
-	 * 
 	 * @return el mapa original.
 	 */
 	public Map getMapOriginal() {

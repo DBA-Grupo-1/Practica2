@@ -27,7 +27,7 @@ public class Map {
 
 	/**
 	 * Constructor por copia.
-	 * @param map 	Mapa original a copiar
+	 * @param map 	Mapa original a copiar.
 	 */
 	public Map(Map map) {
 		// Inicialización de componentes
