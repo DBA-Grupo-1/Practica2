@@ -50,45 +50,41 @@ public class Drone extends SingleAgent {
 	 */
 	public int think(){
 		ArrayList<Pair> mispares = new ArrayList<Pair>();
-		ArrayList<Pair> misCandi= new ArrayList<Pair>();
 
-		int posiOX=0,posiOY=0;
+		double posiOX=0,posiOY=0;
+		float calculoDist=0;
 
-		/* FIXME
-		 * Los angulos son de 0 a 360 (mirate la practica) y angle%90 no tiene sentido. 
-		 * Ademas el coseno y el seno estan al reves. 
-		 * Lo correcto:
-		 * posiOX= (int) (posX + (Math.cos(angle) * distancia));
-		 * posiOY= (int) (posY + (Math.sin(angle) * distancia));
-		 */
-		//Supongo que los ángulos son entre 0 a 90 grados
-		posiOX= (int) (posX + (Math.sin(angle%90) * distancia));
-		posiOY= (int) (posY + (Math.cos(angle%90)*distancia));
+		posiOX= (posX + (Math.cos(angle) * distancia));
+		posiOY= (posY + (Math.sin(angle)*distancia));
 
 
-		/* FIXME
-		 * Estan todas las direcciones mal menos OESTE (mirate la practica).
-		 * Hay demasiados calculos ya que como minimo una de las direcciones no vale para nada. Eso es poco eficiente.
-		 * Ademas fijate que el tercer componente (por el que juzgas si es un movimiento valido) solo esta formado
-		 * por la componente del surroundings. No se comprueba si la posicion ya fue visitada.
-		 * Los componentes del surroundings se cojen mal (mirate la practica). 
-		 * Lo correcto:
-		 * 	Norte:	posX, posY-1		surroundings[1]
-		 * 	Este:	posX+1, posY		surroundings[5]
-		 * 	Sur:	posX, posY+1		surroundings[7]
-		 * 	Oeste:	posX-1, posY		surroundings[3]
-		 */
-		mispares.add(new Pair((float) Math.sqrt(Math.pow((posiOX-posX),2)+Math.pow((posiOY-(posY+1)), 2)),NORTE,surroundings[NORTE]));
-		mispares.add(new Pair((float) Math.sqrt(Math.pow((posiOX-(posX+1)),2)+Math.pow((posiOY-posY), 2)),SUR,surroundings[SUR]));
-		mispares.add(new Pair((float) Math.sqrt(Math.pow((posiOX-posX),2)+Math.pow((posiOY-(posY-1)), 2)),ESTE,surroundings[ESTE]));
-		mispares.add(new Pair((float) Math.sqrt(Math.pow((posiOX-(posX-1)),2)+Math.pow((posiOY-posY), 2)),OESTE,surroundings[OESTE]));
-
-		//Aquí se obtienen los candidatos a comprobar
-		misCandi=obtenerCandidatos(mispares);
+		//TODO Fijate que ahora el tercer componente de Pair no se usa
+		if(droneMap.getValue(posX+1, posY)!=Map.VISITADO && surroundings[5]==Map.LIBRE){
+			
+			calculoDist= (float) Math.sqrt(Math.pow((posiOX-(posX+1)),2)+Math.pow((posiOY-posY), 2));
+			mispares.add(new Pair(calculoDist,ESTE,surroundings[5]));
+		}
+		if(droneMap.getValue(posX, posY+1)!=Map.VISITADO && surroundings[7]==Map.LIBRE){
+			
+			calculoDist=(float) Math.sqrt(Math.pow((posiOX-posX),2)+Math.pow((posiOY-(posY+1)), 2));
+			mispares.add(new Pair(calculoDist,SUR,surroundings[7]));
+		}
+		
+		if(droneMap.getValue(posX, posY-1)!=Map.VISITADO && surroundings[1]==Map.LIBRE){
+			
+			calculoDist=(float) Math.sqrt(Math.pow((posiOX-posX),2)+Math.pow((posiOY-(posY-1)), 2));
+			mispares.add(new Pair(calculoDist,NORTE,surroundings[1]));
+		}
+		
+		if(droneMap.getValue(posX-1, posY)!=Map.VISITADO && surroundings[3]==Map.LIBRE){
+			
+			calculoDist=(float) Math.sqrt(Math.pow((posiOX-(posX-1)),2)+Math.pow((posiOY-posY), 2));
+			mispares.add(new Pair(calculoDist,OESTE,surroundings[3]));
+		}
+		
 
 		//Aquí se toma una decisión.
-		int dec=decision(misCandi);
-
+		int dec=decision(mispares);
 		return dec;
 	}
 
@@ -98,7 +94,7 @@ public class Drone extends SingleAgent {
 	 * @param datos
 	 * @return -1(error) o decision
 	 */
-	public int decision(ArrayList<Pair> datos){
+	private int decision(ArrayList<Pair> datos){
 		float min=9999999;
 		int i=0;
 		int po=-1;
@@ -118,22 +114,6 @@ public class Drone extends SingleAgent {
 		}
 	}
 
-	/**
-	 * ObtenerCandidatos devuelve un ArrayList con los candidatos de movimiento.
-	 * @return n
-	 */
-	public ArrayList obtenerCandidatos(ArrayList<Pair> mios){
-		ArrayList<Pair> n = new ArrayList<Pair>();
-		for(int i=0;i<4;i++){
-			if(mios.get(i).getT()==0){
-				n.add(mios.get(i));
-			}
-			else{
-				System.out.println("mala\n");
-			}
-		}
-		return n;
-	}
 	
 	/**
 	 * Método para obtener un array con los movimientos libres del drone usando la memoria del mismo.

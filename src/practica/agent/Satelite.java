@@ -1,15 +1,9 @@
 package practica.agent;
 
-import java.util.ArrayList;
 
 import es.upv.dsic.gti_ia.core.ACLMessage;
 import es.upv.dsic.gti_ia.core.AgentID;
 import es.upv.dsic.gti_ia.core.SingleAgent;
-
-
-//NOTA_INTEGRACION (Jahiel) Esto no se usa. Como en el codigo de Ismael.
-import javax.json.Json;
-import javax.json.JsonObject;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -34,11 +28,22 @@ public class Satelite extends SingleAgent {
 		mapSeguimiento = new Map(mapa);
 		state = SolicitudStatus;
 		gps = new GPSLocation();
-		// (Andres) Inicializar goalPosX y goalPosY a la posicion media de las casillas rojas del mapa
 		
-		// Inicialización de prueba
-		goalPosX = 40;
-		goalPosY = 40;
+		int f=mapOriginal.getHeigh();
+		int c=mapOriginal.getWidth();
+		int suma_x=0, suma_y=0, cont=0;
+		
+		for(int i=0; i<f; i++){
+		    for(int j=0; j<c; j++){
+		        if(mapOriginal.getValue(j,i)==Map.OBJETIVO){
+		            suma_x+=j;
+		            suma_y+=i;
+		            cont++;
+		        }
+		    }
+		}
+		goalPosX=suma_x/(float)cont;
+		goalPosY=suma_y/(float)cont;
 
 		mapSeguimiento.setvalue(0, 0, Map.VISITADO); // añadido esto que faltaba
 	}
@@ -53,7 +58,6 @@ public class Satelite extends SingleAgent {
 	 * @throws JSONException  Si la clave es null
 	 */
 	private JSONObject createStatus() throws JSONException {
-		ArrayList<Integer> casillas = new ArrayList<Integer>();
 		int posXDrone = gps.getPositionX(), posYDrone = gps.getPositionY();
 		// double distancia = Math.sqrt(Math.pow(posYDrone, goalPosY) + Math.pow(posYDrone, goalPosY)); Esto estaba mal
 		double distancia = Math.sqrt(Math.pow(goalPosX - posXDrone, 2) + Math.pow(goalPosY - posYDrone, 2));
