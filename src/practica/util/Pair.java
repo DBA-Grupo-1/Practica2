@@ -1,11 +1,12 @@
+
 package practica.util;
 
-public class Pair {
+public class Pair implements Comparable<Pair>{
 	private float first;
 	private int second;
-	private int t;
+	private boolean t;
 
-	public Pair(float a,int b,int c){
+	public Pair(float a,int b, boolean c){
 		this.first = a;
 		this.second = b;
 		this.t=c;
@@ -17,7 +18,7 @@ public class Pair {
 	public void setSecond(int i){
 		second =i;
 	}
-	public void sett(int i){
+	public void setThird(boolean i){
 		t =i;
 	}
 
@@ -27,8 +28,12 @@ public class Pair {
 	public int getSecond(){
 		return second;
 	}
-	public int getT(){
+	public boolean getThird(){
 		return t;
+	}
+	@Override
+	public int compareTo(Pair o) {
+		return second - o.getSecond();
 	}
 
 
