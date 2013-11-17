@@ -38,7 +38,7 @@ public class Map {
 		// Copia de valores
 		for (int i = 0; i < heigh; i++)
 			for (int j = 0; j < width; j++)
-				matrix[i][j] = map.getValue(i, j);
+				matrix[i][j] = map.getValue(j, i);
 	}
 
 	/**
@@ -59,8 +59,8 @@ public class Map {
 
 	/**
 	 * Getter del valor de una celda.
-	 * @param x 	Coordenada en el eje X.
-	 * @param y 	Coordenada en el eje Y.
+	 * @param x 	Columna.
+	 * @param y 	Fila.
 	 * @return Valor de la celda en la posición x,y.
 	 */
 	public int getValue(int x, int y) {
@@ -68,18 +68,18 @@ public class Map {
 		if (x < 0 || y < 0 || x >= this.getWidth() || y >= this.getHeigh()) {
 			return OBSTACULO;
 		} else {
-			return matrix[x][y];
+			return matrix[y][x];
 		}
 	}
 
 	/**
 	 * Setter del valor de una celda
-	 * @param x 	Coordenada en el eje X.
-	 * @param y 	Coordenada en el eje Y.
+	 * @param x 	Columna.
+	 * @param y 	Fila.
 	 * @param value Valor nuevo de la celda.
 	 */
 	public void setvalue(int x, int y, int value) {
-		matrix[x][y] = value;
+		matrix[y][x] = value;
 	}
 
 }
