@@ -35,6 +35,7 @@ public abstract class ImgMapConverter {
 					case -1 : value = Map.LIBRE; break;
 					case -16777216 : value = Map.OBSTACULO; break;
 					case -1237980 : value = Map.OBJETIVO; break;	
+					case -800000 : value = Map.VISITADO; break;
 					default : value = -1; break; //Por si acaso.
 				}
 				
