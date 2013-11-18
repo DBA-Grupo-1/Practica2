@@ -37,14 +37,14 @@ public class Visualizer extends JFrame {
 	
 	public Visualizer() {		
 		initialize();
+		setVisible(true);		
 	}
 	private void initialize() {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 275, 275);
-		setVisible(true);		
 		
 		//Meter los nombres de los mapas
-		File f = new File ("src/maps");
+		File f = new File ("src/Maps");
 		String [] mapNames = f.list();
 		mapSelector = new JComboBox(mapNames);
 		mapSelector.addActionListener(new MapSelectorActionListener());
@@ -90,7 +90,7 @@ public class Visualizer extends JFrame {
 	private class MapSelectorActionListener implements ActionListener {
 		public void actionPerformed(ActionEvent arg0) {
 			btnLoadMap.setEnabled(true);
-			ImageIcon mapIcon = new ImageIcon(Visualizer.class.getResource("/maps/" + mapSelector.getSelectedItem().toString()));
+			ImageIcon mapIcon = new ImageIcon(Visualizer.class.getResource("/Maps/" + mapSelector.getSelectedItem().toString()));
 			//Me creo una imagen a partir de la del icono
 			Image img = mapIcon.getImage();
 			//Me creo otra reescalándola.
@@ -114,7 +114,7 @@ public class Visualizer extends JFrame {
 	        // QPID
 	        AgentsConnection.connect("localhost",5672, "test", "guest", "guest", false);
 	        
-	        Map map = ImgMapConverter.imgToMap("src/maps/" + mapSelector.getSelectedItem().toString());
+	        Map map = ImgMapConverter.imgToMap("src/Maps/" + mapSelector.getSelectedItem().toString());
 	        AgentID id_satelite = new AgentID("Satelite");
 	        
 	        try{
