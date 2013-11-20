@@ -49,6 +49,30 @@ public class Satelite extends SingleAgent {
 	}
 
 	/**
+	 * Se calcula el valor del ángulo que forma la baliza y el EjeX horizontal tomando como centro
+	 * a el agente drone.
+	 * @param posX Posición relativa de la baliza con respecto al drone.
+	 * @param posY Posición relativa de la baliza con respecto al drone.
+	 * @return valor del ángulo.
+	 */
+	private double calculateAngle(double posX, double posY){
+		double angle = 0;
+		
+		if(posX>0 && posY>=0)
+			angle = Math.atan(posY / posX);
+		else if(posX>0 && posY<0)
+			angle = Math.atan(posY / posX) + (2.0*Math.PI);
+		else if(posX == 0 && posY>0)
+			angle = Math.PI/2.0;
+		else if(posX == 0 && posY<0)
+			angle = (3*Math.PI) / 2.0;
+		else if(posX<0)
+			angle = Math.atan(posY / posX) + Math.PI;
+		
+		return angle;
+	}
+	
+	/**
 	 * Creamos el objeto JSON status:
 	 * Status: {“connected”:”YES”, “ready”:”YES”, “gps”:{“x”:10,”y”:5},
 	 * “goal”:”No”, “gonio”:{“alpha”:0, “dist”:4.0}, “battery”:100,
@@ -59,19 +83,8 @@ public class Satelite extends SingleAgent {
 	 */
 	private JSONObject createStatus() throws JSONException {
 		int posXDrone = gps.getPositionX(), posYDrone = gps.getPositionY();
-		// double distancia = Math.sqrt(Math.pow(posYDrone, goalPosY) + Math.pow(posYDrone, goalPosY)); Esto estaba mal
-		double distancia = Math.sqrt(Math.pow(goalPosX - posXDrone, 2) + Math.pow(goalPosY - posYDrone, 2));
-		double grado = Math.atan((posYDrone - goalPosY) / (posXDrone - goalPosX)); // distancia = raiz( pow(x0-x1) + pow(y0-y1)) angulo = atan (y0-y1 / x0-x1 )
-
-		/*
-		 * Version 2:
-		 * 
-		 * JsonObject status = Json.createObjectBuilder() 
-		 * .add("connected","Yes") .add("ready", "Yes") .add("gps", Json.createObjectBuilder()
-		 * .add("x", 10) .add("y", 5)) .add("goal", "No") .add("gonio", Json.createObjectBuilder() 
-		 * .add("alpha", grado) .add("dist", distancia)) .add("battery", 100)
-		 *  //.add("radar", casillas) no se puede asociar un Collection al // value .build();
-		 */
+		double distance = Math.sqrt(Math.pow(goalPosX - posXDrone, 2) + Math.pow(goalPosY - posYDrone, 2));
+		double angle = calculateAngle(goalPosX - posXDrone, goalPosY - posYDrone);
 
 		JSONObject status2 = new JSONObject();
 		status2.put("connected", "Yes");
@@ -83,15 +96,14 @@ public class Satelite extends SingleAgent {
 
 		status2.put("gps", aux);
 
-		status2.put("goal", "No");
+		if(mapOriginal.getValue(posXDrone, posYDrone) == Map.OBJETIVO)
+			status2.put("goal", "Si");
+		else
+			status2.put("goal", "No");
 
-		/*
-		 * No se puede vaciar el objeto Aux, tendria que eliminar uno a uno sus
-		 * elementos ... sin comentarios Java
-		 */
 		JSONObject aux2 = new JSONObject();
-		aux2.put("alpha", grado);
-		aux2.put("dist", distancia);
+		aux2.put("alpha", angle);
+		aux2.put("dist", distance);
 		status2.put("gonio", aux2);
 		status2.put("battery", 100);
 		
