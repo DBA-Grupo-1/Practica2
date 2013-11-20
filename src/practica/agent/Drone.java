@@ -19,14 +19,13 @@ import org.json.JSONObject;
 
 public class Drone extends SingleAgent {
 	private final int ESTADOREQUEST = 0, ESTADOINFORM = 1;
-	// NOTA_INTEGRACION (Ismael) exit no tiene sentido fuera del execute
 	private boolean exit;
 	private boolean goal;
 	private int estado;
 	private int posX;
 	private int posY;
 	private float angle;
-	private float distancia;
+	private float distance;
 	private int[] surroundings;
 	private Map droneMap;
 	public static final int NORTE = 3;
@@ -54,18 +53,154 @@ public class Drone extends SingleAgent {
 	 * @return dirección a la que se moverá.
 	 */
 	public int think(){
+		/*La estructura del agente esta formada por task accomplishing behaviours (TAB).
+		 *Para que se vean mejor cuales son las comprobaciones de estos TAB pondre en los comentarios TABi donde i
+		 *es el orden del TAB empezando por el más crítico (i=1) al menos crítico.
+		 */
+		
+		//TAB1 Si hemos llegado al objetivo hemos terminado
 		if(goal)
 			return END;
 		
-		ArrayList<Pair> mispares = new ArrayList<Pair>(), ordenados;
+		ArrayList<Pair> mispares, ordenados;
+		
+		mispares = getAllMovements();		
+		
+		//Ordenamos el array segun la distancia (de menor a mayor)
+		ordenados=new ArrayList<Pair>(mispares);
+		Collections.sort(ordenados, new Comparator<Pair>(){
+			public int compare(Pair p1, Pair p2){
+				if(p1.getFirst()<p2.getFirst()){
+					return -1;
+				}else{
+					if(p1.getFirst()>p2.getFirst()){
+						return 1;
+					}else{
+						return 0;
+					}
+				}
+			}
+		});
+		
+		System.out.println("Dodging: " + dodging);
+		for(int i=0; i<4; i++){
+			System.out.println(ordenados.get(i).getFirst() + "," + ordenados.get(i).getSecond() + "," + ordenados.get(i).getThird());
+		}
+		
+		
+		//TAB2 Si estamos esquivando y podemos hacer el movimiento que pretendíamos cuando entramos en el modo entonces lo hacemos
+		if(dodging && mispares.get(betterMoveBeforeDodging).getThird()){
+			dodging=false;
+			System.out.println("Saliendo dodging: " + betterMoveBeforeDodging);
+			return betterMoveBeforeDodging;
+		}
+		
+		//TAB3 Si estamos esquivando y podemos hacer el segundo movimiento que teniamos cuando entramos en el modo entonces lo hacemos
+		if(dodging && mispares.get(secondMoveBeforeDodging).getThird()){
+			return secondMoveBeforeDodging;
+		}
+		
+		
+		//TAB4 A partir de aqui comienza la ejecucion del algoritmo de escalada
+		
+		//Si podemos hacer el mejor movimiento lo hacemos
+		//Si no podemos y es debido a que hay un obstaculo pasamos al modo esquivar
+		if(ordenados.get(0).getThird()){
+			return ordenados.get(0).getSecond();
+		}else{
+			int [] validMov=getValidMovements();
+			if(validMov[ordenados.get(0).getSecond()]==Map.OBSTACULO && !dodging){
+				dodging=true;
+				betterMoveBeforeDodging=ordenados.get(0).getSecond();
+				secondMoveBeforeDodging=ordenados.get(1).getSecond();
+			}
+		}
+		
+		int second=-1, third=-1;
+		//Para hallar los dos mejores movimientos posibles (si existen) recorremos el array de peor a mejor
+		//Si un movimiento es posible entonces hemos encontrado uno mejor que los que encontrasemos antes
+		//Desplazamos los valores encontrados antes (siempre se queda en second el mejor posible y en third el segundo mejor posible)
+		for(int i=3; i>=0; i--){
+			if(ordenados.get(i).getThird()){
+				third = second;
+				second = ordenados.get(i).getSecond();
+			}
+		}
+		
+		//Si third no existe nuestra unica posibilidad es second
+		if(third==-1)
+			return second;
+		
+		//Si second no existe (y por lo tanto third tampoco) entonces no tenemos movimientos
+		if(second==-1)
+			return END;
+		
+		
+		//Ahora comprobamos si existe empate entre ambos (distancias parecidas).
+		//Si no hay empate nos quedamos con el segundo
+		//El valor de margen de error debe ser ajustado "a mano" en caso de usar distancias.
+		//En caso de usar el angulo se puede poneer un valor mejor pero los calculos son mas coñazo
+		float error=1.0f;
+		int better=ordenados.get(0).getSecond(), decision;
+		float distSecond=mispares.get(second).getFirst(), distThird=mispares.get(third).getFirst();
+		if(Math.abs(distSecond-distThird)<error && dodging && third==(second+2)%4){
+			int cornerSecond = getCorner(better, second), cornerThird = getCorner(better, third);
+			
+			//El empate se decide por los obstaculos
+			//Si la esquina del tercero esta libre pero la del segundo no, nos quedamos con esa
+			//En cualquier otro caso nos quedamos con el segundo mejor movimiento
+			if(cornerThird==Map.LIBRE && cornerSecond==Map.OBSTACULO){
+				decision = third;
+			}else{
+				decision = second;
+			}
+				
+		}else{
+			decision = second;
+		}
+		
+		return decision;
+	}
+
+	/**
+	 * Calcula la esquina que rodean dos posiciones.
+	 * @param mov1 Movimiento que nos dejaria en la primera posición 
+	 * @param mov2 Movimiento que nos dejaria en la segunda posición
+	 * @return Valor del surrounding para esa esquina
+	 */
+	private int getCorner(int mov1, int mov2) {
+		//por si las moscas
+		if(mov1 == (mov2 + 2) % 4)
+			return surroundings[4];
+
+		switch(mov1){
+			case ESTE:
+				return ((mov2==SUR) ? surroundings[8] : surroundings[2]);
+			case SUR:
+				return ((mov2==OESTE) ? surroundings[6] : surroundings[8]);
+			case OESTE:
+				return ((mov2==NORTE) ? surroundings[0] : surroundings[6]);
+			case NORTE:
+				return ((mov2==ESTE) ? surroundings[2] : surroundings[0]);
+			default:
+				return surroundings[4];
+		}
+	}
+
+	/**
+	 * Calcula las distancias y las condiciones de los cuatro posibles movimientos.
+	 * @return Array con los movimientos
+	 */
+	private ArrayList<Pair> getAllMovements(){
+		ArrayList<Pair> mispares=new ArrayList<Pair>();
 		int[] validSqr = getValidSquares();
 		boolean condition;
 
 		double posiOX=0,posiOY=0;
 		float calculoDist=0;
 
-		posiOX= (posX + (Math.cos(angle) * distancia));
-		posiOY= (posY + (Math.sin(angle)*distancia));
+		posiOX= (posX + (Math.cos(angle) * distance));
+		posiOY= (posY + (Math.sin(angle)*distance));
 
 		//Creamos el array con todos los movimientos, incluyendo la distancia al objetivo, el movimiento en si, y si es valido o no
 		calculoDist= (float) Math.sqrt(Math.pow((posiOX-(posX+1)),2)+Math.pow((posiOY-posY), 2));
@@ -92,228 +227,9 @@ public class Drone extends SingleAgent {
 					|| (validSqr[5]!=Map.LIBRE && validSqr[3]!=Map.LIBRE && validSqr[7]!=Map.LIBRE));
 		mispares.add(new Pair(calculoDist,NORTE,condition));
 		
-		//ordenamos el array segun la distancia (de menor a mayor)
-		ordenados=new ArrayList<Pair>(mispares);
-		Collections.sort(ordenados, new Comparator<Pair>(){
-			public int compare(Pair p1, Pair p2){
-				if(p1.getFirst()<p2.getFirst()){
-					return -1;
-				}else{
-					if(p1.getFirst()>p2.getFirst()){
-						return 1;
-					}else{
-						return 0;
-					}
-				}
-			}
-		});
-		
-		System.out.println("Dodging: " + dodging);
-		for(int i=0; i<4; i++){
-			System.out.println(ordenados.get(i).getFirst() + "," + ordenados.get(i).getSecond() + "," + ordenados.get(i).getThird());
-		}
-		
-		if(dodging && mispares.get(betterMoveBeforeDodging).getThird()){
-			dodging=false;
-			System.out.println("Saliendo dodging: " + betterMoveBeforeDodging);
-			return betterMoveBeforeDodging;
-		}
-		
-		//Si el mejor movimiento es posible tenemos un ganador
-		if(ordenados.get(0).getThird()){
-			//S estamos esquivando y no es el que intentabamos hacer cuando entramos en modo "Esquivar" hacemos el segundo
-			if(dodging && ordenados.get(0).getSecond()!=betterMoveBeforeDodging && mispares.get(secondMoveBeforeDodging).getThird()){
-				System.out.println("SI O SI");
-				return secondMoveBeforeDodging;
-			}
-			return ordenados.get(0).getSecond();
-		}else{
-			//Si estamos esquivando y podemos hacer el segundo mejor movimiento de esquivar lo hacemos SI O SI
-			if(dodging && mispares.get(secondMoveBeforeDodging).getThird()){
-				System.out.println("SI O SI");
-				return secondMoveBeforeDodging;
-			}
-		}
-		
-		//Si no es asi y no hemos avanzado debido a un obstaculo entramos en el modo "Esquivar"
-		int[] validMov = getValidMovements();
-		if(validMov[ordenados.get(0).getSecond()]==Map.OBSTACULO && !dodging){
-			dodging=true;
-			betterMoveBeforeDodging=ordenados.get(0).getSecond();
-			secondMoveBeforeDodging=ordenados.get(1).getSecond();
-			System.out.println("SecondMOve Dodging: "+ secondMoveBeforeDodging);
-			System.out.println("Entrando dodging: " + betterMoveBeforeDodging);
-		}
-		
-		//Obtenemos los otros movimientos posibles. Pueden ser ninguno, uno o dos
-		int second=-1, third=-1;
-		float distSecond=0, distThird=0;
-		
-		//Obtenemos el segundo
-		for(int i=1; i<4; i++){
-			if(ordenados.get(i).getThird()){
-				second=ordenados.get(i).getSecond();
-				distSecond=ordenados.get(i).getFirst();
-				break; //No le enseñeis esta linea a Cubero :P
-			}
-		}
-
-		System.out.println("Movs: " + second);
-		//Si no existe es que no quedan movimientos posibles
-		if(second==-1)
-			return END;
-		
-		//Obtenemos el tercero
-		for(int i=1; i<4; i++){
-			if(ordenados.get(i).getThird() && ordenados.get(i).getSecond()!=second){
-				third=ordenados.get(i).getSecond();
-				distThird=ordenados.get(i).getFirst();
-				break;
-			}
-		}
-		System.out.println("Movs: " + third);
-		//Si no existe es que solo podemos realizar el segundo
-		if(third==-1){
-			//if(enteringDodging)
-				//secondMoveBeforeDodging=second;
-			return second;
-		}
-		
-		
-		//Ahora comprobamos si existe empate entre ambos (distancias parecidas) pero solo si estamos en modo "Esquivar".
-		//El valor de margen de error debe ser ajustado "a mano" en caso de usar distancias.
-		//En caso de usar el angulo se puede poneer un valor mejor pero los calculos son mas coñazo
-		float error=1.0f;
-		int better = ordenados.get(0).getSecond(), decision;
-		if(Math.abs(distSecond-distThird)<error){
-			//En caso de empate y estar en modo esquivar nos quedaremos con el que se "parezca" mas al movimiento que intentabamos hacer al entrar en "Esquivar"
-			
-			//Si el segundo es el movimiento opuesto al betterMove... nos quedamos con el tercero 
-			if((betterMoveBeforeDodging+2)%4==second){
-				System.out.println("Empate dodging (second caca): " + betterMoveBeforeDodging);
-				decision = third;
-			}
-			//Viceversa 
-			if((betterMoveBeforeDodging+2)%4==third){
-				System.out.println("Empate dodging (third caca): " + betterMoveBeforeDodging);
-				decision = second;
-			}
-			
-			//Si no el empate se decide por los obstaculos
-			int cornerSecond = getCorner(better, second), cornerThird = getCorner(better, third);
-			
-			//Si la esquina del tercero esta libre pero la del segundo no, nos quedamos con esa
-			if(cornerThird==Map.LIBRE && cornerSecond==Map.OBSTACULO){
-				decision = third;
-			}else{
-				//En cualquier otro caso nos quedamos con el segundo mejor movimiento
-				decision = second;
-			}
-				
-		}else{
-			//Si no hay empate nos quedamos con el segundo
-			decision = second;
-		}
-		
-		return decision;
-		/*int zonaAngle = 0;
-		double angleDeg = Math.toDegrees(angle);
-		
-		System.out.println("Objetivo: " + angleDeg + ", " + distancia);
-		
-		if(angleDeg <= 45 || angleDeg > 315)
-			zonaAngle=0;
-		if(angleDeg > 45 && angleDeg <= 135)
-			zonaAngle=1;
-		if(angleDeg > 135 && angleDeg <= 225)
-			zonaAngle=2;
-		if(angleDeg > 225 && angleDeg <= 315)
-			zonaAngle=3;
-		
-		int[] validSquares = getValidSquares();
-		
-		//TODO Fijate que ahora el tercer componente de Pair no se usa
-		//if(droneMap.getValue(posX+1, posY)!=Map.VISITADO && surroundings[5]!=Map.OBSTACULO){
-		if(validSquares[5]==Map.LIBRE
-				&& (!(validSquares[2]==Map.VISITADO || validSquares[8]==Map.VISITADO)
-					|| (validSquares[1]!=Map.LIBRE && validSquares[3]!=Map.LIBRE && validSquares[7]!=Map.LIBRE))){
-			if(angleDeg < 180){
-				calculoDist = (float) angleDeg; 
-			}else{
-				calculoDist = (float) (360 - angleDeg);
-			}
-			calculoDist= (float) Math.sqrt(Math.pow((posiOX-(posX+1)),2)+Math.pow((posiOY-posY), 2));
-			mispares.add(new Pair(calculoDist,ESTE,surroundings[5]));
-		}
-		//if(droneMap.getValue(posX, posY+1)!=Map.VISITADO && surroundings[7]!=Map.OBSTACULO){
-		if(validSquares[7]==Map.LIBRE
-				&& (!(validSquares[6]==Map.VISITADO || validSquares[8]==Map.VISITADO)
-					|| (validSquares[1]!=Map.LIBRE && validSquares[3]!=Map.LIBRE && validSquares[5]!=Map.LIBRE))){
-			if(angleDeg > 270){
-				calculoDist = (float) (360 - angleDeg + 90); 
-			}else{
-				calculoDist = (float) Math.abs(angleDeg - 90);
-			}
-			calculoDist=(float) Math.sqrt(Math.pow((posiOX-posX),2)+Math.pow((posiOY-(posY+1)), 2));
-			mispares.add(new Pair(calculoDist,SUR,surroundings[7]));
-		}
-		
-		//if(droneMap.getValue(posX, posY-1)!=Map.VISITADO && surroundings[1]!=Map.OBSTACULO){
-		if(validSquares[1]==Map.LIBRE
-				&& (!(validSquares[0]==Map.VISITADO || validSquares[2]==Map.VISITADO)
-					|| (validSquares[3]!=Map.LIBRE && validSquares[5]!=Map.LIBRE && validSquares[7]!=Map.LIBRE))){
-			if(angleDeg < 90){
-				calculoDist = (float) angleDeg + 90; 
-			}else{
-				calculoDist = (float) Math.abs(270 - angleDeg);
-			}
-			calculoDist=(float) Math.sqrt(Math.pow((posiOX-posX),2)+Math.pow((posiOY-(posY-1)), 2));
-			mispares.add(new Pair(calculoDist,NORTE,surroundings[1]));
-		}
-		
-		//if(droneMap.getValue(posX-1, posY)!=Map.VISITADO && surroundings[3]!=Map.OBSTACULO){
-		if(validSquares[3]==Map.LIBRE
-				&& (!(validSquares[0]==Map.VISITADO || validSquares[6]==Map.VISITADO)
-				|| (validSquares[1]!=Map.LIBRE && validSquares[5]!=Map.LIBRE && validSquares[7]!=Map.LIBRE))){
-			calculoDist = (float) Math.abs(180 - angleDeg);
-			calculoDist=(float) Math.sqrt(Math.pow((posiOX-(posX-1)),2)+Math.pow((posiOY-posY), 2));
-			mispares.add(new Pair(calculoDist,OESTE,surroundings[3]));
-		}
-		
-
-		//Aquí se toma una decisión.
-		int dec=decision(mispares);
-		return dec;*/
+		return mispares;
 	}
-
-	/**
-	 * Calcula la esuina que rodean pos1 y pos2 y devuelve el valor del surrounding
-	 * @param pos1 Primera posicion
-	 * @param pos2 Segunda posicion
-	 * @return Valor del surrounding para esa esquina
-	 */
-	private int getCorner(int pos1, int pos2) {
-		/*
-		 * La suma de dos posiciones a los lados de una esquina de la matriz es unica y sigue la siguiente regla
-		 * 1+3=4  ==> 0
-		 * 1+5=6  ==> 2
-		 * 3+7=10  ==> 6
-		 * 5+7=12  ==> 8
-		 */
-		switch(pos1+pos2){
-			case 4:
-				return surroundings[0];
-			case 6:
-				return surroundings[2];
-			case 10:
-				return surroundings[6];
-			case 12:
-				return surroundings[8];
-				
-			default: return surroundings[4];
-		}
-	}
-
+	
 	/**
 	 * decision funcion para tomar la decisión de movimiento
 	 * se busca la distancia mas pequeña al objetivo en caso de empate se coge siempre la primera.
@@ -398,7 +314,6 @@ public class Drone extends SingleAgent {
 	 * Método para obtener un array con los valores combinados de surroundings y el mapa
 	 * @return Un array con lo que hay en las posiciones de alrededor. Los valores posibles son LIBRE, OBSTACULO y VISITADO
 	 */
-	// POST DIAGRAMA DE CLASES
 	private int[] getValidSquares() {
 		int movimientosLibres[] = new int[9];
 
@@ -483,7 +398,7 @@ public class Drone extends SingleAgent {
 			msg = receiveACLMessage();
 
 		} catch (InterruptedException ex) {
-			System.err.println("Agente " + this.getName() + " Error de comuncicación");
+			System.err.println("Agente " + this.getName() + " Error de comunicación");
 			Logger.getLogger(Drone.class.getName()).log(Level.SEVERE, null, ex);
 		}
 		if (msg.getPerformative().equals("INFORM")) {
