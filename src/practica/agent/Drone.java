@@ -53,6 +53,16 @@ public class Drone extends SingleAgent {
 		counterStop = 0;
 	}
 	
+	/**
+	 * Se comprueba si el movimiento realizado por el Drone a mejorado la distancia absoluta con 
+	 * respecto a la baliza:
+	 *  - Si la mejora se almacena esa nueva distancia minima alcanzada por el drone.
+	 *  - En caso contraria se comprueba que no se halla alcanzado el tope de movimientos permitidos
+	 *  sin mejorar la distancia. Si se supera el tope de movimientos se finaliza la ejecución sin
+	 *  haber encontrado solución al problema.
+	 * @param distance Distancia absoluta a la que se encuentra el drone con respecto a la baliza.
+	 * @return Se devuelve True si se debe finalizar y False en caso contrario.
+	 */
 	private boolean stop(float distance){
 		
 		if(distance < distanceMin){
