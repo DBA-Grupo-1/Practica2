@@ -19,6 +19,7 @@ import org.json.JSONObject;
 
 public class Drone extends SingleAgent {
 	private final int ESTADOREQUEST = 0, ESTADOINFORM = 1;
+	private final int LIMIT_MOVEMENTS = 200;
 	private boolean exit;
 	private boolean goal;
 	private int estado;
@@ -28,12 +29,14 @@ public class Drone extends SingleAgent {
 	private float distance;
 	private int[] surroundings;
 	private Map droneMap;
+	private float distanceMin;
+	private int counterStop;
 	public static final int NORTE = 3;
 	public static final int OESTE = 2;
 	public static final int SUR = 1;
 	public static final int ESTE = 0;
 	public static final int END = -1;
-
+	
 	private AgentID sateliteID;
 	
 	private boolean dodging = false;
@@ -46,8 +49,24 @@ public class Drone extends SingleAgent {
 		this.sateliteID = sateliteID;
 		posX = 0;
 		posY = 0;
+		distanceMin = 999999;
+		counterStop = 0;
 	}
 	
+	private boolean stop(float distance){
+		
+		if(distance < distanceMin){
+			distanceMin = distance;
+			counterStop = 0;
+			return false;
+		}else
+			counterStop++;
+		
+		if(counterStop >= LIMIT_MOVEMENTS)
+			return true;
+		else
+			return false;
+	}
 	/**
 	 * Método donde el dron decide a qué dirección mover.
 	 * @return dirección a la que se moverá.
@@ -57,6 +76,11 @@ public class Drone extends SingleAgent {
 		 *Para que se vean mejor cuales son las comprobaciones de estos TAB pondre en los comentarios TABi donde i
 		 *es el orden del TAB empezando por el más crítico (i=1) al menos crítico.
 		 */
+		
+		//Comprobacion de que no hemos alcanzado el limite de movimientos sin mejorar la distancia
+		
+		if(stop(distance))
+			return END;
 		
 		//TAB1 Si hemos llegado al objetivo hemos terminado
 		if(goal)
