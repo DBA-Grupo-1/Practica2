@@ -76,6 +76,7 @@ public class Drone extends SingleAgent {
 			return true;
 		else
 			return false;
+
 	}
 	/**
 	 * Método donde el dron decide a qué dirección mover.
