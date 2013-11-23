@@ -10,102 +10,116 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
-
-import org.apache.log4j.Logger;
-import org.apache.log4j.xml.DOMConfigurator;
 
 import practica.Launcher;
-import practica.agent.Drone;
 import practica.agent.Satelite;
-import es.upv.dsic.gti_ia.core.AgentID;
-import es.upv.dsic.gti_ia.core.AgentsConnection;
 
 public class Visualizer extends JFrame {
-	private JPanel droneMap;
-	private JPanel satelliteMap;
-	private JComboBox mapSelector;
+	private JComboBox <String> mapSelector;
 	private JButton btnLoadMap;
 	private JButton btnThinkOnce;
 	private JButton btnFindTarget;
 	private JLabel miniMap;
-	private JLabel droneMapIcon;
 	private JLabel satelliteMapIcon;
+	private Map mapToLoad;
+	private Launcher launcher;
 	
-	private Drone drone;
 	private Satelite satelite;
 	
-	public Visualizer() {		
-		initialize();
-		setVisible(true);		
+	/**
+	 * Setter de satelite.
+	 * @param sat satélite para poder comunicarse con él.
+	 */
+	public void setSatelite(Satelite sat){
+		satelite = sat;
 	}
+	
+	/**
+	 * Getter del mapa.
+	 * @return el mapa que ha cargado.
+	 */
+	public Map getMapToLoad(){
+		return mapToLoad;
+	}
+	
+	/**
+	 * Constructor. Inicializa componentes y se hace visible.
+	 */
+	public Visualizer(Launcher l) {		
+		initialize();
+		launcher = l;
+		setVisible(true);			
+	}
+	
+	/**
+	 * Crea todos los componentes, los coloca, y asigna los eventos.
+	 */
 	private void initialize() {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setBounds(100, 100, 275, 275);
+		setBounds(100, 100, 250, 300);
 		
 		//Meter los nombres de los mapas
 		File f = new File ("src/maps");
 		String [] mapNames = f.list();
-		mapSelector = new JComboBox(mapNames);
-		mapSelector.addActionListener(new MapSelectorActionListener());
-		mapSelector.setBounds(10, 1, 112, 20);
 		getContentPane().setLayout(null);
+		mapSelector = new JComboBox <String> (mapNames);
+		mapSelector.addActionListener(new MapSelectorActionListener());
+		
+		satelliteMapIcon = new JLabel("");
+		satelliteMapIcon.setBounds(10, 10, 500, 500);
+		getContentPane().add(satelliteMapIcon);
+		mapSelector.setBounds(10, 11, 112, 20);
+		getContentPane().add(mapSelector);
 		
 		btnLoadMap = new JButton("Load map");
 		btnLoadMap.addActionListener(new BtnLoadMapActionListener());
 		btnLoadMap.setEnabled(false);
-		btnLoadMap.setBounds(128, 0, 96, 23);
+		btnLoadMap.setBounds(129, 10, 96, 23);
 		getContentPane().add(btnLoadMap);
 		
-		droneMap = new JPanel();
-		droneMap.setBounds(10, 29, 350, 350);
-		getContentPane().add(droneMap);
-		droneMap.setLayout(null);
-		
 		miniMap = new JLabel("");
-		miniMap.setBounds(0, 0, 200, 200);
-		droneMap.add(miniMap);
-		
-		droneMapIcon = new JLabel("");
-		droneMapIcon.setBounds(0, 0, 350, 350);
-		droneMap.add(droneMapIcon);
-		getContentPane().add(mapSelector);
-		satelliteMap = new JPanel();
-		satelliteMap.setBounds(370, 29, 350, 350);
-		getContentPane().add(satelliteMap);
-		satelliteMap.setLayout(null);
-		
-		satelliteMapIcon = new JLabel("");
-		satelliteMapIcon.setBounds(0, 0, 350, 350);
-		satelliteMap.add(satelliteMapIcon);
+		miniMap.setBounds(10, 44, 210, 210);
+		getContentPane().add(miniMap);
 		
 		btnThinkOnce = new JButton("Think once");
 		btnThinkOnce.addActionListener(new BtnThinkOnceActionListener());
-		btnThinkOnce.setBounds(10, 390, 190, 23);
+		btnThinkOnce.setBounds(10, 528, 190, 23);
 		getContentPane().add(btnThinkOnce);
 		
 		btnFindTarget = new JButton("Find target");
 		btnFindTarget.addActionListener(new BtnFindTargetActionListener());
-		btnFindTarget.setBounds(10, 424, 190, 23);
+		btnFindTarget.setBounds(320, 528, 190, 23);
 		getContentPane().add(btnFindTarget);
 	}
 	
+	/**
+	 * Activa el botón "Think Once"
+	 */
 	public void enableThinkOnce(){
 		btnThinkOnce.setEnabled(true);
-		//updateMaps();
 	}
 	
+	/**
+	 * Mira si el botón "Think Once" está habilitado.
+	 * @return true si está deshabilitado (y por lo tanto se pulsó). False si no.
+	 */
 	public boolean isBtnThinkOnceEnabled(){
 		return btnThinkOnce.isEnabled();
 	}
 	
+	/**
+	 * Mira si el botón "Find target" está habilitado.
+	 * @return true si está deshabilitado (y por lo tanto se pulsó). False si no.
+	 */
 	public boolean isBtnFindTargetEnabled(){
 		return btnFindTarget.isEnabled();
 	}
 	
-	public void updateMaps(){
-        droneMapIcon.setIcon(new ImageIcon(ImgMapConverter.mapToScalatedImg(drone.getDroneMap(), 350, 350)));
-        satelliteMapIcon.setIcon(new ImageIcon(ImgMapConverter.mapToScalatedImg(satelite.getMapSeguimiento(), 350, 350)));
+	/**
+	 * Actualiza el mapa.
+	 */
+	public void updateMap(){
+        satelliteMapIcon.setIcon(new ImageIcon(ImgMapConverter.mapToScalatedImg(satelite.getMapSeguimiento(), 500, 500)));
 	}
 	
 	private class MapSelectorActionListener implements ActionListener {
@@ -115,7 +129,7 @@ public class Visualizer extends JFrame {
 			//Me creo una imagen a partir de la del icono
 			Image img = mapIcon.getImage();
 			//Me creo otra reescalándola.
-			Image scalatedImg = img.getScaledInstance(200, 200, Image.SCALE_SMOOTH);
+			Image scalatedImg = img.getScaledInstance(210, 210, Image.SCALE_SMOOTH);
 			//Se la asigno al icono
 			mapIcon.setImage(scalatedImg);
 			//Asigno el icon al label
@@ -124,31 +138,13 @@ public class Visualizer extends JFrame {
 	}
 	private class BtnLoadMapActionListener implements ActionListener {
 		public void actionPerformed(ActionEvent arg0) {
-			setBounds(100, 100, 800, 600);
+			setBounds(100, 100, 550, 600);
 			mapSelector.setVisible(false);
 			miniMap.setVisible(false);
 			btnLoadMap.setVisible(false);
-			
-			DOMConfigurator.configure("src/Configuration/loggin.xml"); // ERR
-	        Logger logger = Logger.getLogger(Launcher.class);
 	        
-	        // QPID
-	        AgentsConnection.connect("localhost",5672, "test", "guest", "guest", false);
-	        
-	        Map map = ImgMapConverter.imgToMap("src/maps/" + mapSelector.getSelectedItem().toString());
-	        AgentID id_satelite = new AgentID("Satelite");
-	        
-	        try{
-	        	satelite = new Satelite(id_satelite, map, Visualizer.this);
-	        	drone = new Drone(new AgentID("Drone"), map.getWidth(), map.getHeigh(), id_satelite);
-	            satelite.start();
-	            drone.start();
-	            updateMaps();
-	        }catch(Exception e){
-	        	System.err.println("Main: Error al crear los agentes");
-	            System.exit(-1);
-	        }
-			
+	        mapToLoad = ImgMapConverter.imgToMap("src/maps/" + mapSelector.getSelectedItem().toString());
+	        launcher.launch();			
 		}
 	}
 	private class BtnFindTargetActionListener implements ActionListener {
