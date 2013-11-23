@@ -80,10 +80,12 @@ public class Visualizer extends JFrame {
 		satelliteMap.add(satelliteMapIcon);
 		
 		btnThinkOnce = new JButton("Think once");
+		btnThinkOnce.addActionListener(new BtnThinkOnceActionListener());
 		btnThinkOnce.setBounds(10, 390, 190, 23);
 		getContentPane().add(btnThinkOnce);
 		
 		btnFindTarget = new JButton("Find target");
+		btnFindTarget.addActionListener(new BtnFindTargetActionListener());
 		btnFindTarget.setBounds(10, 424, 190, 23);
 		getContentPane().add(btnFindTarget);
 	}
@@ -129,6 +131,14 @@ public class Visualizer extends JFrame {
 	            System.exit(-1);
 	        }
 			
+		}
+	}
+	private class BtnFindTargetActionListener implements ActionListener {
+		public void actionPerformed(ActionEvent arg0) {
+		}
+	}
+	private class BtnThinkOnceActionListener implements ActionListener {
+		public void actionPerformed(ActionEvent e) {
 		}
 	}
 }
