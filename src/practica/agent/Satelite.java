@@ -19,10 +19,10 @@ public class Satelite extends SingleAgent {
 	private Map mapOriginal, mapSeguimiento;
 	private GPSLocation gps;
 	private double goalPosX, goalPosY;
+	
+	private Integer lock;
 
-	// (Andres) Faltan los atributos goalPosX y goalPosY (ambos private float)
-
-	public Satelite(AgentID sat, Map mapa) throws Exception {
+	public Satelite(AgentID sat, Map mapa, int modo) throws Exception{
 		super(sat);
 		mapOriginal = new Map(mapa);
 		mapSeguimiento = new Map(mapa);
@@ -46,8 +46,33 @@ public class Satelite extends SingleAgent {
 		goalPosY=suma_y/(float)cont;
 
 		mapSeguimiento.setvalue(0, 0, Map.VISITADO); // añadido esto que faltaba
+		
+		lock=new Integer(modo);
 	}
 
+	
+	public Satelite(AgentID sat, Map mapa) throws Exception {
+		this(sat, mapa, 1);
+	}
+
+	public void waitForPass(){
+		synchronized(lock){
+			if(lock.intValue()==0){
+				try {
+					lock.wait();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	public void allowPass(){
+		synchronized(lock){
+			lock.notify();
+		}
+	}
+	
 	/**
 	 * Se calcula el valor del ángulo que forma la baliza y el EjeX horizontal tomando como centro
 	 * a el agente drone.

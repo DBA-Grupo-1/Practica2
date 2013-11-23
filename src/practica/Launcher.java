@@ -19,7 +19,7 @@ public class Launcher {
         AgentsConnection.connect("localhost",5672, "test", "guest", "guest", false);
         System.out.println("Main: Creando agentes");
         
-        Map map = ImgMapConverter.imgToMap("src/maps/Challenge2.png");
+        Map map = ImgMapConverter.imgToMap("src/maps/map3.png");
         AgentID id_satelite = new AgentID("Satelite");
         
         try{
