@@ -447,12 +447,26 @@ public class Drone extends SingleAgent {
 			}
 			try {
 				JSONObject aux = new JSONObject();
+				String campo=null;
 				aux = contenido.getJSONObject("gps");
+				//actualizamos el mapa del drone antes de recoger las nuevas posiciones X e Y.
+				droneMap.setvalue(posX,posY,Map.VISITADO);
 				posX = aux.getInt("x");
 				posY = aux.getInt("y");
 
 				aux = contenido.getJSONObject("gonio");
 				angle = (float) aux.getDouble("alpha");
+				//Recoger distancia.
+				distance= (float) aux.getDouble("dist");				
+				
+				//Recogida y comprobación del campo goal.
+				campo= aux.getString("goal");
+				if(campo.equals("Si")){
+					goal=true;
+				}
+				else if(campo.equals("No")){
+					goal=false;
+				}
 				// Corregido, alpha estaba en aux y no en contenido
 
 				// surroundings=(int[]) contenido.get("radar"); // No se puede hacer así
@@ -516,7 +530,12 @@ public class Drone extends SingleAgent {
 				break;
 			case ESTADOINFORM:
 				decision = think();
-				if (decision < 0 || decision > 4) {
+
+				//En caso de llegar a la meta.
+				if(decision==END){
+					exit=true;
+				}
+				else if (decision < -1 || decision > 3) {
 					ACLMessage fallo = new ACLMessage(ACLMessage.FAILURE);
 					fallo.setSender(this.getAid());
 					fallo.addReceiver(sateliteID);
