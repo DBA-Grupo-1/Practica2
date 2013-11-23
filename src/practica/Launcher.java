@@ -6,13 +6,14 @@ import org.apache.log4j.xml.DOMConfigurator;
 import practica.agent.*;
 import practica.util.ImgMapConverter;
 import practica.util.Map;
+import practica.util.Visualizer;
 import es.upv.dsic.gti_ia.core.AgentID;
 import es.upv.dsic.gti_ia.core.AgentsConnection;
 
 public class Launcher {
 
 	public static void main(String[] args) {
-		DOMConfigurator.configure("src/Configuration/loggin.xml"); // ERR
+		/*DOMConfigurator.configure("src/Configuration/loggin.xml"); // ERR
         Logger logger = Logger.getLogger(Launcher.class);
         
         // QPID
@@ -32,7 +33,9 @@ public class Launcher {
         	System.err.println("Main: Error al crear los agentes");
             System.exit(-1);
         }
-
+	*/
+		Visualizer v = new Visualizer();
 	}
+		
 
 }

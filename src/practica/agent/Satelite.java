@@ -12,6 +12,7 @@ import org.json.JSONObject;
 import practica.util.GPSLocation;
 import practica.util.ImgMapConverter;
 import practica.util.Map;
+import practica.util.Visualizer;
 
 public class Satelite extends SingleAgent {
 	private final int SolicitudStatus = 0, EsperarInform = 1; // Estos nombres no me gustan
@@ -20,8 +21,15 @@ public class Satelite extends SingleAgent {
 	private GPSLocation gps;
 	private double goalPosX, goalPosY;
 	
-	private Integer lock;
-
+	//De momento no tengo por qué usarlo.
+	/*private Integer lock;
+	
+	public static final int HAS_VISUALIZER = 1;
+	public static final int NO_VISUALIZER = 0;
+	 */
+	private Visualizer visualizer;
+	
+	
 	public Satelite(AgentID sat, Map mapa, int modo) throws Exception{
 		super(sat);
 		mapOriginal = new Map(mapa);
@@ -47,15 +55,43 @@ public class Satelite extends SingleAgent {
 
 		mapSeguimiento.setvalue(0, 0, Map.VISITADO); // añadido esto que faltaba
 		
-		lock=new Integer(modo);
+		//lock=new Integer(modo);
 	}
+	
+	public Satelite(AgentID sat, Map mapa, Visualizer v) throws Exception{
+		super(sat);
+		mapOriginal = new Map(mapa);
+		mapSeguimiento = new Map(mapa);
+		state = SolicitudStatus;
+		gps = new GPSLocation();
+		
+		int f=mapOriginal.getHeigh();
+		int c=mapOriginal.getWidth();
+		int suma_x=0, suma_y=0, cont=0;
+		
+		for(int i=0; i<f; i++){
+		    for(int j=0; j<c; j++){
+		        if(mapOriginal.getValue(j,i)==Map.OBJETIVO){
+		            suma_x+=j;
+		            suma_y+=i;
+		            cont++;
+		        }
+		    }
+		}
+		goalPosX=suma_x/(float)cont;
+		goalPosY=suma_y/(float)cont;
 
+		mapSeguimiento.setvalue(0, 0, Map.VISITADO); // añadido esto que faltaba
+		
+		visualizer = v;
+	}
 	
 	public Satelite(AgentID sat, Map mapa) throws Exception {
 		this(sat, mapa, 1);
 	}
 
-	public void waitForPass(){
+	//De momento no tengo por qué usarlo.
+	/*public void waitForPass(){
 		synchronized(lock){
 			if(lock.intValue()==0){
 				try {
@@ -71,7 +107,7 @@ public class Satelite extends SingleAgent {
 		synchronized(lock){
 			lock.notify();
 		}
-	}
+	}*/
 	
 	/**
 	 * Se calcula el valor del ángulo que forma la baliza y el EjeX horizontal tomando como centro
@@ -269,6 +305,13 @@ public class Satelite extends SingleAgent {
 		boolean exit = false;
 		System.out.println("Agente " + this.getName() + " en ejecución");
 		while (!exit) {
+			//Si hay visualizador, manda actualizar sus mapas.
+			if (visualizer != null){
+				visualizer.updateMaps();
+				//Si no está pulsado "Find Target" y está pulsado "Think Once" hay que habilitar "Think Once". Si "Find Target" está pulsado, no se debe de hacer nada.
+				if (visualizer.isBtnFindTargetEnabled() && !visualizer.isBtnThinkOnceEnabled())
+					visualizer.enableThinkOnce();
+			}
 			switch (state) {
 
 			case SolicitudStatus:
@@ -319,6 +362,11 @@ public class Satelite extends SingleAgent {
 					exit = true;
 				}
 				if (message.getPerformative().equals("REQUEST")) {
+					
+					if (visualizer.isBtnThinkOnceEnabled())
+						while (visualizer.isBtnThinkOnceEnabled()){
+							System.out.print("");
+						}
 
 					JSONObject aux = null;
 					try {

@@ -89,6 +89,25 @@ public class Visualizer extends JFrame {
 		btnFindTarget.setBounds(10, 424, 190, 23);
 		getContentPane().add(btnFindTarget);
 	}
+	
+	public void enableThinkOnce(){
+		btnThinkOnce.setEnabled(true);
+		//updateMaps();
+	}
+	
+	public boolean isBtnThinkOnceEnabled(){
+		return btnThinkOnce.isEnabled();
+	}
+	
+	public boolean isBtnFindTargetEnabled(){
+		return btnFindTarget.isEnabled();
+	}
+	
+	public void updateMaps(){
+        droneMapIcon.setIcon(new ImageIcon(ImgMapConverter.mapToScalatedImg(drone.getDroneMap(), 350, 350)));
+        satelliteMapIcon.setIcon(new ImageIcon(ImgMapConverter.mapToScalatedImg(satelite.getMapSeguimiento(), 350, 350)));
+	}
+	
 	private class MapSelectorActionListener implements ActionListener {
 		public void actionPerformed(ActionEvent arg0) {
 			btnLoadMap.setEnabled(true);
@@ -120,12 +139,11 @@ public class Visualizer extends JFrame {
 	        AgentID id_satelite = new AgentID("Satelite");
 	        
 	        try{
-	        	satelite = new Satelite(id_satelite, map);
+	        	satelite = new Satelite(id_satelite, map, Visualizer.this);
 	        	drone = new Drone(new AgentID("Drone"), map.getWidth(), map.getHeigh(), id_satelite);
 	            satelite.start();
 	            drone.start();
-	            droneMapIcon.setIcon(new ImageIcon(ImgMapConverter.mapToScalatedImg(drone.getDroneMap(), 350, 350)));
-	            satelliteMapIcon.setIcon(new ImageIcon(ImgMapConverter.mapToScalatedImg(satelite.getMapOriginal(), 350, 350)));
+	            updateMaps();
 	        }catch(Exception e){
 	        	System.err.println("Main: Error al crear los agentes");
 	            System.exit(-1);
@@ -135,10 +153,14 @@ public class Visualizer extends JFrame {
 	}
 	private class BtnFindTargetActionListener implements ActionListener {
 		public void actionPerformed(ActionEvent arg0) {
+			btnThinkOnce.setEnabled(false);
+			btnFindTarget.setEnabled(false);
+			System.out.println("Botones desactivados");
 		}
 	}
 	private class BtnThinkOnceActionListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
+			btnThinkOnce.setEnabled(false);
 		}
 	}
 }
