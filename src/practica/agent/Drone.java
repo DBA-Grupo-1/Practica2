@@ -460,7 +460,7 @@ public class Drone extends SingleAgent {
 				distance= (float) aux.getDouble("dist");				
 				
 				//Recogida y comprobación del campo goal.
-				campo= aux.getString("goal");
+				campo= contenido.getString("goal");
 				if(campo.equals("Si")){
 					goal=true;
 				}
@@ -531,16 +531,16 @@ public class Drone extends SingleAgent {
 			case ESTADOINFORM:
 				decision = think();
 
-				//En caso de llegar a la meta.
-				if(decision==END){
-					exit=true;
-				}
-				else if (decision < -1 || decision > 3) {
+				if (decision < -1 || decision > 3) {
 					ACLMessage fallo = new ACLMessage(ACLMessage.FAILURE);
 					fallo.setSender(this.getAid());
 					fallo.addReceiver(sateliteID);
 					fallo.setContent(null);
 				} else {
+					//En caso de llegar a la meta.
+					if(decision==END){
+						exit=true;
+					}
 					try {
 						status.remove("decision");
 						System.out.println("decision " + decision);
