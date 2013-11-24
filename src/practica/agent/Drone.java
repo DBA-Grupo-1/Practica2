@@ -19,7 +19,7 @@ import org.json.JSONObject;
 
 public class Drone extends SingleAgent {
 	private final int ESTADOREQUEST = 0, ESTADOINFORM = 1;
-	private final int LIMIT_MOVEMENTS = 200;
+	private final int LIMIT_MOVEMENTS = 500;
 	private boolean exit;
 	private boolean goal;
 	private int estado;
@@ -90,8 +90,10 @@ public class Drone extends SingleAgent {
 		
 		//Comprobacion de que no hemos alcanzado el limite de movimientos sin mejorar la distancia
 		
-		if(stop(distance))
+		if(stop(distance)){
+			System.out.println("A la mierda esto. No hay quien lo resuelva");
 			return END;
+		}
 		
 		//TAB1 Si hemos llegado al objetivo hemos terminado
 		if(goal)
@@ -229,39 +231,40 @@ public class Drone extends SingleAgent {
 	private ArrayList<Pair> getAllMovements(){
 		ArrayList<Pair> mispares=new ArrayList<Pair>();
 		int[] validSqr = getValidSquares();
-		boolean condition;
+		boolean[] basicond=new boolean[4];
 
 		double posiOX=0,posiOY=0;
 		float calculoDist=0;
+		
 
+		basicond[ESTE]= 	validSqr[5]==Map.LIBRE	&& !(validSqr[2]==Map.VISITADO || validSqr[8]==Map.VISITADO);
+		basicond[SUR]= 		validSqr[7]==Map.LIBRE	&& !(validSqr[6]==Map.VISITADO || validSqr[8]==Map.VISITADO);
+		basicond[OESTE]= 	validSqr[3]==Map.LIBRE	&& !(validSqr[0]==Map.VISITADO || validSqr[6]==Map.VISITADO);
+		basicond[NORTE]= 	validSqr[1]==Map.LIBRE	&& !(validSqr[0]==Map.VISITADO || validSqr[2]==Map.VISITADO);
+
+		if(!(basicond[ESTE] || basicond[SUR] || basicond[OESTE] || basicond[NORTE])){
+			basicond[ESTE]= 	validSqr[5]==Map.LIBRE	&& !(validSqr[2]==Map.VISITADO && validSqr[8]==Map.VISITADO);
+			basicond[SUR]= 		validSqr[7]==Map.LIBRE	&& !(validSqr[6]==Map.VISITADO && validSqr[8]==Map.VISITADO);
+			basicond[OESTE]= 	validSqr[3]==Map.LIBRE	&& !(validSqr[0]==Map.VISITADO && validSqr[6]==Map.VISITADO);
+			basicond[NORTE]= 	validSqr[1]==Map.LIBRE	&& !(validSqr[0]==Map.VISITADO && validSqr[2]==Map.VISITADO);
+		}	
+		
 		posiOX= (posX + (Math.cos(angle) * distance));
 		posiOY= (posY + (Math.sin(angle)*distance));
 
 		//Creamos el array con todos los movimientos, incluyendo la distancia al objetivo, el movimiento en si, y si es valido o no
 		calculoDist= (float) Math.sqrt(Math.pow((posiOX-(posX+1)),2)+Math.pow((posiOY-posY), 2));
-		condition = validSqr[5]==Map.LIBRE
-				&& (!(validSqr[2]==Map.VISITADO || validSqr[8]==Map.VISITADO)
-					|| (validSqr[1]!=Map.LIBRE && validSqr[3]!=Map.LIBRE && validSqr[7]!=Map.LIBRE));
-		mispares.add(new Pair(calculoDist,ESTE,condition));
+		mispares.add(new Pair(calculoDist,ESTE,basicond[ESTE]));
 		
 		calculoDist=(float) Math.sqrt(Math.pow((posiOX-posX),2)+Math.pow((posiOY-(posY+1)), 2));
-		condition = validSqr[7]==Map.LIBRE
-				&& (!(validSqr[6]==Map.VISITADO || validSqr[8]==Map.VISITADO)
-					|| (validSqr[1]!=Map.LIBRE && validSqr[3]!=Map.LIBRE && validSqr[5]!=Map.LIBRE));
-		mispares.add(new Pair(calculoDist,SUR,condition));
+		mispares.add(new Pair(calculoDist,SUR,basicond[SUR]));
 		
 		calculoDist=(float) Math.sqrt(Math.pow((posiOX-(posX-1)),2)+Math.pow((posiOY-posY), 2));
-		condition = validSqr[3]==Map.LIBRE
-				&& (!(validSqr[0]==Map.VISITADO || validSqr[6]==Map.VISITADO)
-					|| (validSqr[1]!=Map.LIBRE && validSqr[5]!=Map.LIBRE && validSqr[7]!=Map.LIBRE));
-		mispares.add(new Pair(calculoDist,OESTE,condition));
+		mispares.add(new Pair(calculoDist,OESTE,basicond[OESTE]));
 		
 		calculoDist=(float) Math.sqrt(Math.pow((posiOX-posX),2)+Math.pow((posiOY-(posY-1)), 2));
-		condition = validSqr[1]==Map.LIBRE
-				&& (!(validSqr[0]==Map.VISITADO || validSqr[2]==Map.VISITADO)
-					|| (validSqr[5]!=Map.LIBRE && validSqr[3]!=Map.LIBRE && validSqr[7]!=Map.LIBRE));
-		mispares.add(new Pair(calculoDist,NORTE,condition));
-		
+		mispares.add(new Pair(calculoDist,NORTE,basicond[NORTE]));
+	
 		return mispares;
 	}
 	
