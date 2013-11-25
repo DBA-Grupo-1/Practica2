@@ -19,7 +19,7 @@ import org.json.JSONObject;
 
 public class Drone extends SingleAgent {
 	private final int ESTADOREQUEST = 0, ESTADOINFORM = 1;
-	private final int LIMIT_MOVEMENTS = 500;
+	private final int LIMIT_MOVEMENTS;
 	private boolean exit;
 	private boolean goal;
 	private int estado;
@@ -40,12 +40,14 @@ public class Drone extends SingleAgent {
 	private AgentID sateliteID;
 	
 	private boolean dodging = false;
-	private int betterMoveBeforeDodging = -1, secondMoveBeforeDodging = -1;
+	private int betterMoveBeforeDodging = -1;
 
 	public Drone(AgentID aid, int mapWidth, int mapHeight, AgentID sateliteID) throws Exception {
 		super(aid);
 		surroundings = new int[9];
 		droneMap = new Map(mapWidth, mapHeight);
+		//Ahora el limite depende del tamaño del mapa
+		LIMIT_MOVEMENTS = mapWidth + mapHeight;
 		this.sateliteID = sateliteID;
 		posX = 0;
 		posY = 0;
@@ -90,10 +92,8 @@ public class Drone extends SingleAgent {
 		
 		//Comprobacion de que no hemos alcanzado el limite de movimientos sin mejorar la distancia
 		
-		if(stop(distance)){
-			System.out.println("A la mierda esto. No hay quien lo resuelva");
+		if(stop(distance))
 			return END;
-		}
 		
 		//TAB1 Si hemos llegado al objetivo hemos terminado
 		if(goal)
@@ -132,9 +132,24 @@ public class Drone extends SingleAgent {
 			return betterMoveBeforeDodging;
 		}
 		
-		//TAB3 Si estamos esquivando y podemos hacer el segundo movimiento que teniamos cuando entramos en el modo entonces lo hacemos
-		if(dodging && mispares.get(secondMoveBeforeDodging).getThird()){
-			return secondMoveBeforeDodging;
+		//TAB3 Si estamos esquivando y podemos hacer un movimiento que nos deje cerda de un obstaculo lo hacemos
+		
+		//Al lado de un obstaculo (en un movimiento)
+		if(dodging)
+			for(Pair pair: ordenados){
+				int move = pair.getSecond();
+				if(pair.getThird() && (getCorner(move, (move+1)%4) == Map.OBSTACULO || getCorner(move, (move+3)%4) == Map.OBSTACULO))
+					return move;
+			}
+		
+		//Al lado de un obstaculo (en dos movimientos)
+		if(dodging){
+			int [] validMovs=getValidMovements();
+			for(Pair pair: ordenados){
+				int move = pair.getSecond();
+				if(pair.getThird() && (validMovs[(move+1)%4] == Map.OBSTACULO || validMovs[(move+3)%4] == Map.OBSTACULO))
+					return move;
+			}
 		}
 		
 		
@@ -149,7 +164,7 @@ public class Drone extends SingleAgent {
 			if(validMov[ordenados.get(0).getSecond()]==Map.OBSTACULO && !dodging){
 				dodging=true;
 				betterMoveBeforeDodging=ordenados.get(0).getSecond();
-				secondMoveBeforeDodging=ordenados.get(1).getSecond();
+				System.out.println("Entrando dodging: "+betterMoveBeforeDodging);
 			}
 		}
 		
