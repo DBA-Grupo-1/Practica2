@@ -41,6 +41,8 @@ public class Drone extends SingleAgent {
 	
 	private boolean dodging = false;
 	private int betterMoveBeforeDodging = -1;
+	
+	private ArrayList<Integer> trazaEjecucion;
 
 	public Drone(AgentID aid, int mapWidth, int mapHeight, AgentID sateliteID) throws Exception {
 		super(aid);
@@ -53,6 +55,7 @@ public class Drone extends SingleAgent {
 		posY = 0;
 		distanceMin = 999999;
 		counterStop = 0;
+		trazaEjecucion = new ArrayList<Integer>();
 	}
 	
 	/**
@@ -520,7 +523,29 @@ public class Drone extends SingleAgent {
 	@Override
 	public void finalize() {
 		System.out.println("Agente " + this.getName() + " ha finalizado");
+		mostrarTrazaEjecucion();
 		super.finalize();
+	}
+
+	private void mostrarTrazaEjecucion() {
+		System.out.print("Traza de la ejecución: ");
+		for (int i : trazaEjecucion){
+			switch(i){
+			case NORTE:
+				System.out.print("N");
+				break;
+			case OESTE: 
+				System.out.print("O");
+				break;
+			case SUR:
+				System.out.print("S");
+				break;
+			case ESTE:
+				System.out.print("E");
+				break;
+			}
+			
+		}
 	}
 
 	/*
@@ -547,7 +572,10 @@ public class Drone extends SingleAgent {
 				estado = ESTADOINFORM;
 				break;
 			case ESTADOINFORM:
-				decision = think();
+				decision = think();		
+				
+				// Guardo la decisión en un array para mostrar al final una traza de ejecución
+				trazaEjecucion.add(decision);
 
 				if (decision < -1 || decision > 3) {
 					ACLMessage fallo = new ACLMessage(ACLMessage.FAILURE);
