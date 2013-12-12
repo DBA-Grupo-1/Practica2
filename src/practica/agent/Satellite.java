@@ -281,13 +281,17 @@ public class Satellite extends SingleAgent {
 			break;
 		}
 
-		gps.setPositionX(x);
-		gps.setPositionY(y);
-		/**
-		 * @author Dani
-		 * TODO Cambiar a Mapa distribuido.
-		 */
-		mapSeguimiento.setvalue(x, y, Map.VISITADO);
+		try {
+			gps.setPositionX(x);
+			gps.setPositionY(y);
+			/**
+			 * @author Dani
+			 * TODO Cambiar a Mapa distribuido.
+			 */
+			mapSeguimiento.setValue(x, y, Map.VISITADO);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 		return false;
 	}

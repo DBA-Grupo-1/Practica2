@@ -77,9 +77,12 @@ public class Map {
 	 * @param x 	Columna.
 	 * @param y 	Fila.
 	 * @param value Valor nuevo de la celda.
+	 * @throws Exception Lanza una excepción si los valores x o y no son correctos
 	 */
-	public void setvalue(int x, int y, int value) {
-		matrix[y][x] = value;
+	public void setValue(int x, int y, int value) throws Exception {
+		if(x < 0 || x >= this.width || y < 0 || y >= this.heigh){
+			throw new Exception("La posición ("+x+", "+y+") no se encuentra dentro de los límites del mapa");
+		}
 	}
 
 }
