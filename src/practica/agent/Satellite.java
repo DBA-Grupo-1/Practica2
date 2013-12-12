@@ -78,6 +78,15 @@ public class Satellite extends SingleAgent {
 		usingVisualizer = true;
 	}
 	
+	public void onMessage (ACLMessage msg){
+		try {
+			messageQueue.Push(msg);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
 	/**
 	 * Se calcula el valor del ángulo que forma la baliza y el EjeX horizontal tomando como centro
 	 * a el agente drone.
@@ -268,11 +277,34 @@ public class Satellite extends SingleAgent {
 	 */
 	@Override
 	protected void execute() {
-		ACLMessage message = new ACLMessage();
-		AgentID dron = null;
+		ACLMessage proccesingMessage = null;
 		boolean exit = false;
 		System.out.println("Agente " + this.getName() + " en ejecución");
 		while (!exit) {
+			//Si la cola de mensajes no está vacía, saca un elemento y lo procesa.
+			if (!messageQueue.isEmpty()){
+				try {
+					proccesingMessage = messageQueue.Pop();
+				} catch (InterruptedException e) {
+					System.out.println("¡Cola vacía!");
+					e.printStackTrace();
+				}
+				
+				switch (proccesingMessage.getProtocol()){
+				case "Register" : onRegister(proccesingMessage); break;
+				case "SendMeMyStatus" : onStatusQueried (proccesingMessage); break;
+				case "IMoved" : onDroneMoved (proccesingMessage); break;
+				case "DroneReachedGoalSubscription" : onSubscribe(proccesingMessage); break;
+				case "LetMeKnowWhenSomeoneMoves" : onSubscribe(proccesingMessage); break;
+				case "SendOriginalMap" : onMapQueried(proccesingMessage); break;
+				case "SendSharedMap" : onMapQueried(proccesingMessage); break;
+				case "SendAllDroneIDs" : onDronesIDQueried(proccesingMessage); break;
+				case "SendPositionOfDrone" : onDronePositionQueried(proccesingMessage); break;
+				case "SendDistanceOfDrone" : onDroneDistanceQueried(proccesingMessage); break;
+				case "SendBateryOfDrone" : onDroneBatteryQueried(proccesingMessage); break;
+				}
+				
+			}
 
 			/*switch (state) {
 
@@ -362,6 +394,8 @@ public class Satellite extends SingleAgent {
 		}
 	}
 
+	
+
 	@Override
 	public void finalize() {
 		System.out.println("Agente " + this.getName() + " ha finalizado");
@@ -383,5 +417,50 @@ public class Satellite extends SingleAgent {
 	 */
 	public Map getMapSeguimiento() {
 		return mapSeguimiento;
+	}
+	
+	//TODO Implementation
+	public void onMapQueried (ACLMessage msg){
+		
+	}
+	
+	//TODO Implementation
+	//Esto es un placeholder y el código siguiente deberá de ser borrado/comentado por quien implemente el protocolo de comunicación inicial
+	public void onRegister (ACLMessage msg){
+		subscribedDrones.add(msg.getSender());
+	}
+	
+	public ACLMessage onStatusQueried(ACLMessage msg) {
+		return null;	
+	}
+	
+	public ACLMessage onDroneMoved(ACLMessage msg) {
+		return null;
+		
+	}
+	
+	//TODO Implementation
+	public ACLMessage onDronePositionQueried (ACLMessage msg){
+		return null;
+	}
+	
+	//TODO Implementation
+	public ACLMessage onDronesIDQueried (ACLMessage msg){
+		return null;
+	}
+	
+	//TODO Implementation
+	public ACLMessage onSubscribe (ACLMessage msg){
+		return null;
+	}
+	
+	//TODO Implementation
+	public ACLMessage onDroneBatteryQueried (ACLMessage msg){
+		return null;
+	}
+	
+	//TODO Implementation
+	public ACLMessage onDroneDistanceQueried (ACLMessage msg){
+		return null;
 	}
 }
