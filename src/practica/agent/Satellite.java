@@ -20,6 +20,8 @@ import practica.util.Visualizer;
 import practica.util.DroneStatus;
 
 public class Satellite extends SingleAgent {
+	private static final int QUEUE_SIZE = 50;
+	
 	private Map mapOriginal, mapSeguimiento;
 	
 	private double goalPosX;
@@ -50,10 +52,14 @@ public class Satellite extends SingleAgent {
 		exit = false;
 		mapOriginal = new Map(map);
 		mapSeguimiento = new Map(map);
-		this.maxDrones = maxDrones;
+
 		subscribedDrones = new AgentID [maxDrones];
 		droneStuses = new DroneStatus [maxDrones];
+		this.maxDrones = maxDrones;
 		connectedDrones = 0;
+		
+		messageQueue = new MessageQueue(QUEUE_SIZE);
+		
 		
 		//Calcular la posición del objetivo.
 		//Se suman todas las posiciones que contienen un objetivo y se halla la media.
@@ -89,6 +95,7 @@ public class Satellite extends SingleAgent {
 	}
 	
 	public void onMessage (ACLMessage msg){
+		
 		try {
 			messageQueue.Push(msg);
 		} catch (InterruptedException e) {
@@ -324,8 +331,15 @@ public class Satellite extends SingleAgent {
 				
 				switch (proccesingMessage.getProtocol()){
 				case "Register" : onRegister(proccesingMessage); break;
-				case "SendMeMyStatus" : onStatusQueried (proccesingMessage); break;
-				case "IMoved" : onDroneMoved (proccesingMessage); break;
+				case "SendMeMyStatus" : 					
+					JSONObject statusJSON = onStatusQueried (proccesingMessage); 
+					send (ACLMessage.INFORM, proccesingMessage.getSender(), statusJSON);
+					
+					break;
+				case "IMoved" : 
+					onDroneMoved (proccesingMessage); 
+					send(ACLMessage.INFORM, proccesingMessage.getSender(), null);
+					break;
 				case "DroneReachedGoalSubscription" : onSubscribe(proccesingMessage); break;
 				case "LetMeKnowWhenSomeoneMoves" : onSubscribe(proccesingMessage); break;
 				case "SendOriginalMap" : onMapQueried(proccesingMessage); break;
@@ -419,7 +433,7 @@ public class Satellite extends SingleAgent {
 		return null;	
 	}
 	
-	public ACLMessage onDroneMoved(ACLMessage msg) {
+	public void onDroneMoved(ACLMessage msg) {
 		if (msg.getPerformative().equals("REQUEST")){
 			if (usingVisualizer)
 				if (visualizer.isBtnThinkOnceEnabled())
@@ -439,7 +453,6 @@ public class Satellite extends SingleAgent {
 			}
 
 			exit = evalueDecision(msg.getSender(), aux);
-			return null;
 		}
 		else{
 			// El mensaje recibido es de tipo distinto a Request por tanto error
@@ -450,9 +463,7 @@ public class Satellite extends SingleAgent {
 			//sendError(dron,"Error de secuencia en la comunicación. El mensaje debe ser de tipo REQUEST");
 
 			exit = true;
-		}
-		return null;
-		
+		}		
 	}
 	
 	//TODO Implementation
