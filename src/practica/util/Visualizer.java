@@ -12,7 +12,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 
 import practica.Launcher;
-import practica.agent.Satelite;
+import practica.agent.Satellite;
 
 public class Visualizer extends JFrame {
 	private JComboBox <String> mapSelector;
@@ -24,14 +24,14 @@ public class Visualizer extends JFrame {
 	private Map mapToLoad;
 	private Launcher launcher;
 	
-	private Satelite satelite;
+	private Satellite satellite;
 	
 	/**
 	 * Setter de satelite.
 	 * @param sat satélite para poder comunicarse con él.
 	 */
-	public void setSatelite(Satelite sat){
-		satelite = sat;
+	public void setSatelite(Satellite sat){
+		satellite = sat;
 	}
 	
 	/**
@@ -119,7 +119,7 @@ public class Visualizer extends JFrame {
 	 * Actualiza el mapa.
 	 */
 	public void updateMap(){
-        satelliteMapIcon.setIcon(new ImageIcon(ImgMapConverter.mapToScalatedImg(satelite.getMapSeguimiento(), 500, 500)));
+        satelliteMapIcon.setIcon(new ImageIcon(ImgMapConverter.mapToScalatedImg(satellite.getMapSeguimiento(), 500, 500)));
 	}
 	
 	private class MapSelectorActionListener implements ActionListener {

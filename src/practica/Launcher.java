@@ -13,12 +13,14 @@ import es.upv.dsic.gti_ia.core.AgentsConnection;
 public class Launcher {
 	
 	AgentID id_satelite;
-	Satelite satelite;
+	Satellite satellite;
 	Drone drone;
 	Visualizer visualizer;
 	Map map;
+	static int droneAmmount;
 
 	public static void main(String[] args) {
+		droneAmmount = 1;
 		DOMConfigurator.configure("src/Configuration/loggin.xml"); // ERR
         Logger logger = Logger.getLogger(Launcher.class);
         
@@ -41,11 +43,11 @@ public class Launcher {
         try{
             System.out.println("Main: Creando agentes");
         	map = visualizer.getMapToLoad();
-        	satelite = new Satelite(id_satelite, map, visualizer);
+        	satellite = new Satellite(id_satelite, map, droneAmmount, visualizer);
         	drone = new Drone(new AgentID("Drone"), map.getWidth(), map.getHeigh(), id_satelite);
         	System.out.println("MAIN : Iniciando agentes...");
-        	visualizer.setSatelite(satelite);
-            satelite.start();
+        	visualizer.setSatelite(satellite);
+            satellite.start();
             drone.start();
         }catch(Exception e){
         	System.err.println("Main: Error al crear los agentes");
@@ -57,10 +59,10 @@ public class Launcher {
         try{
             System.out.println("Main: Creando agentes");
         	map = ImgMapConverter.imgToMap("src/maps/dead end.png");
-        	satelite = new Satelite(id_satelite, map);
+        	satellite = new Satellite(id_satelite, map, droneAmmount);
         	drone = new Drone(new AgentID("Drone"), map.getWidth(), map.getHeigh(), id_satelite);
         	System.out.println("MAIN : Iniciando agentes...");
-            satelite.start();
+            satellite.start();
             drone.start();
         }catch(Exception e){
         	System.err.println("Main: Error al crear los agentes");

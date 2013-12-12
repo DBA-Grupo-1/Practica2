@@ -1,6 +1,8 @@
 package practica.agent;
 
 
+import java.util.ArrayList;
+
 import es.upv.dsic.gti_ia.core.ACLMessage;
 import es.upv.dsic.gti_ia.core.AgentID;
 import es.upv.dsic.gti_ia.core.SingleAgent;
@@ -12,71 +14,69 @@ import org.json.JSONObject;
 import practica.util.GPSLocation;
 import practica.util.ImgMapConverter;
 import practica.util.Map;
+import practica.util.MessageQueue;
 import practica.util.Visualizer;
 
-public class Satelite extends SingleAgent {
-	private final int SolicitudStatus = 0, EsperarInform = 1; // Estos nombres no me gustan
-	private int state;
+public class Satellite extends SingleAgent {
 	private Map mapOriginal, mapSeguimiento;
 	private GPSLocation gps;
-	private double goalPosX, goalPosY;
+	
+	private double goalPosX;
+	private double goalPosY;
+	private ArrayList <AgentID> subscribedDrones;
+	private int maxDrones;
+	private MessageQueue messageQueue;
 
 	private Visualizer visualizer;
 	private boolean usingVisualizer;
 	
-	
-	public Satelite(AgentID sat, Map mapa) throws Exception{
+	/**
+	 * Constructor
+	 * @param sat ID del satélite.
+	 * @param mapa mapa que se usará.
+	 * @param maxDrones número máximo de drones que aceptará el satélite.
+	 * @throws Exception
+	 */
+	public Satellite(AgentID sat, Map map, int maxDrones) throws Exception{
+		//Inicialización de atributos.
 		super(sat);
-		mapOriginal = new Map(mapa);
-		mapSeguimiento = new Map(mapa);
-		state = SolicitudStatus;
+		mapOriginal = new Map(map);
+		mapSeguimiento = new Map(map);
 		gps = new GPSLocation();
+		this.maxDrones = maxDrones;
 		
-		int f=mapOriginal.getHeigh();
-		int c=mapOriginal.getWidth();
-		int suma_x=0, suma_y=0, cont=0;
+		//Calcular la posición del objetivo.
+		//Se suman todas las posiciones que contienen un objetivo y se halla la media.
+		float horizontalPositions = 0, verticalPositions = 0, adjacentSquares=0;
 		
-		for(int i=0; i<f; i++){
-		    for(int j=0; j<c; j++){
-		        if(mapOriginal.getValue(j,i)==Map.OBJETIVO){
-		            suma_x+=j;
-		            suma_y+=i;
-		            cont++;
+		for(int i = 0; i < mapOriginal.getHeigh(); i ++)
+		    for(int j = 0; j < mapOriginal.getWidth(); j ++){
+		        if(mapOriginal.getValue(j,i) == Map.OBJETIVO){
+		            horizontalPositions += j;
+		            verticalPositions += i;
+		            adjacentSquares ++;
 		        }
 		    }
-		}
-		goalPosX=suma_x/(float)cont;
-		goalPosY=suma_y/(float)cont;
-
-		mapSeguimiento.setvalue(0, 0, Map.VISITADO); // añadido esto que faltaba
+		
+		goalPosX = horizontalPositions / adjacentSquares;
+		goalPosY = verticalPositions / adjacentSquares;
 		
 		usingVisualizer = false;
 	}
 	
-	public Satelite(AgentID sat, Map mapa, Visualizer v) throws Exception{
-		this (sat, mapa);		
+	/**
+	 * Constructor con un visualizador
+	 * @param sat ID del satélite.
+	 * @param mapa mapa que se usará.
+	 * @param maxDrones número máximo de drones que aceptará el satélite.
+	 * @param v visualizador.
+	 * @throws Exception
+	 */
+	public Satellite(AgentID sat, Map mapa, int maxDrones, Visualizer v) throws Exception{
+		this (sat, mapa, maxDrones);		
 		visualizer = v;
 		usingVisualizer = true;
 	}
-
-	//De momento no tengo por qué usarlo.
-	/*public void waitForPass(){
-		synchronized(lock){
-			if(lock.intValue()==0){
-				try {
-					lock.wait();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-		}
-	}
-	
-	public void allowPass(){
-		synchronized(lock){
-			lock.notify();
-		}
-	}*/
 	
 	/**
 	 * Se calcula el valor del ángulo que forma la baliza y el EjeX horizontal tomando como centro
@@ -88,15 +88,15 @@ public class Satelite extends SingleAgent {
 	private double calculateAngle(double posX, double posY){
 		double angle = 0;
 		
-		if(posX>0 && posY>=0)
+		if(posX > 0 && posY >= 0)
 			angle = Math.atan(posY / posX);
-		else if(posX>0 && posY<0)
+		else if(posX > 0 && posY < 0)
 			angle = Math.atan(posY / posX) + (2.0*Math.PI);
-		else if(posX == 0 && posY>0)
-			angle = Math.PI/2.0;
-		else if(posX == 0 && posY<0)
+		else if(posX == 0 && posY > 0)
+			angle = Math.PI / 2.0;
+		else if(posX == 0 && posY < 0)
 			angle = (3*Math.PI) / 2.0;
-		else if(posX<0)
+		else if(posX < 0)
 			angle = Math.atan(posY / posX) + Math.PI;
 		
 		return angle;
@@ -111,6 +111,8 @@ public class Satelite extends SingleAgent {
 	 * @return Objeto JSon con el contenido de Status
 	 * @throws JSONException  Si la clave es null
 	 */
+	
+	
 	private JSONObject createStatus() throws JSONException {
 		int posXDrone = gps.getPositionX(), posYDrone = gps.getPositionY();
 		double distance = Math.sqrt(Math.pow(goalPosX - posXDrone, 2) + Math.pow(goalPosY - posYDrone, 2));
@@ -137,7 +139,7 @@ public class Satelite extends SingleAgent {
 		status2.put("gonio", aux2);
 		status2.put("battery", 100);
 		
-		int[] surroundings = obtenerAlrededores();
+		int[] surroundings = getSurroundings();
 		JSONArray jsArray = new JSONArray(surroundings);
 		status2.put("radar", jsArray);
 
@@ -149,7 +151,7 @@ public class Satelite extends SingleAgent {
 	 * (incluyendo en la que se encuentra el drone)
 	 * @return Array de enteros con las 
 	 */
-	private int[] obtenerAlrededores(){
+	private int[] getSurroundings(){
 		int[] surroundings = new int[9];
 		int posX = gps.getPositionX();
 		int posY = gps.getPositionY();
@@ -157,10 +159,7 @@ public class Satelite extends SingleAgent {
 		// Recorre desde la posición dron -1  hasta la del dron + 1, tanto en X como en Y
 		for (int i = 0; i< 3; i++){
 			for(int j = 0; j < 3; j++){
-				/* TODO: ¿poner mapSeguimiento o mapOriginal? Depende del método getValidMoviments del drone
-				 * Se puede liar si aquí digo que está visitado, y allí le suma que también.
-				 */
-				surroundings[i+j*3] = mapOriginal.getValue(posX-1+i, posY-1+j);
+				surroundings[i+j*3] = mapSeguimiento.getValue(posX-1+i, posY-1+j);
 			}
 		}
 		
@@ -192,9 +191,9 @@ public class Satelite extends SingleAgent {
 	 * @param dron		Identificador del agente dron.
 	 * @param ob		Objeto JSon con los valores de la decision del drone: 
 	 * 					-  0 : El dron decide ir al Este. 
-	 * 					-  1 : El dorn decide ir al Sur. 
-	 * 					-  2 : El dorn decide ir al Oeste. 
-	 * 					-  3 : El dorn decide ir al Norte.
+	 * 					-  1 : El dron decide ir al Sur. 
+	 * 					-  2 : El dron decide ir al Oeste. 
+	 * 					-  3 : El dron decide ir al Norte.
 	 *            		- -1: Fin de la comunicación
 	 * @return Se devuelve "true" si se debe finalizar la comunicación y "false" en caso contrario.
 	 */
@@ -275,7 +274,7 @@ public class Satelite extends SingleAgent {
 		System.out.println("Agente " + this.getName() + " en ejecución");
 		while (!exit) {
 
-			switch (state) {
+			/*switch (state) {
 
 			case SolicitudStatus:
 				//Si hay visualizador, manda actualizar sus mapas.
@@ -358,7 +357,7 @@ public class Satelite extends SingleAgent {
 					exit = true;
 				}
 				break;
-			}
+			}*/
 
 		}
 	}
