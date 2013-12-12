@@ -39,7 +39,11 @@ public abstract class ImgMapConverter {
 					default : value = -1; break; //Por si acaso.
 				}
 				
-				map.setvalue(i, j, value);
+				try {
+					map.setValue(i, j, value);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		return map;	
 	}

@@ -468,7 +468,7 @@ public class Drone extends SingleAgent {
 				String campo=null;
 				aux = contenido.getJSONObject("gps");
 				//actualizamos el mapa del drone antes de recoger las nuevas posiciones X e Y.
-				droneMap.setvalue(posX,posY,Map.VISITADO);
+				droneMap.setValue(posX,posY,Map.VISITADO);
 				posX = aux.getInt("x");
 				posY = aux.getInt("y");
 
@@ -508,6 +508,8 @@ public class Drone extends SingleAgent {
 				System.out.println("numeritos");
 				ex.printStackTrace();
 				Logger.getLogger(Drone.class.getName()).log(Level.SEVERE, null, ex);
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 
 		} else {
