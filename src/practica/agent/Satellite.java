@@ -2,6 +2,7 @@ package practica.agent;
 
 
 import java.util.ArrayList;
+import java.util.ListIterator;
 
 import es.upv.dsic.gti_ia.core.ACLMessage;
 import es.upv.dsic.gti_ia.core.AgentID;
@@ -16,19 +17,25 @@ import practica.util.ImgMapConverter;
 import practica.util.Map;
 import practica.util.MessageQueue;
 import practica.util.Visualizer;
+import practica.util.DroneStatus;
 
 public class Satellite extends SingleAgent {
 	private Map mapOriginal, mapSeguimiento;
-	private GPSLocation gps;
 	
 	private double goalPosX;
 	private double goalPosY;
-	private ArrayList <AgentID> subscribedDrones;
+	
+	private AgentID [] subscribedDrones;
+	private DroneStatus [] droneStuses;
 	private int maxDrones;
+	private int connectedDrones;
+	
 	private MessageQueue messageQueue;
 
 	private Visualizer visualizer;
 	private boolean usingVisualizer;
+	
+	private boolean exit;
 	
 	/**
 	 * Constructor
@@ -40,10 +47,13 @@ public class Satellite extends SingleAgent {
 	public Satellite(AgentID sat, Map map, int maxDrones) throws Exception{
 		//Inicialización de atributos.
 		super(sat);
+		exit = false;
 		mapOriginal = new Map(map);
 		mapSeguimiento = new Map(map);
-		gps = new GPSLocation();
 		this.maxDrones = maxDrones;
+		subscribedDrones = new AgentID [maxDrones];
+		droneStuses = new DroneStatus [maxDrones];
+		connectedDrones = 0;
 		
 		//Calcular la posición del objetivo.
 		//Se suman todas las posiciones que contienen un objetivo y se halla la media.
@@ -122,37 +132,40 @@ public class Satellite extends SingleAgent {
 	 */
 	
 	
-	private JSONObject createStatus() throws JSONException {
+	private JSONObject createJSONStatus(DroneStatus droneStatus) throws JSONException {
+		
+		GPSLocation gps = droneStatus.getLocation();
+		
 		int posXDrone = gps.getPositionX(), posYDrone = gps.getPositionY();
 		double distance = Math.sqrt(Math.pow(goalPosX - posXDrone, 2) + Math.pow(goalPosY - posYDrone, 2));
 		double angle = calculateAngle(goalPosX - posXDrone, goalPosY - posYDrone);
 
-		JSONObject status2 = new JSONObject();
-		status2.put("connected", "Yes");
-		status2.put("ready", "Yes");
+		JSONObject status = new JSONObject();
+		status.put("connected", "Yes");
+		status.put("ready", "Yes");
 		
 		JSONObject aux = new JSONObject();
 		aux.put("x", gps.getPositionX());
 		aux.put("y", gps.getPositionY());
 
-		status2.put("gps", aux);
+		status.put("gps", aux);
 
 		if(mapOriginal.getValue(posXDrone, posYDrone) == Map.OBJETIVO)
-			status2.put("goal", "Si");
+			status.put("goal", "Si");
 		else
-			status2.put("goal", "No");
+			status.put("goal", "No");
 
-		JSONObject aux2 = new JSONObject();
-		aux2.put("alpha", angle);
-		aux2.put("dist", distance);
-		status2.put("gonio", aux2);
-		status2.put("battery", 100);
+		JSONObject angleAndDistance = new JSONObject();
+		angleAndDistance.put("alpha", angle);
+		angleAndDistance.put("dist", distance);
+		status.put("gonio", angleAndDistance);
+		status.put("battery", droneStatus.getBattery());
 		
-		int[] surroundings = getSurroundings();
+		int[] surroundings = getSurroundings(droneStatus);
 		JSONArray jsArray = new JSONArray(surroundings);
-		status2.put("radar", jsArray);
+		status.put("radar", jsArray);
 
-		return status2;
+		return status;
 	}
 
 	/**
@@ -160,7 +173,8 @@ public class Satellite extends SingleAgent {
 	 * (incluyendo en la que se encuentra el drone)
 	 * @return Array de enteros con las 
 	 */
-	private int[] getSurroundings(){
+	private int[] getSurroundings(DroneStatus status){
+		GPSLocation gps = status.getLocation();
 		int[] surroundings = new int[9];
 		int posX = gps.getPositionX();
 		int posY = gps.getPositionY();
@@ -192,12 +206,22 @@ public class Satellite extends SingleAgent {
 			msg.setContent("");
 		this.send(msg);
 	}
+	
+	private DroneStatus findStatus (AgentID droneID){
+		DroneStatus status = null;
+		
+		for (int i = 0; i < connectedDrones; i++)
+			if (subscribedDrones[i] == droneID)
+				status =  droneStuses[i];
+		
+		return status;
+	}
 
 	/**
 	 * En función del valor recibido por el dron se actualiza el mapa interno
 	 * del satelite con la nueva posición del drone (x, y en funcion de la
 	 * dirección elegida) o se da por finalizada la comunicación.
-	 * @param dron		Identificador del agente dron.
+	 * @param droneID		Identificador del agente dron.
 	 * @param ob		Objeto JSon con los valores de la decision del drone: 
 	 * 					-  0 : El dron decide ir al Este. 
 	 * 					-  1 : El dron decide ir al Sur. 
@@ -206,14 +230,18 @@ public class Satellite extends SingleAgent {
 	 *            		- -1: Fin de la comunicación
 	 * @return Se devuelve "true" si se debe finalizar la comunicación y "false" en caso contrario.
 	 */
-	private boolean evalueDecision(AgentID dron, JSONObject ob) {
+	private boolean evalueDecision(AgentID droneID, JSONObject ob) {
+		//Busco el status del drone
+		DroneStatus droneStatus = findStatus(droneID);
+		GPSLocation gps = droneStatus.getLocation();
+		
 		int decision, x = -1, y = -1;
 
 		try {
 			decision = ob.getInt("decision");
 		} catch (JSONException e) {
 
-			sendError(dron, "Error de parametros en la decisión");
+			sendError(droneID, "Error de parametros en la decisión");
 			return true;
 		}
 
@@ -242,12 +270,16 @@ public class Satellite extends SingleAgent {
 		case Drone.END:
 			return true;
 		default: // Fin, No me gusta, prefiero un case para el fin y en el default sea un caso de error pero no me deja poner -1 en el case.
-			sendError(dron, "Error al actualizar el mapa");
+			sendError(droneID, "Error al actualizar el mapa");
 			break;
 		}
 
 		gps.setPositionX(x);
 		gps.setPositionY(y);
+		/**
+		 * @author Dani
+		 * TODO Cambiar a Mapa distribuido.
+		 */
 		mapSeguimiento.setvalue(x, y, Map.VISITADO);
 
 		return false;
@@ -302,95 +334,8 @@ public class Satellite extends SingleAgent {
 				case "SendPositionOfDrone" : onDronePositionQueried(proccesingMessage); break;
 				case "SendDistanceOfDrone" : onDroneDistanceQueried(proccesingMessage); break;
 				case "SendBateryOfDrone" : onDroneBatteryQueried(proccesingMessage); break;
-				}
-				
+				}				
 			}
-
-			/*switch (state) {
-
-			case SolicitudStatus:
-				//Si hay visualizador, manda actualizar sus mapas.
-				if (usingVisualizer){
-					visualizer.updateMap();
-					//Si no está pulsado "Find Target" y está pulsado "Think Once" hay que habilitar "Think Once". Si "Find Target" está pulsado, no se debe de hacer nada.
-					if (visualizer.isBtnFindTargetEnabled() && !visualizer.isBtnThinkOnceEnabled())
-						visualizer.enableThinkOnce();
-				}
-				
-				// Aqui esperamos el primer Request vacio
-				try {
-					message = receiveACLMessage();
-				} catch (InterruptedException e) {
-					sendError(dron, "Error en la comunicación");
-					exit = true;
-				}
-
-				if (!exit) {
-					dron = message.getSender();
-					// Una vez recibido el mensaje comprobamos el tipo y si es del tipo Request respondemos con Inform(status)
-
-					if (message.getPerformative().equals("REQUEST")) {
-						
-						System.out.println("Posicion: " + gps.getPositionX() + ", "+ gps.getPositionY());
-						
-						JSONObject status = null;
-						try {
-							status = createStatus();
-						} catch (JSONException e) {
-							sendError(dron, "Error al crear Status");
-							exit = true;
-						}
-						if (status != null) {
-							send(ACLMessage.INFORM, dron, status);
-							state = EsperarInform;
-						}
-					} else {
-						// El mensaje recibido es de tipo distinto a Request por tanto error
-
-						sendError(dron,"Error de secuencia en la comunicación. El mensaje debe ser de tipo REQUEST");
-						exit = true;
-					}
-				}
-
-				break;
-
-			case EsperarInform:
-				// Aqui esperamos el Inform
-				try {
-					message = receiveACLMessage();
-				} catch (InterruptedException e) {
-					sendError(dron, "Error de comunicación");
-					exit = true;
-				}
-				if (message.getPerformative().equals("REQUEST")) {
-					if (usingVisualizer)
-						if (visualizer.isBtnThinkOnceEnabled())
-							while (visualizer.isBtnThinkOnceEnabled()){
-								System.out.print("");//Necesario para volver a comprobar la condición del while.
-							}
-
-					JSONObject aux = null;
-					try {
-						aux = new JSONObject(message.getContent());
-					} catch (JSONException e) {
-						sendError(dron,"Error al crear objeto JSON con la decision");
-					}
-
-					exit = evalueDecision(dron, aux);
-					// Si ha habido algún fallo al actualizar el mapa se le informa al drone y se finaliza
-					if (!exit)
-						state = SolicitudStatus;
-					send(ACLMessage.INFORM, dron, null);
-				} else {
-					// El mensaje recibido es de tipo distinto a Request por tanto error
-
-					sendError(dron,"Error de secuencia en la comunicación. El mensaje debe ser de tipo REQUEST");
-
-					exit = true;
-				}
-				break;
-			}*/
-
 		}
 	}
 
@@ -427,40 +372,110 @@ public class Satellite extends SingleAgent {
 	//TODO Implementation
 	//Esto es un placeholder y el código siguiente deberá de ser borrado/comentado por quien implemente el protocolo de comunicación inicial
 	public void onRegister (ACLMessage msg){
-		subscribedDrones.add(msg.getSender());
+		subscribedDrones[connectedDrones] = msg.getSender();
+		droneStuses[connectedDrones] = new DroneStatus(msg.getSender(), "DroneP2", new GPSLocation());
 	}
 	
-	public ACLMessage onStatusQueried(ACLMessage msg) {
+	public JSONObject onStatusQueried(ACLMessage msg) {
+		//Si hay visualizador, manda actualizar su mapa.
+		if (usingVisualizer){
+			visualizer.updateMap();
+			//Si no está pulsado "Find Target" y está pulsado "Think Once" hay que habilitar "Think Once". Si "Find Target" está pulsado, no se debe de hacer nada.
+			if (visualizer.isBtnFindTargetEnabled() && !visualizer.isBtnThinkOnceEnabled())
+				visualizer.enableThinkOnce();
+		}
+		if (msg.getPerformative().equals("REQUEST")){
+			//System.out.println("Posicion: " + gps.getPositionX() + ", "+ gps.getPositionY());
+			
+			//Construcción del objeto JSON			
+			try {				
+				//Busco el DroneStatus correspondiente a quien me mandó el mensaje
+				for (int i = 0; i < connectedDrones; i++){
+					if (subscribedDrones[i] == msg.getSender())
+						return createJSONStatus(droneStuses[i]);
+				}
+			} catch (JSONException e) {
+				//sendError(dron, "Error al crear Status");
+				/**
+				 * @author Dani
+				 * TODO Mandar error a todos los drones.
+				 */
+				exit = true;
+			}
+		}
+		else{
+			// El mensaje recibido es de tipo distinto a Request por tanto error
+			/**
+			 * @author Dani
+			 * TODO Mandar error a todos los drones.
+			 */
+			//sendError(dron,"Error de secuencia en la comunicación. El mensaje debe ser de tipo REQUEST");
+			exit = true;
+		}
+		/**
+		 * @author Dani
+		 * TODO no me gusta este return null, ya se me ocurrirá algo mejor.
+		 */
 		return null;	
 	}
 	
 	public ACLMessage onDroneMoved(ACLMessage msg) {
+		if (msg.getPerformative().equals("REQUEST")){
+			if (usingVisualizer)
+				if (visualizer.isBtnThinkOnceEnabled())
+					while (visualizer.isBtnThinkOnceEnabled()){
+						System.out.print("");//Necesario para volver a comprobar la condición del while.
+					}
+
+			JSONObject aux = null;
+			try {
+				aux = new JSONObject(msg.getContent());
+			} catch (JSONException e) {
+				/**
+				 * @author Dani
+				 * TODO Mandar error a todos los drones.
+				 */
+				//sendError(dron,"Error al crear objeto JSON con la decision");
+			}
+
+			exit = evalueDecision(msg.getSender(), aux);
+			return null;
+		}
+		else{
+			// El mensaje recibido es de tipo distinto a Request por tanto error
+			/**
+			 * @author Dani
+			 * TODO Mandar error a todos los drones.
+			 */
+			//sendError(dron,"Error de secuencia en la comunicación. El mensaje debe ser de tipo REQUEST");
+
+			exit = true;
+		}
 		return null;
 		
 	}
 	
 	//TODO Implementation
-	public ACLMessage onDronePositionQueried (ACLMessage msg){
+	public GPSLocation onDronePositionQueried (ACLMessage msg){
 		return null;
 	}
 	
 	//TODO Implementation
-	public ACLMessage onDronesIDQueried (ACLMessage msg){
+	public AgentID [] onDronesIDQueried (ACLMessage msg){
 		return null;
 	}
 	
 	//TODO Implementation
-	public ACLMessage onSubscribe (ACLMessage msg){
-		return null;
+	public void onSubscribe (ACLMessage msg){
 	}
 	
 	//TODO Implementation
-	public ACLMessage onDroneBatteryQueried (ACLMessage msg){
-		return null;
+	public int onDroneBatteryQueried (ACLMessage msg){
+		return (Integer) null;
 	}
 	
 	//TODO Implementation
-	public ACLMessage onDroneDistanceQueried (ACLMessage msg){
-		return null;
+	public float onDroneDistanceQueried (ACLMessage msg){
+		return (Float) null;
 	}
 }
