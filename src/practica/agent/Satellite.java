@@ -16,13 +16,14 @@ import practica.util.GPSLocation;
 import practica.util.ImgMapConverter;
 import practica.util.Map;
 import practica.util.MessageQueue;
+import practica.util.SharedMap;
 import practica.util.Visualizer;
 import practica.util.DroneStatus;
 
 public class Satellite extends SingleAgent {
 	private static final int QUEUE_SIZE = 50;
 	
-	private Map mapOriginal, mapSeguimiento;
+	private SharedMap mapOriginal, mapSeguimiento;
 	
 	private double goalPosX;
 	private double goalPosY;
@@ -50,8 +51,8 @@ public class Satellite extends SingleAgent {
 		//Inicialización de atributos.
 		super(sat);
 		exit = false;
-		mapOriginal = new Map(map);
-		mapSeguimiento = new Map(map);
+		mapOriginal = new SharedMap(map);
+		mapSeguimiento = new SharedMap(map);
 
 		subscribedDrones = new AgentID [maxDrones];
 		droneStuses = new DroneStatus [maxDrones];
@@ -95,9 +96,9 @@ public class Satellite extends SingleAgent {
 	}
 	
 	public void onMessage (ACLMessage msg){
-		
 		try {
 			messageQueue.Push(msg);
+			System.out.println("mensaje recibido!");
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -284,11 +285,7 @@ public class Satellite extends SingleAgent {
 		try {
 			gps.setPositionX(x);
 			gps.setPositionY(y);
-			/**
-			 * @author Dani
-			 * TODO Cambiar a Mapa distribuido.
-			 */
-			mapSeguimiento.setValue(x, y, Map.VISITADO);
+			mapSeguimiento.setValue(x, y, Map.VISITADO, droneID);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

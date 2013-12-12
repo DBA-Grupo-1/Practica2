@@ -30,10 +30,10 @@ public class Launcher {
         Launcher launcher = new Launcher();
         
         launcher.id_satelite = new AgentID("Satelite");  
-		launcher.visualizer = new Visualizer(launcher);
+		//launcher.visualizer = new Visualizer(launcher);
 		
 		//Comentar la línea anterior y descomentar esta para lanzar sin visualizador.
-		//launcher.launchWithoutVisualizer();
+		launcher.launchWithoutVisualizer();
 	}
 	
 	/**
@@ -58,7 +58,7 @@ public class Launcher {
 	public void launchWithoutVisualizer(){
         try{
             System.out.println("Main: Creando agentes");
-        	map = ImgMapConverter.imgToMap("src/maps/dead end.png");
+        	map = ImgMapConverter.imgToMap("src/maps/MeetingPoint1.png");
         	satellite = new Satellite(id_satelite, map, droneAmmount);
         	drone = new Drone(new AgentID("Drone"), map.getWidth(), map.getHeigh(), id_satelite);
         	System.out.println("MAIN : Iniciando agentes...");
