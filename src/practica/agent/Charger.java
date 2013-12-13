@@ -58,7 +58,7 @@ public class Charger extends SingleAgent {
 	}
 	
 	@Override
-	public void execute(){
+	public void execute(){ 
 		ACLMessage msg = null;
 		
 		while (true){
