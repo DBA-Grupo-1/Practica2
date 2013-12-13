@@ -3,7 +3,9 @@ package practica.agent;
 
 import java.util.ArrayList;
 import java.util.ListIterator;
+import java.util.concurrent.LinkedBlockingQueue;
 
+import edu.emory.mathcs.backport.java.util.concurrent.PriorityBlockingQueue;
 import es.upv.dsic.gti_ia.core.ACLMessage;
 import es.upv.dsic.gti_ia.core.AgentID;
 import es.upv.dsic.gti_ia.core.SingleAgent;
@@ -21,27 +23,23 @@ import practica.util.Visualizer;
 import practica.util.DroneStatus;
 
 public class Satellite extends SingleAgent {
-	private static final int QUEUE_SIZE = 50;
-	
-	private SharedMap mapOriginal, mapSeguimiento;
-	
-	private double goalPosX;
-	private double goalPosY;
-	
-	private AgentID [] subscribedDrones;
-	private DroneStatus [] droneStuses;
-	private int maxDrones;
-	private int connectedDrones;
-	
-	private MessageQueue messageQueue;
-
-	private Visualizer visualizer;
-	private boolean usingVisualizer;
-	
-	private boolean exit;
+	private SharedMap mapOriginal;					//Mapa original a partir del cual transcurre todo.
+	private SharedMap mapSeguimiento;				//Mapa que se va actualizando a medida que los drones se muevan.
+	private double goalPosX;						//Coordenada X del objetivo.
+	private double goalPosY;						//Cordenada Y del objetivo.
+	private AgentID [] drones;						//Array que contiene las IDs de los drones.
+	private DroneStatus [] droneStuses;				//Array que contiene los estados de los drones.
+	private int maxDrones;							//Número máximo de drones que acepta el satélite.
+	private int connectedDrones;					//Número de drones conectados.
+	private LinkedBlockingQueue messageQueue;		//Cola de mensajes
+	private Visualizer visualizer;					//Visualizador.
+	private boolean usingVisualizer;				//Variable para controlar si se está usando el visualizador.
+	private boolean exit;							//Variable para controlar la terminación de la ejecución del satélite.
 	
 	/**
 	 * Constructor
+	 * @author Dani
+	 * FIXME otros autores añadiros.
 	 * @param sat ID del satélite.
 	 * @param mapa mapa que se usará.
 	 * @param maxDrones número máximo de drones que aceptará el satélite.
@@ -53,13 +51,12 @@ public class Satellite extends SingleAgent {
 		exit = false;
 		mapOriginal = new SharedMap(map);
 		mapSeguimiento = new SharedMap(map);
-
-		subscribedDrones = new AgentID [maxDrones];
+		drones = new AgentID [maxDrones];
 		droneStuses = new DroneStatus [maxDrones];
 		this.maxDrones = maxDrones;
-		connectedDrones = 0;
-		
-		messageQueue = new MessageQueue(QUEUE_SIZE);
+		connectedDrones = 0;	
+		//TODO cambiar a PriorityBlockingQueue.
+		messageQueue = new LinkedBlockingQueue();
 		
 		
 		//Calcular la posición del objetivo.
@@ -83,10 +80,11 @@ public class Satellite extends SingleAgent {
 	
 	/**
 	 * Constructor con un visualizador
-	 * @param sat ID del satélite.
-	 * @param mapa mapa que se usará.
-	 * @param maxDrones número máximo de drones que aceptará el satélite.
-	 * @param v visualizador.
+	 * @author Dani
+	 * @param sat 			ID del satélite.
+	 * @param mapa 			mapa que se usará.
+	 * @param maxDrones 	número máximo de drones que aceptará el satélite.
+	 * @param v 			visualizador.
 	 * @throws Exception
 	 */
 	public Satellite(AgentID sat, Map mapa, int maxDrones, Visualizer v) throws Exception{
@@ -95,19 +93,83 @@ public class Satellite extends SingleAgent {
 		usingVisualizer = true;
 	}
 	
+	/**
+	 * Hebra de recepción de mensajes
+	 * @author Dani
+	 * @param msg mensaje recibido.
+	 */
 	public void onMessage (ACLMessage msg){
+		System.out.println("mensaje recibido!");		
 		try {
-			messageQueue.Push(msg);
-			System.out.println("mensaje recibido!");
+			messageQueue.put(msg);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		System.out.println("mensaje recibido!");		
+	}
+	
+	/**
+	 * Se envia un mensaje del tipo "typeMessag" al agente "id" con el contenido "datas".
+	 * @author Dani
+	 * FIXME: otros autores añadiros.
+	 * @param typeMessage 	Tipo del mensaje
+	 * @param id   			Identificador del destinatario
+	 * @param protocolo		Protocolo del mensaje.
+	 * @param datas			Contenido del mensaje
+	 */
+	private void send(int typeMessage, String protocol, AgentID id, JSONObject datas) {
+
+		ACLMessage msg = new ACLMessage(typeMessage);
+		msg.setSender(this.getAid());
+		msg.addReceiver(id);
+		msg.setProtocol(protocol);
+		if (datas != null)
+			msg.setContent(datas.toString());
+		else
+			msg.setContent("");
+		this.send(msg);
+	}	
+
+	/**
+	 * Se crea un mensaje del tipo FAIL para informar de algun fallo al agente dron.
+	 * FIXME otros autores añadiros.
+	 * @author Dani.
+	 * @param dron 			Identificador del agente dron.
+	 * @param cad_error 	Cadena descriptiva del error producido.
+	 */
+	private void sendError(String protocol, AgentID dron, String cad_error) {
+		JSONObject error = new JSONObject();
+
+		try {
+			error.put("fail", cad_error);
+		} catch (JSONException e) {
+			e.printStackTrace(); // esta excepcion nunca va a suceder porque la clave siempre es fail aun asi hay que capturarla y por eso no se lo comunico al dron
+		}
+		System.err.println("Agente " + this.getName() + " " + cad_error);
+
+		send(ACLMessage.FAILURE, "", dron, error);
+	}
+	
+	/**
+	 * Busca el status correspondiente a un drone.
+	 * @author Dani
+	 * @param droneID id del drone cuyo estatus se quiere obtener.
+	 * @return el status encontrado.
+	 */
+	private DroneStatus findStatus (AgentID droneID){
+		DroneStatus status = null;
 		
+		for (int i = 0; i < connectedDrones; i++)
+			if (drones[i] == droneID)
+				status =  droneStuses[i];
+		
+		return status;
 	}
 	
 	/**
 	 * Se calcula el valor del ángulo que forma la baliza y el EjeX horizontal tomando como centro
 	 * a el agente drone.
+	 * FIXME autores añadiros
 	 * @param posX Posición relativa de la baliza con respecto al drone.
 	 * @param posY Posición relativa de la baliza con respecto al drone.
 	 * @return valor del ángulo.
@@ -129,17 +191,38 @@ public class Satellite extends SingleAgent {
 		return angle;
 	}
 	
+
+	/**
+	 * Este método obtiene los valores de las celdas en las 9 casillas que rodean el drone 
+	 * (incluyendo en la que se encuentra el drone)
+	 * FIXME autores añadiros.
+	 * @return Array de enteros con las inmediaciones del drone.
+	 */
+	private int[] getSurroundings(DroneStatus status){
+		GPSLocation gps = status.getLocation();
+		int[] surroundings = new int[9];
+		int posX = gps.getPositionX();
+		int posY = gps.getPositionY();
+		
+		// Recorre desde la posición dron -1  hasta la del dron + 1, tanto en X como en Y
+		for (int i = 0; i< 3; i++){
+			for(int j = 0; j < 3; j++){
+				surroundings[i+j*3] = mapSeguimiento.getValue(posX-1+i, posY-1+j);
+			}
+		}
+		
+		return surroundings;
+	}
+	
 	/**
 	 * Creamos el objeto JSON status:
 	 * Status: {“connected”:”YES”, “ready”:”YES”, “gps”:{“x”:10,”y”:5},
 	 * “goal”:”No”, “gonio”:{“alpha”:0, “dist”:4.0}, “battery”:100,
 	 * “radar”:[0,0,0,0,0,0,0,1,1]}
-	 * 
+	 * FIXME autores añadiros.
 	 * @return Objeto JSon con el contenido de Status
 	 * @throws JSONException  Si la clave es null
 	 */
-	
-	
 	private JSONObject createJSONStatus(DroneStatus droneStatus) throws JSONException {
 		
 		GPSLocation gps = droneStatus.getLocation();
@@ -176,59 +259,14 @@ public class Satellite extends SingleAgent {
 		return status;
 	}
 
-	/**
-	 * Este método obtiene los valores de las celdas en las 9 casillas que rodean el drone 
-	 * (incluyendo en la que se encuentra el drone)
-	 * @return Array de enteros con las 
-	 */
-	private int[] getSurroundings(DroneStatus status){
-		GPSLocation gps = status.getLocation();
-		int[] surroundings = new int[9];
-		int posX = gps.getPositionX();
-		int posY = gps.getPositionY();
-		
-		// Recorre desde la posición dron -1  hasta la del dron + 1, tanto en X como en Y
-		for (int i = 0; i< 3; i++){
-			for(int j = 0; j < 3; j++){
-				surroundings[i+j*3] = mapSeguimiento.getValue(posX-1+i, posY-1+j);
-			}
-		}
-		
-		return surroundings;
-	}
-	
-	/**
-	 * Se envia un mensaje del tipo "typeMessag" al agente "id" con el contenido "datas".
-	 * @param typeMessage 	Tipo del mensaje: REQUEST, INFORM, FAIL
-	 * @param id   			Identificador del destinatario
-	 * @param datas			Contenido del mensaje
-	 */
-	private void send(int typeMessage, AgentID id, JSONObject datas) {
 
-		ACLMessage msg = new ACLMessage(typeMessage);
-		msg.setSender(this.getAid());
-		msg.addReceiver(id);
-		if (datas != null)
-			msg.setContent(datas.toString());
-		else
-			msg.setContent("");
-		this.send(msg);
-	}
-	
-	private DroneStatus findStatus (AgentID droneID){
-		DroneStatus status = null;
-		
-		for (int i = 0; i < connectedDrones; i++)
-			if (subscribedDrones[i] == droneID)
-				status =  droneStuses[i];
-		
-		return status;
-	}
 
 	/**
 	 * En función del valor recibido por el dron se actualiza el mapa interno
 	 * del satelite con la nueva posición del drone (x, y en funcion de la
 	 * dirección elegida) o se da por finalizada la comunicación.
+	 * @author Dani
+	 * FIXME: otros autores añadiros.
 	 * @param droneID		Identificador del agente dron.
 	 * @param ob		Objeto JSon con los valores de la decision del drone: 
 	 * 					-  0 : El dron decide ir al Este. 
@@ -248,8 +286,8 @@ public class Satellite extends SingleAgent {
 		try {
 			decision = ob.getInt("decision");
 		} catch (JSONException e) {
-
-			sendError(droneID, "Error de parametros en la decisión");
+			//Cambio de P3: si el JSON no está creado el satélite devuelve NOT_UNDERSTOOD en lugar de FAILURE, ya que no es culpa del satélite.
+			send(ACLMessage.NOT_UNDERSTOOD,"IMoved", droneID, null);
 			return true;
 		}
 
@@ -278,7 +316,7 @@ public class Satellite extends SingleAgent {
 		case Drone.END:
 			return true;
 		default: // Fin, No me gusta, prefiero un case para el fin y en el default sea un caso de error pero no me deja poner -1 en el case.
-			sendError(droneID, "Error al actualizar el mapa");
+			sendError("IMoved", droneID, "Error al actualizar el mapa");
 			break;
 		}
 
@@ -293,27 +331,11 @@ public class Satellite extends SingleAgent {
 		return false;
 	}
 
-	/**
-	 * Se crea un mensaje del tipo FAIL para informar de algun fallo al agente dron.
-	 * @param dron 			Identificador del agente dron.
-	 * @param cad_error 	Cadena descriptiva del error producido.
-	 */
-	private void sendError(AgentID dron, String cad_error) {
-		JSONObject error = new JSONObject();
-
-		try {
-			error.put("fail", cad_error);
-		} catch (JSONException e) {
-			e.printStackTrace(); // esta excepcion nunca va a suceder porque la clave siempre es fail aun asi hay que capturarla y por eso no se lo comunico al dron
-		}
-		System.err.println("Agente " + this.getName() + " " + cad_error);
-
-		send(ACLMessage.FAILURE, dron, error);
-
-	}
 
 	/**
-	 * Secuencia de acciones del satelite. Ver diagrama de secuencia para ver la secuencia de acciones.
+	 * Hebra de ejecución del satélite. 
+	 * @author Dani
+	 * FIXME otros autores añadiros.
 	 */
 	@Override
 	protected void execute() {
@@ -324,7 +346,7 @@ public class Satellite extends SingleAgent {
 			//Si la cola de mensajes no está vacía, saca un elemento y lo procesa.
 			if (!messageQueue.isEmpty()){
 				try {
-					proccesingMessage = messageQueue.Pop();
+					proccesingMessage = (ACLMessage) messageQueue.take();
 				} catch (InterruptedException e) {
 					System.out.println("¡Cola vacía!");
 					e.printStackTrace();
@@ -332,14 +354,11 @@ public class Satellite extends SingleAgent {
 				
 				switch (proccesingMessage.getProtocol()){
 				case "Register" : onRegister(proccesingMessage); break;
-				case "SendMeMyStatus" : 					
-					JSONObject statusJSON = onStatusQueried (proccesingMessage); 
-					send (ACLMessage.INFORM, proccesingMessage.getSender(), statusJSON);
-					
+				case "SendMeMyStatus" : 
+					onStatusQueried (proccesingMessage); 			
 					break;
 				case "IMoved" : 
 					onDroneMoved (proccesingMessage); 
-					send(ACLMessage.INFORM, proccesingMessage.getSender(), null);
 					break;
 				case "DroneReachedGoalSubscription" : onSubscribe(proccesingMessage); break;
 				case "LetMeKnowWhenSomeoneMoves" : onSubscribe(proccesingMessage); break;
@@ -357,9 +376,11 @@ public class Satellite extends SingleAgent {
 	
 
 	@Override
+	/**
+	 * FIXME autores añdiros.
+	 */
 	public void finalize() {
 		System.out.println("Agente " + this.getName() + " ha finalizado");
-		// TODO: he añadido la creación del mapa. Revisar si esto debería ir aquí o en el main de algún modo, u otro lugar
 		ImgMapConverter.mapToImg("src/maps/resutado.png", mapSeguimiento);
 	}
 
@@ -387,11 +408,22 @@ public class Satellite extends SingleAgent {
 	//TODO Implementation
 	//Esto es un placeholder y el código siguiente deberá de ser borrado/comentado por quien implemente el protocolo de comunicación inicial
 	public void onRegister (ACLMessage msg){
-		subscribedDrones[connectedDrones] = msg.getSender();
+		drones[connectedDrones] = msg.getSender();
 		droneStuses[connectedDrones] = new DroneStatus(msg.getSender(), "DroneP2", new GPSLocation());
+		connectedDrones ++;
 	}
 	
-	public JSONObject onStatusQueried(ACLMessage msg) {
+	/**
+	 * Rutina de tratamiento de un mensaje con el protocolo "SendMeMyStatus".
+	 * Los posibles mensajes que se mandan son:
+	 * - La performativa no es REQUEST => NOT_UNDERSTOOD.
+	 * - Hubo error al crear el JSON con el status => FAILURE + "Error al crear Status".
+	 * - Todo va bien => INFORM + JSON con el status del drone.
+	 * @author Dani
+	 * @param msg mensaje a tratar
+	 * @return objeto JSON a mandar.
+	 */
+	public void onStatusQueried(ACLMessage msg) {
 		//Si hay visualizador, manda actualizar su mapa.
 		if (usingVisualizer){
 			visualizer.updateMap();
@@ -399,41 +431,33 @@ public class Satellite extends SingleAgent {
 			if (visualizer.isBtnFindTargetEnabled() && !visualizer.isBtnThinkOnceEnabled())
 				visualizer.enableThinkOnce();
 		}
-		if (msg.getPerformative().equals("REQUEST")){
-			//System.out.println("Posicion: " + gps.getPositionX() + ", "+ gps.getPositionY());
-			
+		if (msg.getPerformative().equals("REQUEST")){			
 			//Construcción del objeto JSON			
 			try {				
-				//Busco el DroneStatus correspondiente a quien me mandó el mensaje
-				for (int i = 0; i < connectedDrones; i++){
-					if (subscribedDrones[i] == msg.getSender())
-						return createJSONStatus(droneStuses[i]);
-				}
+				//Mando el status en formato JSON del drone que me lo solicitó.
+				send (ACLMessage.INFORM, "SendMeMyStatus", msg.getSender(), createJSONStatus(findStatus(msg.getSender())));				
 			} catch (JSONException e) {
-				//sendError(dron, "Error al crear Status");
-				/**
-				 * @author Dani
-				 * TODO Mandar error a todos los drones.
-				 */
-				exit = true;
+				//Si hubo error al crear el objeto JSOn se manda un error.
+				sendError("SendMeMyStatus", msg.getSender(), "Error al crear Status");
 			}
 		}
 		else{
-			// El mensaje recibido es de tipo distinto a Request por tanto error
-			/**
-			 * @author Dani
-			 * TODO Mandar error a todos los drones.
-			 */
-			//sendError(dron,"Error de secuencia en la comunicación. El mensaje debe ser de tipo REQUEST");
-			exit = true;
+			// El mensaje recibido es de tipo distinto a Request, se manda un not understood.
+			send(ACLMessage.NOT_UNDERSTOOD, "SendMeMyStatus", msg.getSender(), null);
 		}
-		/**
-		 * @author Dani
-		 * TODO no me gusta este return null, ya se me ocurrirá algo mejor.
-		 */
-		return null;	
 	}
 	
+	/**
+	 * Rutina de tratamiento de un mensaje con el protocolo "IMoved"
+	 * Los posibles mensajes que se mandan son:
+	 * - La performativa no es REQUEST => NOT_UNDERSTOOD.
+	 * - Falla al crear el objeto JSON con el contenido del mensaje => FAILURE + "Error al crear objeto JSON con la decision".
+	 * - El drone ha metido un valor inválido en la decisión => NOT_UNDERSTOOD (se manda en evalueDecision).
+	 * - Hay un fallo al actualizar el mapa => FAILURE + "Error al actualizar el mapa".
+	 * - Todo va bien => INFORM.
+	 * @author Dani
+	 * @param msg mensaje a tratar.
+	 */
 	public void onDroneMoved(ACLMessage msg) {
 		if (msg.getPerformative().equals("REQUEST")){
 			if (usingVisualizer)
@@ -446,35 +470,30 @@ public class Satellite extends SingleAgent {
 			try {
 				aux = new JSONObject(msg.getContent());
 			} catch (JSONException e) {
-				/**
-				 * @author Dani
-				 * TODO Mandar error a todos los drones.
-				 */
-				//sendError(dron,"Error al crear objeto JSON con la decision");
+				sendError("IMoved", msg.getSender(),"Error al crear objeto JSON con la decision");
 			}
 
+			/**
+			 * @TODOauthor Dani
+			 * TODO no se debe de salir, sino que debe de gestionar la llegada del drone al objetivo.
+			 */
 			exit = evalueDecision(msg.getSender(), aux);
+			
+			if (!exit)
+				send(ACLMessage.INFORM, "IMoved", msg.getSender(), null);
 		}
 		else{
-			// El mensaje recibido es de tipo distinto a Request por tanto error
-			/**
-			 * @author Dani
-			 * TODO Mandar error a todos los drones.
-			 */
-			//sendError(dron,"Error de secuencia en la comunicación. El mensaje debe ser de tipo REQUEST");
-
-			exit = true;
+			// El mensaje recibido es de tipo distinto a Request, se manda un not understood.
+			send(ACLMessage.NOT_UNDERSTOOD, "IMoved", msg.getSender(), null);
 		}		
 	}
 	
 	//TODO Implementation
-	public GPSLocation onDronePositionQueried (ACLMessage msg){
-		return null;
+	public void onDronePositionQueried (ACLMessage msg){
 	}
 	
 	//TODO Implementation
-	public AgentID [] onDronesIDQueried (ACLMessage msg){
-		return null;
+	public void onDronesIDQueried (ACLMessage msg){
 	}
 	
 	//TODO Implementation
@@ -482,12 +501,10 @@ public class Satellite extends SingleAgent {
 	}
 	
 	//TODO Implementation
-	public int onDroneBatteryQueried (ACLMessage msg){
-		return (Integer) null;
+	public void onDroneBatteryQueried (ACLMessage msg){
 	}
 	
 	//TODO Implementation
-	public float onDroneDistanceQueried (ACLMessage msg){
-		return (Float) null;
+	public void onDroneDistanceQueried (ACLMessage msg){
 	}
 }
