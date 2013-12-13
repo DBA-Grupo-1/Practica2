@@ -74,7 +74,7 @@ public class Charger extends SingleAgent {
 				case "Get-Battery":
 					try {
 						onBatteryRequest(msg);
-					} catch (JSONException e) {
+					} catch (JSONException e) {  
 						JSONObject error = new JSONObject();
 						try {
 							error.put("error", "Error en la estructura del content");
