@@ -39,17 +39,29 @@ public class SharedMap extends Map{
 	}
 	
 	public void setValue(int x, int y, int value, AgentID id) throws Exception{
+		//FIXME
+		//Esto esta ya en la clase Map.
 		if(x < 0 || x >= this.getWidth() || y < 0 || y >= this.getHeigh()){
 			throw new Exception("La posición ("+x+", "+y+") no se encuentra dentro de los límites del mapa");
 		}
 		
+		//FIXME
+		//Deberias llamar a la funcion de la clase superior para poner el valor.
+		
+		//FIXME
+		//Esto solo si value == VISITADO
 		sharedSquares[y][x].addVisitingAgent(id);
 	}
 	
 	@Override
 	public void setValue(int x, int y, int value) throws Exception {
+		//FIXME
+		//ESto solo si value == VISITADO
 		throw new Exception("Excepción en SharedMap.setValue - Debe indicarse el ID del agente");
+		
+		//FIXME Si value!= VISITADO entonces llama a la funcion de la clase superior
 	}
+
 	
 	public ArrayList<AgentID> getVisitingAgents(int x, int y){
 		return sharedSquares[y][x].getVisitingAgents();
