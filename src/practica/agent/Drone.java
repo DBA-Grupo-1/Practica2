@@ -171,7 +171,7 @@ public class Drone extends SingleAgent {
 			getStatus();
 			
 			decision = think();
-			
+			System.out.println(""+decision);
 			//Por si las moscas
 			if(decision != NO_DEC){
 				sendDecision(decision);
@@ -179,7 +179,42 @@ public class Drone extends SingleAgent {
 				postUpdateTrace();
 			}
 		}while(decision != END_FAIL && decision != END_SUCCESS);
+	}
+	
+	/**
+	 * Recibe el mensaje y lo encola. La decision de a que cola mandarlo depende enteramente del protocolo del mensaje (campo protocol).<br>
+	 * Estado actual:<br>
+	 * answerQueue -> SendMeMyStatus, IMoved<br>
+	 * requestQueue -> BatteryQuery, TraceQuery, DroneReachedGoal, DroneRecharged
+	 * @param msg Mensaje recibido
+	 */
+	@Override
+	public void onMessage(ACLMessage msg){
+		BlockingQueue<ACLMessage> queue = null;
 		
+		switch(msg.getProtocol()){
+		case "SendMeMyStatus":
+		case "IMoved":
+			queue = answerQueue;
+			break;
+		case "BatteryQuery":
+		case "TraceQuery":
+		case "DroneReachedGoal":
+		case "DroneRecharged":
+			queue = answerQueue;
+			break;
+		default:
+			send(ACLMessage.NOT_UNDERSTOOD, msg.getProtocol(), msg.getSender(), null);
+			break;
+		}
+		
+		if(queue != null){
+			try {
+				queue.put(msg);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	/**
@@ -1306,6 +1341,7 @@ public class Drone extends SingleAgent {
 	@Override
 	public void finalize() {
 		System.out.println("Agente " + this.getName() + " ha finalizado");
+		practica.util.ImgMapConverter.mapToImg("src/maps/miresultado.png", droneMap);
 		super.finalize();
 	}
 
