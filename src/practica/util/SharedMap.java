@@ -9,6 +9,15 @@ public class SharedMap extends Map{
 
 	public SharedMap(int heigh, int width) {
 		super(heigh, width);
+		initialize(heigh, width);
+	}
+
+	public SharedMap(Map other) {
+		super(other);
+		initialize(other.getHeigh(),other.getWidth());
+	}
+	
+	private void initialize(int heigh, int width){
 		sharedSquares = new SharedSquare[heigh][width];
 		
 		// Inicializo todas las casillas con SharedSquare vacíos
@@ -17,12 +26,6 @@ public class SharedMap extends Map{
 				sharedSquares[y][x] = new SharedSquare();
 			}
 		}
-	}
-
-	public SharedMap(Map other) {
-		//FIXME Este tambien lo tienes que cambiar
-		//Ademas de esta llamada llama al constructor de copia de la superior
-		this(other.getHeigh(), other.getWidth());
 	}
 	
 	public SharedMap(SharedMap other) {
