@@ -60,11 +60,6 @@ public class Launcher {
             System.out.println("Main: Creando agentes");
             //PARTE CONFLICTIVA
         	map = ImgMapConverter.imgToMap("src/maps/map2.png");
-        	System.out.println("Fuera de Launcher");
-    		/*for (int i = 0; i < map.getHeigh(); i++)
-    			for (int j = 0; j < map.getWidth(); j++)
-    				if (map.getValue(i, j) != map.LIBRE)
-    					System.out.println(map.getValue(i, j));		*/
     		ImgMapConverter.mapToImg("src/maps/pruebaoriginal.png", map);
         	satellite = new Satellite(id_satelite, map, droneAmmount);
         	drone = new Drone(new AgentID("Drone"), map.getWidth(), map.getHeigh(), id_satelite);

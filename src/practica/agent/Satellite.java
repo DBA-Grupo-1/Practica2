@@ -72,8 +72,6 @@ public class Satellite extends SingleAgent {
 		float horizontalPositions = 0, verticalPositions = 0, adjacentSquares=0;
 		for(int i = 0; i < mapOriginal.getHeigh(); i ++)
 		    for(int j = 0; j < mapOriginal.getWidth(); j ++){
-		    	if (mapOriginal.getValue(j,i) != Map.LIBRE)
-		    	System.out.println(mapOriginal.getValue(j, i));
 		        if(mapOriginal.getValue(j,i) == Map.OBJETIVO){
 		            horizontalPositions += j;
 		            verticalPositions += i;
@@ -364,6 +362,7 @@ public class Satellite extends SingleAgent {
 					System.out.println("¡Cola vacía!");
 					e.printStackTrace();
 				}
+				System.out.println("Procesando mensaje: protocolo " + proccesingMessage.getProtocol());
 				switch (proccesingMessage.getProtocol()){
 					case "Register" : onRegister(proccesingMessage); break;
 					case "SendMeMyStatus" : 
