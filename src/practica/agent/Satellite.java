@@ -23,8 +23,12 @@ import practica.util.Visualizer;
 import practica.util.DroneStatus;
 
 public class Satellite extends SingleAgent {
-	private SharedMap mapOriginal;					//Mapa original a partir del cual transcurre todo.
-	private SharedMap mapSeguimiento;				//Mapa que se va actualizando a medida que los drones se muevan.
+	/**
+	 * TODOauthor Dani
+	 * TODO cambiar a SharedMap cuando esté arreglado.
+	 */
+	private Map mapOriginal;						//Mapa original a partir del cual transcurre todo.
+	private Map mapSeguimiento;						//Mapa que se va actualizando a medida que los drones se muevan.
 	private double goalPosX;						//Coordenada X del objetivo.
 	private double goalPosY;						//Cordenada Y del objetivo.
 	private AgentID [] drones;						//Array que contiene las IDs de los drones.
@@ -49,8 +53,12 @@ public class Satellite extends SingleAgent {
 		//Inicialización de atributos.
 		super(sat);
 		exit = false;
-		mapOriginal = new SharedMap(map);
-		mapSeguimiento = new SharedMap(map);
+		/**
+		 * @TODOauthor Dani
+		 * TODO cambiar a SharedMap cuando esté arreglado.
+		 */
+		mapOriginal = new Map(map);
+		mapSeguimiento = new Map(map);
 		drones = new AgentID [maxDrones];
 		droneStuses = new DroneStatus [maxDrones];
 		this.maxDrones = maxDrones;
@@ -62,10 +70,8 @@ public class Satellite extends SingleAgent {
 		//Calcular la posición del objetivo.
 		//Se suman todas las posiciones que contienen un objetivo y se halla la media.
 		float horizontalPositions = 0, verticalPositions = 0, adjacentSquares=0;
-		
 		for(int i = 0; i < mapOriginal.getHeigh(); i ++)
 		    for(int j = 0; j < mapOriginal.getWidth(); j ++){
-		    	//System.out.println(mapOriginal.getValue(j, i));
 		        if(mapOriginal.getValue(j,i) == Map.OBJETIVO){
 		            horizontalPositions += j;
 		            verticalPositions += i;
@@ -323,7 +329,11 @@ public class Satellite extends SingleAgent {
 		try {
 			gps.setPositionX(x);
 			gps.setPositionY(y);
-			mapSeguimiento.setValue(x, y, Map.VISITADO, droneID);
+			/**
+			 * @TOODauthor Dani
+			 * TODO cambiar al método setValue de la clase SharedMap, añadiendo como  4º argumento la id del drone.
+			 */
+			mapSeguimiento.setValue(x, y, Map.VISITADO);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -352,6 +362,7 @@ public class Satellite extends SingleAgent {
 					System.out.println("¡Cola vacía!");
 					e.printStackTrace();
 				}
+				System.out.println("Procesando mensaje: protocolo " + proccesingMessage.getProtocol());
 				switch (proccesingMessage.getProtocol()){
 					case "Register" : onRegister(proccesingMessage); break;
 					case "SendMeMyStatus" : 
@@ -446,7 +457,7 @@ public class Satellite extends SingleAgent {
 				//Mando el status en formato JSON del drone que me lo solicitó.
 				send (ACLMessage.INFORM, "SendMeMyStatus", msg.getSender(), createJSONStatus(findStatus(msg.getSender())));		
 
-				System.out.println("Aquí estoy");
+				System.out.println("Mensaje mandado con su status.");
 			} catch (JSONException e) {
 				//Si hubo error al crear el objeto JSOn se manda un error.
 				e.printStackTrace();

@@ -58,7 +58,9 @@ public class Launcher {
 	public void launchWithoutVisualizer(){
         try{
             System.out.println("Main: Creando agentes");
-        	map = ImgMapConverter.imgToMap("src/maps/MeetingPoint1.png");
+            //PARTE CONFLICTIVA
+        	map = ImgMapConverter.imgToMap("src/maps/map2.png");
+    		ImgMapConverter.mapToImg("src/maps/pruebaoriginal.png", map);
         	satellite = new Satellite(id_satelite, map, droneAmmount);
         	drone = new Drone(new AgentID("Drone"), map.getWidth(), map.getHeigh(), id_satelite);
         	System.out.println("MAIN : Iniciando agentes...");
