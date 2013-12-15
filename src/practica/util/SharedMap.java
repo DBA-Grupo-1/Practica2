@@ -20,6 +20,8 @@ public class SharedMap extends Map{
 	}
 
 	public SharedMap(Map other) {
+		//FIXME Este tambien lo tienes que cambiar
+		//Ademas de esta llamada llama al constructor de copia de la superior
 		this(other.getHeigh(), other.getWidth());
 	}
 	
@@ -33,6 +35,7 @@ public class SharedMap extends Map{
 		
 		for(int x=0; x<width; x++){
 			for(int y=0; y<heigh; y++){
+				//FIXME Seria mejor una copia de valor
 				sharedSquares[y][x] = new SharedSquare(otherSS[x][y]);
 			}
 		}
