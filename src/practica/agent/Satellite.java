@@ -23,12 +23,8 @@ import practica.util.Visualizer;
 import practica.util.DroneStatus;
 
 public class Satellite extends SingleAgent {
-	/**
-	 * TODOauthor Dani
-	 * TODO cambiar a SharedMap cuando esté arreglado.
-	 */
-	private Map mapOriginal;						//Mapa original a partir del cual transcurre todo.
-	private Map mapSeguimiento;						//Mapa que se va actualizando a medida que los drones se muevan.
+	private SharedMap mapOriginal;						//Mapa original a partir del cual transcurre todo.
+	private SharedMap mapSeguimiento;						//Mapa que se va actualizando a medida que los drones se muevan.
 	private double goalPosX;						//Coordenada X del objetivo.
 	private double goalPosY;						//Cordenada Y del objetivo.
 	private AgentID [] drones;						//Array que contiene las IDs de los drones.
@@ -53,12 +49,8 @@ public class Satellite extends SingleAgent {
 		//Inicialización de atributos.
 		super(sat);
 		exit = false;
-		/**
-		 * @TODOauthor Dani
-		 * TODO cambiar a SharedMap cuando esté arreglado.
-		 */
-		mapOriginal = new Map(map);
-		mapSeguimiento = new Map(map);
+		mapOriginal = new SharedMap(map);
+		mapSeguimiento = new SharedMap(map);
 		drones = new AgentID [maxDrones];
 		droneStuses = new DroneStatus [maxDrones];
 		this.maxDrones = maxDrones;
@@ -166,7 +158,6 @@ public class Satellite extends SingleAgent {
 		DroneStatus status = null;
 
 		for (int i = 0; i < connectedDrones; i++){
-			//FIXME if (drones[i] == droneID) 
 			if (drones[i].toString().equals(droneID.toString()))
 				status =  droneStuses[i];
 		}
@@ -320,9 +311,8 @@ public class Satellite extends SingleAgent {
 			x = gps.getPositionX();
 			y = gps.getPositionY() - 1;
 			break;
-
-			//FIXME He usado los nuevos valores de fin. Estan asi porque pense que esta vez al satelite si le interesaba diferenciar.
 		case Drone.END_SUCCESS:
+			return true;
 		case Drone.END_FAIL:
 			return true;
 		default: // Fin, No me gusta, prefiero un case para el fin y en el default sea un caso de error pero no me deja poner -1 en el case.
@@ -333,11 +323,7 @@ public class Satellite extends SingleAgent {
 		try {
 			gps.setPositionX(x);
 			gps.setPositionY(y);
-			/**
-			 * @TOODauthor Dani
-			 * TODO cambiar al método setValue de la clase SharedMap, añadiendo como  4º argumento la id del drone.
-			 */
-			mapSeguimiento.setValue(x, y, Map.VISITADO);
+			mapSeguimiento.setValue(x, y, Map.VISITADO, droneID);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -354,7 +340,6 @@ public class Satellite extends SingleAgent {
 	@Override
 	protected void execute() {
 		ACLMessage proccesingMessage = null;
-		boolean exit = false;
 		System.out.println("Agente " + this.getName() + " en ejecución");
 		
 		while (!exit) {
