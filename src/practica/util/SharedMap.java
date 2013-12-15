@@ -6,7 +6,7 @@ import es.upv.dsic.gti_ia.core.AgentID;
 
 public class SharedMap extends Map{
 	private SharedSquare sharedSquares[][];
-	
+
 	public SharedMap(int heigh, int width) {
 		super(heigh, width);
 		sharedSquares = new SharedSquare[heigh][width];
@@ -24,7 +24,18 @@ public class SharedMap extends Map{
 	}
 	
 	public SharedMap(SharedMap other) {
-		this(other.getHeigh(), other.getWidth());
+		super(other.getHeigh(), other.getWidth());
+		int width, heigh;
+		width = other.getWidth();
+		heigh = other.getHeigh();
+		sharedSquares = new SharedSquare[heigh][width];
+		SharedSquare otherSS[][] = other.getSharedSquares();
+		
+		for(int x=0; x<width; x++){
+			for(int y=0; y<heigh; y++){
+				sharedSquares[y][x] = new SharedSquare(otherSS[x][y]);
+			}
+		}
 	}
 	
 	public void setValue(int x, int y, int value, AgentID id) throws Exception{
@@ -46,6 +57,10 @@ public class SharedMap extends Map{
 	
 	public ArrayList<BadChoice> getBadChoices(int x, int y){
 		return sharedSquares[y][x].getBadChoices();
+	}
+	
+	public SharedSquare[][] getSharedSquares() {
+		return sharedSquares;
 	}
 	
 	public void addBadChoice(int x, int y, BadChoice bc){

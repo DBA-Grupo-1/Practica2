@@ -13,6 +13,18 @@ public class SharedSquare {
 		badChoices = new ArrayList<BadChoice>();
 	}
 	
+	public SharedSquare(SharedSquare ss){
+		this();
+		ArrayList<AgentID> auxAid = ss.getVisitingAgents();
+		ArrayList<BadChoice> auxBC = ss.getBadChoices();
+		for(AgentID aid : auxAid){
+			this.visitingAgents.add(aid);
+		}
+		for(BadChoice bc : auxBC){
+			this.badChoices.add(bc);
+		}
+	}
+	
 	public ArrayList<AgentID> getVisitingAgents(){
 		return visitingAgents;
 	}
