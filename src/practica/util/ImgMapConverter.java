@@ -40,8 +40,8 @@ public abstract class ImgMapConverter {
 				}
 				
 				try {
-					if (value != map.LIBRE)
-						System.out.println(value);
+					/*if (value != map.LIBRE)
+						System.out.println(value);*/
 					map.setValue(i, j, value);
 				} catch (Exception e) {
 					e.printStackTrace();

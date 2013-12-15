@@ -458,7 +458,7 @@ public class Satellite extends SingleAgent {
 				//Mando el status en formato JSON del drone que me lo solicitó.
 				send (ACLMessage.INFORM, "SendMeMyStatus", msg.getSender(), createJSONStatus(findStatus(msg.getSender())));		
 
-				System.out.println("Aquí estoy");
+				System.out.println("Mensaje mandado con su status.");
 			} catch (JSONException e) {
 				//Si hubo error al crear el objeto JSOn se manda un error.
 				e.printStackTrace();
