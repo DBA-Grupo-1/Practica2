@@ -83,7 +83,7 @@ public class Map {
 		if(x < 0 || x >= this.width || y < 0 || y >= this.heigh){
 			throw new Exception("La posición ("+x+", "+y+") no se encuentra dentro de los límites del mapa");
 		}
-		//FIXME No llegas a pones el valor en la matriz
+		matrix[y][x] = value;
 	}
 
 }
