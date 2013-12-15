@@ -65,6 +65,7 @@ public class Satellite extends SingleAgent {
 		
 		for(int i = 0; i < mapOriginal.getHeigh(); i ++)
 		    for(int j = 0; j < mapOriginal.getWidth(); j ++){
+		    	//System.out.println(mapOriginal.getValue(j, i));
 		        if(mapOriginal.getValue(j,i) == Map.OBJETIVO){
 		            horizontalPositions += j;
 		            verticalPositions += i;
@@ -98,14 +99,13 @@ public class Satellite extends SingleAgent {
 	 * @author Dani
 	 * @param msg mensaje recibido.
 	 */
-	public void onMessage (ACLMessage msg){
-		System.out.println("mensaje recibido!");		
+	public void onMessage (ACLMessage msg){	
 		try {
 			messageQueue.put(msg);
+			System.out.println("mensaje recibido!");	
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-		}
-		System.out.println("mensaje recibido!");		
+		}	
 	}
 	
 	/**
@@ -342,33 +342,33 @@ public class Satellite extends SingleAgent {
 		ACLMessage proccesingMessage = null;
 		boolean exit = false;
 		System.out.println("Agente " + this.getName() + " en ejecución");
+		
 		while (!exit) {
 			//Si la cola de mensajes no está vacía, saca un elemento y lo procesa.
-			if (!messageQueue.isEmpty()){
+			if (!messageQueue.isEmpty()){				
 				try {
 					proccesingMessage = (ACLMessage) messageQueue.take();
 				} catch (InterruptedException e) {
 					System.out.println("¡Cola vacía!");
 					e.printStackTrace();
 				}
-				
 				switch (proccesingMessage.getProtocol()){
-				case "Register" : onRegister(proccesingMessage); break;
-				case "SendMeMyStatus" : 
-					onStatusQueried (proccesingMessage); 			
-					break;
-				case "IMoved" : 
-					onDroneMoved (proccesingMessage); 
-					break;
-				case "DroneReachedGoalSubscription" : onSubscribe(proccesingMessage); break;
-				case "LetMeKnowWhenSomeoneMoves" : onSubscribe(proccesingMessage); break;
-				case "SendOriginalMap" : onMapQueried(proccesingMessage); break;
-				case "SendSharedMap" : onMapQueried(proccesingMessage); break;
-				case "SendAllDroneIDs" : onDronesIDQueried(proccesingMessage); break;
-				case "SendPositionOfDrone" : onDronePositionQueried(proccesingMessage); break;
-				case "SendDistanceOfDrone" : onDroneDistanceQueried(proccesingMessage); break;
-				case "SendBateryOfDrone" : onDroneBatteryQueried(proccesingMessage); break;
-				}				
+					case "Register" : onRegister(proccesingMessage); break;
+					case "SendMeMyStatus" : 
+						onStatusQueried (proccesingMessage); 			
+						break;
+					case "IMoved" : 
+						onDroneMoved (proccesingMessage); 
+						break;
+					case "DroneReachedGoalSubscription" : onSubscribe(proccesingMessage); break;
+					case "LetMeKnowWhenSomeoneMoves" : onSubscribe(proccesingMessage); break;
+					case "SendOriginalMap" : onMapQueried(proccesingMessage); break;
+					case "SendSharedMap" : onMapQueried(proccesingMessage); break;
+					case "SendAllDroneIDs" : onDronesIDQueried(proccesingMessage); break;
+					case "SendPositionOfDrone" : onDronePositionQueried(proccesingMessage); break;
+					case "SendDistanceOfDrone" : onDroneDistanceQueried(proccesingMessage); break;
+					case "SendBateryOfDrone" : onDroneBatteryQueried(proccesingMessage); break;
+				}		
 			}
 		}
 	}
@@ -424,6 +424,13 @@ public class Satellite extends SingleAgent {
 	 * @return objeto JSON a mandar.
 	 */
 	public void onStatusQueried(ACLMessage msg) {
+		/**
+		 * @TODOauthor Dani
+		 * TODO Esto es completamente temporal y tendrá que ser eliminado cuando se implemente el protocolo inicial.
+		 */
+		if (connectedDrones == 0){
+			onRegister(msg);
+		}
 		//Si hay visualizador, manda actualizar su mapa.
 		if (usingVisualizer){
 			visualizer.updateMap();
@@ -431,13 +438,18 @@ public class Satellite extends SingleAgent {
 			if (visualizer.isBtnFindTargetEnabled() && !visualizer.isBtnThinkOnceEnabled())
 				visualizer.enableThinkOnce();
 		}
+
 		if (msg.getPerformative().equals("REQUEST")){			
 			//Construcción del objeto JSON			
+			
 			try {				
 				//Mando el status en formato JSON del drone que me lo solicitó.
-				send (ACLMessage.INFORM, "SendMeMyStatus", msg.getSender(), createJSONStatus(findStatus(msg.getSender())));				
+				send (ACLMessage.INFORM, "SendMeMyStatus", msg.getSender(), createJSONStatus(findStatus(msg.getSender())));		
+
+				System.out.println("Aquí estoy");
 			} catch (JSONException e) {
 				//Si hubo error al crear el objeto JSOn se manda un error.
+				e.printStackTrace();
 				sendError("SendMeMyStatus", msg.getSender(), "Error al crear Status");
 			}
 		}
