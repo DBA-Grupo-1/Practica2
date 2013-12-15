@@ -183,6 +183,42 @@ public class Drone extends SingleAgent {
 	}
 	
 	/**
+	 * Recibe el mensaje y lo encola. La decision de a que cola mandarlo depende enteramente del protocolo del mensaje (campo protocol).<br>
+	 * Estado actual:<br>
+	 * answerQueue -> SendMeMyStatus, IMoved<br>
+	 * requestQueue -> BatteryQuery, TraceQuery, DroneReachedGoal, DroneRecharged
+	 * @param msg Mensaje recibido
+	 */
+	@Override
+	public void onMessage(ACLMessage msg){
+		BlockingQueue<ACLMessage> queue = null;
+		
+		switch(msg.getProtocol()){
+		case "SendMeMyStatus":
+		case "IMoved":
+			queue = answerQueue;
+			break;
+		case "BatteryQuery":
+		case "TraceQuery":
+		case "DroneReachedGoal":
+		case "DroneRecharged":
+			queue = answerQueue;
+			break;
+		default:
+			send(ACLMessage.NOT_UNDERSTOOD, msg.getProtocol(), msg.getSender(), null);
+			break;
+		}
+		
+		if(queue != null){
+			try {
+				queue.put(msg);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	/**
 	 * Lanza el despachador.
 	 */
 	protected void startDispatcher() {
