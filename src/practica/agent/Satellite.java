@@ -164,10 +164,12 @@ public class Satellite extends SingleAgent {
 	 */
 	private DroneStatus findStatus (AgentID droneID){
 		DroneStatus status = null;
-		
-		for (int i = 0; i < connectedDrones; i++)
-			if (drones[i] == droneID)
+
+		for (int i = 0; i < connectedDrones; i++){
+			//FIXME if (drones[i] == droneID) 
+			if (drones[i].toString().equals(droneID.toString()))
 				status =  droneStuses[i];
+		}
 		
 		return status;
 	}
@@ -319,7 +321,9 @@ public class Satellite extends SingleAgent {
 			y = gps.getPositionY() - 1;
 			break;
 
-		case Drone.END:
+			//FIXME He usado los nuevos valores de fin. Estan asi porque pense que esta vez al satelite si le interesaba diferenciar.
+		case Drone.END_SUCCESS:
+		case Drone.END_FAIL:
 			return true;
 		default: // Fin, No me gusta, prefiero un case para el fin y en el default sea un caso de error pero no me deja poner -1 en el case.
 			sendError("IMoved", droneID, "Error al actualizar el mapa");
@@ -501,8 +505,7 @@ public class Satellite extends SingleAgent {
 			 * TODO no se debe de salir, sino que debe de gestionar la llegada del drone al objetivo.
 			 */
 			exit = evalueDecision(msg.getSender(), aux);
-			
-			if (!exit)
+			//FIXME if (!exit) (enviar incluso cuando ha terminado
 				send(ACLMessage.INFORM, "IMoved", msg.getSender(), null);
 		}
 		else{

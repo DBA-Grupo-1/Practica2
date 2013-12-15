@@ -171,7 +171,7 @@ public class Drone extends SingleAgent {
 			getStatus();
 			
 			decision = think();
-			
+			System.out.println(""+decision);
 			//Por si las moscas
 			if(decision != NO_DEC){
 				sendDecision(decision);
@@ -179,7 +179,6 @@ public class Drone extends SingleAgent {
 				postUpdateTrace();
 			}
 		}while(decision != END_FAIL && decision != END_SUCCESS);
-		
 	}
 	
 	/**
@@ -1342,6 +1341,7 @@ public class Drone extends SingleAgent {
 	@Override
 	public void finalize() {
 		System.out.println("Agente " + this.getName() + " ha finalizado");
+		practica.util.ImgMapConverter.mapToImg("src/maps/miresultado.png", droneMap);
 		super.finalize();
 	}
 
