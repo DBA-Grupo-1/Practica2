@@ -8,6 +8,7 @@ import java.util.List;
 import practica.util.Map;
 import practica.util.Pair;
 import practica.util.Trace;
+import es.upv.dsic.gti_ia.architecture.FIPAException;
 import es.upv.dsic.gti_ia.core.AgentID;
 import es.upv.dsic.gti_ia.core.SingleAgent;
 import es.upv.dsic.gti_ia.core.ACLMessage;
@@ -803,6 +804,8 @@ public class Drone extends SingleAgent {
 				send(ACLMessage.NOT_UNDERSTOOD, protocol, msg.getSender(), null);
 				break;
 			}
+		}catch(FIPAException fe){
+			sendError(fe, msg);
 		}catch(IllegalArgumentException e){
 			res = treatMessageError(msg, e);
 		}catch(RuntimeException e){
@@ -812,6 +815,26 @@ public class Drone extends SingleAgent {
 		return res;
 	}
 	
+	
+	private void sendError(FIPAException fe, ACLMessage msgOrig) {
+		ACLMessage msgError = fe.getACLMessage();
+		JSONObject content = new JSONObject();
+		
+		try {
+			content.put("error",fe.getMessage());
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		
+		msgError.addReceiver(msgOrig.getSender());
+		msgError.setContent(content.toString());
+		msgError.setProtocol(msgOrig.getProtocol());
+		msgError.setConversationId(msgOrig.getConversationId());
+		msgError.setInReplyTo(msgOrig.getReplyWith());
+		
+		this.send(msgError);
+	}
+
 	/**
 	 * Comportamiento ante un error en un mensaje recibido por el dispatcher.
 	 * @param msg Mensaje recibido
@@ -868,7 +891,7 @@ public class Drone extends SingleAgent {
 	 * @throws IllegalArgumentException En caso de error en el mensaje original (performativa equivocada, content erroneo...).
 	 * @throws RuntimeException En caso de error en el procesamiento del mensaje (comportamiento del drone ante el mensaje).
 	 */
-	protected void onDroneChargedInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException {
+	protected void onDroneChargedInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException {
 		// TODO Auto-generated method stub
 		
 	}
@@ -879,7 +902,7 @@ public class Drone extends SingleAgent {
 	 * @throws IllegalArgumentException En caso de error en el mensaje original (performativa equivocada, content erroneo...).
 	 * @throws RuntimeException En caso de error en el procesamiento del mensaje (comportamiento del drone ante el mensaje).
 	 */
-	protected void onDroneReachedGoalInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException {
+	protected void onDroneReachedGoalInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException {
 		// TODO Auto-generated method stub
 	}
 
@@ -890,7 +913,7 @@ public class Drone extends SingleAgent {
 	 * @throws IllegalArgumentException En caso de error en el mensaje original (performativa equivocada, content erroneo...).
 	 * @throws RuntimeException En caso de error en el procesamiento del mensaje (comportamiento del drone ante el mensaje).
 	 */
-	protected Trace onTraceQueried(ACLMessage msg) throws IllegalArgumentException, RuntimeException {
+	protected Trace onTraceQueried(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -902,7 +925,7 @@ public class Drone extends SingleAgent {
 	 * @throws IllegalArgumentException En caso de error en el mensaje original (performativa equivocada, content erroneo...).
 	 * @throws RuntimeException En caso de error en el procesamiento del mensaje (comportamiento del drone ante el mensaje).
 	 */
-	protected int onBatteryQueried(ACLMessage msg) throws IllegalArgumentException, RuntimeException{
+	protected int onBatteryQueried(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException{
 		// TODO Auto-generated method stub
 		return 0;
 	}
