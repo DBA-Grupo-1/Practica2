@@ -24,7 +24,6 @@ import practica.util.MessageQueue;
 import practica.util.SharedMap;
 import practica.util.Visualizer;
 import practica.util.DroneStatus;
-import practica.util.protocolLibrary;
 
 public class Satellite extends SingleAgent {
 	private SharedMap mapOriginal;						//Mapa original a partir del cual transcurre todo.
@@ -134,19 +133,19 @@ public class Satellite extends SingleAgent {
 		msg.setSender(this.getAid());
 		msg.addReceiver(id);
 		
-		if (replyWith.isEmpty() || replyWith == null) //Doble comprobación, nunca está de más.
+		if (/*replyWith.isEmpty() ||*/ replyWith == null) //Doble comprobación, nunca está de más.
 			msg.setReplyWith("");
 		else
 			msg.setProtocol(protocol);
 		msg.setInReplyTo(replyWith);
 		
-		if (inReplyTo.isEmpty() || inReplyTo == null) //Doble comprobación, nunca está de más.
+		if (/*inReplyTo.isEmpty() ||*/ inReplyTo == null) //Doble comprobación, nunca está de más.
 			msg.setInReplyTo("");
 		else
 			msg.setProtocol(protocol);
 		msg.setInReplyTo(inReplyTo);
 		
-		if (conversationId.isEmpty() || conversationId == null) //Doble comprobación, nunca está de más.
+		if (/*conversationId.isEmpty() ||*/ conversationId == null) //Doble comprobación, nunca está de más.
 			msg.setConversationId("");
 		else
 			msg.setProtocol(protocol);
@@ -338,34 +337,41 @@ public class Satellite extends SingleAgent {
 		}
 
 		switch (decision) {
-
-		case Drone.ESTE: // Este
-			x = gps.getPositionX() + 1;
-			y = gps.getPositionY();
-			break;
-
-		case Drone.SUR: // Sur
-			x = gps.getPositionX();
-			y = gps.getPositionY() + 1;
-			break;
-
-		case Drone.OESTE: // Oeste
-			x = gps.getPositionX() - 1;
-			y = gps.getPositionY();
-			break;
-
-		case Drone.NORTE: // Norte
-			x = gps.getPositionX();
-			y = gps.getPositionY() - 1;
-			break;
-		case Drone.END_SUCCESS:
-			return true;
-		case Drone.END_FAIL:
-			return true;
-		default: // Fin, No me gusta, prefiero un case para el fin y en el default sea un caso de error pero no me deja poner -1 en el case.
-			//sendError("IMoved", droneID, "Error al actualizar el mapa");
-			break;
+			case Drone.ESTE: // Este
+				x = gps.getPositionX() + 1;
+				y = gps.getPositionY();
+				break;
+	
+			case Drone.SUR: // Sur
+				x = gps.getPositionX();
+				y = gps.getPositionY() + 1;
+				break;
+	
+			case Drone.OESTE: // Oeste
+				x = gps.getPositionX() - 1;
+				y = gps.getPositionY();
+				break;
+	
+			case Drone.NORTE: // Norte
+				x = gps.getPositionX();
+				y = gps.getPositionY() - 1;
+				break;
+			case Drone.END_SUCCESS:
+				return true;
+			case Drone.END_FAIL:
+				return true;
+			default: // Fin, No me gusta, prefiero un case para el fin y en el default sea un caso de error pero no me deja poner -1 en el case.
+				/**
+				 * @TODOauthor Dani
+				 * TODO mandar error.
+				 */
+				//sendError("IMoved", droneID, "Error al actualizar el mapa");
+				break;
 		}
+		//Actualizar status
+		//Si se movió, consumir una unidad de batería.
+		if (decision == Drone.ESTE || decision == Drone.SUR || decision == Drone.OESTE || decision == Drone.NORTE)
+			droneStatus.setBattery(droneStatus.getBattery() - 1);
 
 		try {
 			gps.setPositionX(x);
@@ -404,7 +410,7 @@ public class Satellite extends SingleAgent {
 					case "SendMeMyStatus" : 
 						onStatusQueried (proccesingMessage); 			
 						break;
-					case protocolLibrary.droneMovementProtocol : 
+					case "IMoved" : 
 						onDroneMoved (proccesingMessage); 
 						break;
 					case "DroneReachedGoalSubscription" : onSubscribe(proccesingMessage); break;
@@ -563,13 +569,15 @@ public class Satellite extends SingleAgent {
 				//sendError("IMoved", msg.getSender(),"Error al crear objeto JSON con la decision");
 			}
 
-			/**
-			 * @TODOauthor Dani
-			 * TODO no se debe de salir, sino que debe de gestionar la llegada del drone al objetivo.
-			 */
 			exit = evalueDecision(msg);
 			send(ACLMessage.INFORM, msg.getSender(), "IMoved", null, msg.getReplyWith(), msg.getConversationId(), null);				
-				exit=false;
+			
+			/**
+			 * @TODOauthor Dani
+			 * Cambiar esta línea por la gestión de la finalización
+			 */
+			exit=false;
+				
 		}
 		else{
 			// El mensaje recibido es de tipo distinto a Request, se manda un not understood.

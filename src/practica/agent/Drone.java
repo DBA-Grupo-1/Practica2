@@ -64,6 +64,8 @@ public class Drone extends SingleAgent {
 	protected Map droneMap;
 	protected float distanceMin;
 	protected int counterStop;
+	/** Decisión de pedir batería */
+	public static final int ASK_FOR_BATTERY = 4;
 	/** Decision de mover al norte */
 	public static final int NORTE = 3;
 	/** Decision de mover al oeste */
@@ -597,6 +599,7 @@ public class Drone extends SingleAgent {
 	
 	/**
 	 * Comportamiento critico del drone. Es el primero en ejecutarse al recorrer los comportamientos.
+	 * @author Dani
 	 * @param listaMovimientos Lista de movimientos a analizar
 	 * @param args Argumentos adicionales
 	 * @return Decision tomada
