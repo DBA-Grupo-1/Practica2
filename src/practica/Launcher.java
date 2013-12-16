@@ -17,6 +17,7 @@ public class Launcher {
 	Drone drone;
 	Visualizer visualizer;
 	Map map;
+	Charger charger;
 	static int droneAmmount;
 
 	public static void main(String[] args) {
@@ -45,10 +46,12 @@ public class Launcher {
         	map = visualizer.getMapToLoad();
         	satellite = new Satellite(id_satelite, map, droneAmmount, visualizer);
         	drone = new Drone(new AgentID("Drone"), map.getWidth(), map.getHeigh(), id_satelite);
+        	charger = new Charger(new AgentID("Charger"), 500*droneAmmount, id_satelite);
         	System.out.println("MAIN : Iniciando agentes...");
         	visualizer.setSatelite(satellite);
             satellite.start();
             drone.start();
+            charger.start();
         }catch(Exception e){
         	System.err.println("Main: Error al crear los agentes");
             System.exit(-1);
@@ -63,9 +66,11 @@ public class Launcher {
     		ImgMapConverter.mapToImg("src/maps/pruebaoriginal.png", map);
         	satellite = new Satellite(id_satelite, map, droneAmmount);
         	drone = new Drone(new AgentID("Drone"), map.getWidth(), map.getHeigh(), id_satelite);
+        	charger = new Charger(new AgentID("Charger"), 500*droneAmmount, id_satelite);
         	System.out.println("MAIN : Iniciando agentes...");
             satellite.start();
             drone.start();
+            charger.start();
         }catch(Exception e){
         	System.err.println("Main: Error al crear los agentes");
 			System.err.println(e.getMessage());
