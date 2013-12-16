@@ -112,14 +112,14 @@ public class Satellite extends SingleAgent {
 	 * @author Dani
 	 * @author Jahiel
 	 * @param typeMessage 		performativa del mensaje.
-	 * @param protocol			protocolo de comunicación del mensaje.
 	 * @param id				destinatario del mensaje.
+	 * @param protocol			protocolo de comunicación del mensaje.
 	 * @param replyWith			reply-with del mensaje. Será null si se usa in-reply-to.
 	 * @param inReplyTo			in-reply-to del mensaje. Será null si se usa reply-with.
 	 * @param conversationId	id de la conversación del mensaje,
 	 * @param datas				content del mensaje.
 	 */
-	private void send(int typeMessage, String protocol, AgentID id, String replyWith, String inReplyTo, String conversationId, JSONObject datas) {
+	private void send(int typeMessage, AgentID id, String protocol, String replyWith, String inReplyTo, String conversationId, JSONObject datas) {
 
 		ACLMessage msg = new ACLMessage(typeMessage);
 		msg.setSender(this.getAid());
@@ -158,7 +158,7 @@ public class Satellite extends SingleAgent {
 	 * @param dron 			Identificador del agente dron.
 	 * @param cad_error 	Cadena descriptiva del error producido.
 	 */
-	private void sendErrors(String protocol, AgentID dron, String cad_error) {
+	private void sendError(String protocol, AgentID dron, String cad_error) {
 		JSONObject error = new JSONObject();
 
 		try {
@@ -305,7 +305,7 @@ public class Satellite extends SingleAgent {
 			decision = ob.getInt("decision");
 		} catch (JSONException e) {
 			//Cambio de P3: si el JSON no está creado el satélite devuelve NOT_UNDERSTOOD en lugar de FAILURE, ya que no es culpa del satélite.
-			send(ACLMessage.NOT_UNDERSTOOD, msg.getProtocol(), msg.getSender(), null, msg.getInReplyTo(), msg.getConversationId(), null);
+			send(ACLMessage.NOT_UNDERSTOOD, msg.getSender(), msg.getProtocol(), null, msg.getInReplyTo(), msg.getConversationId(), null);
 			return true;
 		}
 
@@ -373,7 +373,7 @@ public class Satellite extends SingleAgent {
 				System.out.println("Procesando mensaje: protocolo " + proccesingMessage.getProtocol());
 				switch (proccesingMessage.getProtocol()){
 					case "Register" : onRegister(proccesingMessage); break;
-					case protocolLibrary.sendMeMyStatusProtocol : 
+					case "SendMeMyStatus" : 
 						onStatusQueried (proccesingMessage); 			
 						break;
 					case protocolLibrary.droneMovementProtocol : 
@@ -433,7 +433,7 @@ public class Satellite extends SingleAgent {
 	}
 	
 	/**
-	 * Rutina de tratamiento de un mensaje con el protocolo protocolLibrary.sendMeMyStatusProtocol.
+	 * Rutina de tratamiento de un mensaje con el protocolo "SendMeMyStatus".
 	 * Los posibles mensajes que se mandan son:
 	 * - La performativa no es REQUEST => NOT_UNDERSTOOD.
 	 * - Hubo error al crear el JSON con el status => FAILURE + "Error al crear Status".
@@ -463,18 +463,19 @@ public class Satellite extends SingleAgent {
 			
 			try {				
 				//Mando el status en formato JSON del drone que me lo solicitó.
-				send(ACLMessage.INFORM, protocolLibrary.sendMeMyStatusProtocol, msg.getSender(), null, msg.getInReplyTo(), msg.getConversationId(), createJSONStatus(findStatus(msg.getSender())));
-				
+				send(ACLMessage.INFORM, msg.getSender(), "SendMeMyStatus", null, msg.getInReplyTo(), msg.getConversationId(), createJSONStatus(findStatus(msg.getSender())));
+
 				System.out.println("Mensaje mandado con su status.");
 			} catch (JSONException e) {
 				//Si hubo error al crear el objeto JSOn se manda un error.
 				e.printStackTrace();
-				sendError(protocolLibrary.sendMeMyStatusProtocol, msg.getSender(), "Error al crear Status");
+				//TODO enviar error.
+				//sendError("SendMeMyStatus", msg.getSender(), "Error al crear Status");
 			}
 		}
 		else{
 			// El mensaje recibido es de tipo distinto a Request, se manda un not understood.
-			send(ACLMessage.NOT_UNDERSTOOD, protocolLibrary.sendMeMyStatusProtocol, msg.getSender(), null);
+			send(ACLMessage.NOT_UNDERSTOOD, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), null);
 		}
 	}
 	
@@ -501,20 +502,20 @@ public class Satellite extends SingleAgent {
 			try {
 				aux = new JSONObject(msg.getContent());
 			} catch (JSONException e) {
-				sendError("IMoved", msg.getSender(),"Error al crear objeto JSON con la decision");
+				//TODO enviar error
+				//sendError("IMoved", msg.getSender(),"Error al crear objeto JSON con la decision");
 			}
 
 			/**
 			 * @TODOauthor Dani
 			 * TODO no se debe de salir, sino que debe de gestionar la llegada del drone al objetivo.
 			 */
-			exit = evalueDecision(msg.getSender(), aux);
-			//FIXME if (!exit) (enviar incluso cuando ha terminado
-				send(ACLMessage.INFORM, "IMoved", msg.getSender(), null);
+			exit = evalueDecision(msg);
+			send(ACLMessage.INFORM, msg.getSender(), "IMoved", null, msg.getReplyWith(), msg.getConversationId(), null);	
 		}
 		else{
 			// El mensaje recibido es de tipo distinto a Request, se manda un not understood.
-			send(ACLMessage.NOT_UNDERSTOOD, "IMoved", msg.getSender(), null);
+			send(ACLMessage.NOT_UNDERSTOOD, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), null);
 		}		
 	}
 	
