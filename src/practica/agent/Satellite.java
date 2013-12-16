@@ -24,7 +24,6 @@ import practica.util.MessageQueue;
 import practica.util.SharedMap;
 import practica.util.Visualizer;
 import practica.util.DroneStatus;
-import practica.util.protocolLibrary;
 
 public class Satellite extends SingleAgent {
 	private SharedMap mapOriginal;						//Mapa original a partir del cual transcurre todo.
