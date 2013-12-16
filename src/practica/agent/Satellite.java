@@ -21,6 +21,7 @@ import practica.util.MessageQueue;
 import practica.util.SharedMap;
 import practica.util.Visualizer;
 import practica.util.DroneStatus;
+import practica.util.protocolLibrary;
 
 public class Satellite extends SingleAgent {
 	private SharedMap mapOriginal;						//Mapa original a partir del cual transcurre todo.
@@ -107,35 +108,57 @@ public class Satellite extends SingleAgent {
 	}
 	
 	/**
-	 * Se envia un mensaje del tipo "typeMessag" al agente "id" con el contenido "datas".
+	 * Manda un mensaje.
 	 * @author Dani
-	 * FIXME: otros autores añadiros.
-	 * @param typeMessage 	Tipo del mensaje
-	 * @param id   			Identificador del destinatario
-	 * @param protocolo		Protocolo del mensaje.
-	 * @param datas			Contenido del mensaje
+	 * @author Jahiel
+	 * @param typeMessage 		performativa del mensaje.
+	 * @param protocol			protocolo de comunicación del mensaje.
+	 * @param id				destinatario del mensaje.
+	 * @param replyWith			reply-with del mensaje. Será null si se usa in-reply-to.
+	 * @param inReplyTo			in-reply-to del mensaje. Será null si se usa reply-with.
+	 * @param conversationId	id de la conversación del mensaje,
+	 * @param datas				content del mensaje.
 	 */
-	private void send(int typeMessage, String protocol, AgentID id, JSONObject datas) {
+	private void send(int typeMessage, String protocol, AgentID id, String replyWith, String inReplyTo, String conversationId, JSONObject datas) {
 
 		ACLMessage msg = new ACLMessage(typeMessage);
 		msg.setSender(this.getAid());
 		msg.addReceiver(id);
-		msg.setProtocol(protocol);
+		
+		if (replyWith.isEmpty() || replyWith == null) //Doble comprobación, nunca está de más.
+			msg.setReplyWith("");
+		else
+			msg.setProtocol(protocol);
+		msg.setInReplyTo(replyWith);
+		
+		if (inReplyTo.isEmpty() || inReplyTo == null) //Doble comprobación, nunca está de más.
+			msg.setInReplyTo("");
+		else
+			msg.setProtocol(protocol);
+		msg.setInReplyTo(inReplyTo);
+		
+		if (conversationId.isEmpty() || conversationId == null) //Doble comprobación, nunca está de más.
+			msg.setConversationId("");
+		else
+			msg.setProtocol(protocol);
+		msg.setInReplyTo(conversationId);
+		
 		if (datas != null)
 			msg.setContent(datas.toString());
 		else
 			msg.setContent("");
 		this.send(msg);
-	}	
+	}
 
 	/**
 	 * Se crea un mensaje del tipo FAIL para informar de algun fallo al agente dron.
 	 * FIXME otros autores añadiros.
+	 * FIXME Este método ahora mismo creo que no se debe de usar. No lo borro, sino que dejo comentada la línea del send para que el programa compile.
 	 * @author Dani.
 	 * @param dron 			Identificador del agente dron.
 	 * @param cad_error 	Cadena descriptiva del error producido.
 	 */
-	private void sendError(String protocol, AgentID dron, String cad_error) {
+	private void sendErrors(String protocol, AgentID dron, String cad_error) {
 		JSONObject error = new JSONObject();
 
 		try {
@@ -145,7 +168,7 @@ public class Satellite extends SingleAgent {
 		}
 		System.err.println("Agente " + this.getName() + " " + cad_error);
 
-		send(ACLMessage.FAILURE, "", dron, error);
+		//send(ACLMessage.FAILURE, "", dron, error);
 	}
 	
 	/**
@@ -266,27 +289,23 @@ public class Satellite extends SingleAgent {
 	 * dirección elegida) o se da por finalizada la comunicación.
 	 * @author Dani
 	 * FIXME: otros autores añadiros.
-	 * @param droneID		Identificador del agente dron.
-	 * @param ob		Objeto JSon con los valores de la decision del drone: 
-	 * 					-  0 : El dron decide ir al Este. 
-	 * 					-  1 : El dron decide ir al Sur. 
-	 * 					-  2 : El dron decide ir al Oeste. 
-	 * 					-  3 : El dron decide ir al Norte.
-	 *            		- -1: Fin de la comunicación
+	 * @param msg mensaje que contiene la decisión del drone
 	 * @return Se devuelve "true" si se debe finalizar la comunicación y "false" en caso contrario.
 	 */
-	private boolean evalueDecision(AgentID droneID, JSONObject ob) {
+	private boolean evalueDecision(ACLMessage msg) {
 		//Busco el status del drone
+		AgentID droneID = msg.getSender();
 		DroneStatus droneStatus = findStatus(droneID);
 		GPSLocation gps = droneStatus.getLocation();
 		
 		int decision, x = -1, y = -1;
 
 		try {
+			JSONObject ob = new JSONObject(msg.getContent());
 			decision = ob.getInt("decision");
 		} catch (JSONException e) {
 			//Cambio de P3: si el JSON no está creado el satélite devuelve NOT_UNDERSTOOD en lugar de FAILURE, ya que no es culpa del satélite.
-			send(ACLMessage.NOT_UNDERSTOOD,"IMoved", droneID, null);
+			send(ACLMessage.NOT_UNDERSTOOD, msg.getProtocol(), msg.getSender(), null, msg.getInReplyTo(), msg.getConversationId(), null);
 			return true;
 		}
 
@@ -316,7 +335,7 @@ public class Satellite extends SingleAgent {
 		case Drone.END_FAIL:
 			return true;
 		default: // Fin, No me gusta, prefiero un case para el fin y en el default sea un caso de error pero no me deja poner -1 en el case.
-			sendError("IMoved", droneID, "Error al actualizar el mapa");
+			//sendError("IMoved", droneID, "Error al actualizar el mapa");
 			break;
 		}
 
@@ -354,10 +373,10 @@ public class Satellite extends SingleAgent {
 				System.out.println("Procesando mensaje: protocolo " + proccesingMessage.getProtocol());
 				switch (proccesingMessage.getProtocol()){
 					case "Register" : onRegister(proccesingMessage); break;
-					case "SendMeMyStatus" : 
+					case protocolLibrary.sendMeMyStatusProtocol : 
 						onStatusQueried (proccesingMessage); 			
 						break;
-					case "IMoved" : 
+					case protocolLibrary.droneMovementProtocol : 
 						onDroneMoved (proccesingMessage); 
 						break;
 					case "DroneReachedGoalSubscription" : onSubscribe(proccesingMessage); break;
@@ -414,7 +433,7 @@ public class Satellite extends SingleAgent {
 	}
 	
 	/**
-	 * Rutina de tratamiento de un mensaje con el protocolo "SendMeMyStatus".
+	 * Rutina de tratamiento de un mensaje con el protocolo protocolLibrary.sendMeMyStatusProtocol.
 	 * Los posibles mensajes que se mandan son:
 	 * - La performativa no es REQUEST => NOT_UNDERSTOOD.
 	 * - Hubo error al crear el JSON con el status => FAILURE + "Error al crear Status".
@@ -444,18 +463,18 @@ public class Satellite extends SingleAgent {
 			
 			try {				
 				//Mando el status en formato JSON del drone que me lo solicitó.
-				send (ACLMessage.INFORM, "SendMeMyStatus", msg.getSender(), createJSONStatus(findStatus(msg.getSender())));		
-
+				send(ACLMessage.INFORM, protocolLibrary.sendMeMyStatusProtocol, msg.getSender(), null, msg.getInReplyTo(), msg.getConversationId(), createJSONStatus(findStatus(msg.getSender())));
+				
 				System.out.println("Mensaje mandado con su status.");
 			} catch (JSONException e) {
 				//Si hubo error al crear el objeto JSOn se manda un error.
 				e.printStackTrace();
-				sendError("SendMeMyStatus", msg.getSender(), "Error al crear Status");
+				sendError(protocolLibrary.sendMeMyStatusProtocol, msg.getSender(), "Error al crear Status");
 			}
 		}
 		else{
 			// El mensaje recibido es de tipo distinto a Request, se manda un not understood.
-			send(ACLMessage.NOT_UNDERSTOOD, "SendMeMyStatus", msg.getSender(), null);
+			send(ACLMessage.NOT_UNDERSTOOD, protocolLibrary.sendMeMyStatusProtocol, msg.getSender(), null);
 		}
 	}
 	
