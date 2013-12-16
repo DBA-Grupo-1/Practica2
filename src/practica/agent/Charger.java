@@ -31,12 +31,34 @@ public class Charger extends SingleAgent {
 		IDSatellite = satellite;
 	}
 	
-	private void send(int typeMessage, AgentID id, JSONObject datas, String replyWith) {
+	/**
+	 * Manda un mensaje.
+	 * @author Dani
+	 * @author Jahiel
+	 * @param typeMessage 		performativa del mensaje.
+	 * @param id				destinatario del mensaje.
+	 * @param protocol			protocolo de comunicación del mensaje.
+	 * @param replyWith			reply-with o reply-to del mensaje,
+	 * @param conversationId	id de la conversación del mensaje,
+	 * @param datas				content del mensaje.
+	 */
+	private void send(int typeMessage, AgentID id, String protocol, String replyWith, String conversationId, JSONObject datas) {
 
 		ACLMessage msg = new ACLMessage(typeMessage);
 		msg.setSender(this.getAid());
 		msg.addReceiver(id);
+		
+		if (replyWith.isEmpty() || replyWith == null) //Doble comprobación, nunca está de más.
+			msg.setReplyWith("");
+		else
+			msg.setProtocol(protocol);
 		msg.setInReplyTo(replyWith);
+		
+		if (conversationId.isEmpty() || conversationId == null) //Doble comprobación, nunca está de más.
+			msg.setConversationId("");
+		else
+			msg.setProtocol(protocol);
+		msg.setInReplyTo(conversationId);
 		
 		if (datas != null)
 			msg.setContent(datas.toString());
@@ -69,9 +91,9 @@ public class Charger extends SingleAgent {
 			}
 			
 			if(msg != null){
-				switch (msg.getReplyWith()){
+				switch (msg.getProtocol()){
 				
-				case "Get-Battery":
+				case "ChargeMe":
 					try {
 						onBatteryRequest(msg);
 					} catch (JSONException e) {  
@@ -101,8 +123,11 @@ public class Charger extends SingleAgent {
 		}//FIN WHILE
 	}
 	
-	protected void onBatteryRequest(ACLMessage msgReceive) throws JSONException{
-		JSONObject contentReceive = new JSONObject(msgReceive.getContent());
+	protected void onBatteryRequest(ACLMessage msg) throws JSONException{
+		if (msg.getPerformative() == ACLMessage.REQUEST){
+			
+		}
+		/*JSONObject contentReceive = new JSONObject(msgReceive.getContent());
 		JSONObject contentSend = new JSONObject();
 		int level;
 		
@@ -128,6 +153,8 @@ public class Charger extends SingleAgent {
 			JSONObject rejection = new JSONObject();
 			rejection.put("error", "No quedan más cargas de batería");
 			send(ACLMessage.REFUSE, msgReceive.getSender(), rejection, msgReceive.getReplyWith());
+		}*/
+		else{
 		}
 	}
 }
