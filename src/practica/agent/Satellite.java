@@ -2,10 +2,13 @@ package practica.agent;
 
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.ListIterator;
+import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import edu.emory.mathcs.backport.java.util.concurrent.PriorityBlockingQueue;
+import es.upv.dsic.gti_ia.architecture.RefuseException;
 import es.upv.dsic.gti_ia.core.ACLMessage;
 import es.upv.dsic.gti_ia.core.AgentID;
 import es.upv.dsic.gti_ia.core.SingleAgent;
@@ -36,6 +39,7 @@ public class Satellite extends SingleAgent {
 	private Visualizer visualizer;					//Visualizador.
 	private boolean usingVisualizer;				//Variable para controlar si se está usando el visualizador.
 	private boolean exit;							//Variable para controlar la terminación de la ejecución del satélite.
+	private static List<Integer> posXIniciales;
 	
 	/**
 	 * Constructor
@@ -76,6 +80,10 @@ public class Satellite extends SingleAgent {
 		goalPosY = verticalPositions / adjacentSquares;
 		
 		usingVisualizer = false;
+		
+		posXIniciales = new ArrayList<Integer>();
+		for(int i=0; i<maxDrones; i++)
+			posXIniciales.add(new Integer(i*5));
 	}
 	
 	/**
@@ -100,6 +108,7 @@ public class Satellite extends SingleAgent {
 	 */
 	public void onMessage (ACLMessage msg){	
 		try {
+			System.out.println(msg.getPerformative() + " " + msg.getContent());
 			messageQueue.put(msg);
 			System.out.println("mensaje recibido!");	
 		} catch (InterruptedException e) {
@@ -229,7 +238,26 @@ public class Satellite extends SingleAgent {
 		// Recorre desde la posición dron -1  hasta la del dron + 1, tanto en X como en Y
 		for (int i = 0; i< 3; i++){
 			for(int j = 0; j < 3; j++){
-				surroundings[i+j*3] = mapSeguimiento.getValue(posX-1+i, posY-1+j);
+				//Si la casilla esta visitada hay que comprobar si ha sido visitada por el drone que pide su status para evitar conflictos
+				if(mapSeguimiento.getValue(posX-1+i, posY-1+j) == Map.VISITADO){
+					boolean visited=false;
+					List<AgentID> visitingAgents = new ArrayList<AgentID>(mapSeguimiento.getVisitingAgents(posX-1+i, posY-1+j));
+					//Recorremos la lista de drones que han pasado por esa casilla buscando al drone en cuestion. 
+					for(AgentID id : visitingAgents)
+						if(id.toString().equals(status.getId().toString()))
+							visited=true;
+
+					//Si el drone esta en la lista es que ya ha pasado por esa casilla y por lo tanto se le pone un valor de visitado
+					if(visited){
+						surroundings[i+j*3] = Map.VISITADO;
+					}else{
+						//Si no lo esta se le da el valor original de esa casilla
+						surroundings[i+j*3] = mapOriginal.getValue(posX-1+i, posY-1+j);
+					}
+				}else{
+					//Si no ha sido visitada no nos complicamos
+					surroundings[i+j*3] = mapSeguimiento.getValue(posX-1+i, posY-1+j);
+				}
 			}
 		}
 		
@@ -427,9 +455,37 @@ public class Satellite extends SingleAgent {
 	//TODO Implementation
 	//Esto es un placeholder y el código siguiente deberá de ser borrado/comentado por quien implemente el protocolo de comunicación inicial
 	public void onRegister (ACLMessage msg){
-		drones[connectedDrones] = msg.getSender();
-		droneStuses[connectedDrones] = new DroneStatus(msg.getSender(), "DroneP2", new GPSLocation());
-		connectedDrones ++;
+		try{
+			System.out.println("REcibido registro de: " + msg.getSender().toString());
+			drones[connectedDrones] = msg.getSender();
+			Random r=new Random();
+			int randomPos = r.nextInt(posXIniciales.size());
+			GPSLocation location = new GPSLocation(posXIniciales.get(randomPos).intValue(), 0);
+			droneStuses[connectedDrones] = new DroneStatus(msg.getSender(), drones[connectedDrones].name, location);
+			connectedDrones ++;
+
+			if(connectedDrones == maxDrones){
+				List<String> idsList = new ArrayList<String>();
+				for(int i=0; i<maxDrones; i++)
+					idsList.add(drones[i].toString());
+
+				String receiver;
+				for(int i=0; i<maxDrones; i++){
+					receiver = drones[i].toString();
+					idsList.remove(receiver);
+					JSONObject content = new JSONObject();
+					content.put("ids", idsList);
+					send(ACLMessage.INFORM, drones[i], "Register", null, msg.getReplyWith(), msg.getConversationId(), content);
+				}
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+			ACLMessage error = new RefuseException("Error en el registro").getACLMessage();
+			for(int i=0; i<connectedDrones; i++)
+				error.addReceiver(drones[i]);
+			this.send(error);
+			throw new RuntimeException("Error en el registro (Satelite)");
+		}
 	}
 	
 	/**
@@ -513,6 +569,7 @@ public class Satellite extends SingleAgent {
 			 */
 			exit = evalueDecision(msg);
 			send(ACLMessage.INFORM, msg.getSender(), "IMoved", null, msg.getReplyWith(), msg.getConversationId(), null);				
+				exit=false;
 		}
 		else{
 			// El mensaje recibido es de tipo distinto a Request, se manda un not understood.

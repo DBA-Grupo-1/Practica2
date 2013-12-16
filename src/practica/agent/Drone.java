@@ -92,6 +92,7 @@ public class Drone extends SingleAgent {
 	protected BlockingQueue<ACLMessage> answerQueue;
 	protected BlockingQueue<ACLMessage> requestQueue;
 	protected Thread dispatcher;
+	private AgentID[] teammates;
 
 	public Drone(AgentID aid, int mapWidth, int mapHeight, AgentID sateliteID) throws Exception {
 		super(aid);
@@ -159,12 +160,11 @@ public class Drone extends SingleAgent {
 	@Override
 	protected void execute(){
 		startDispatcher();
-		
+	
 		register();
 		
 		subscribe();
 		
-		boolean end = false;
 		int decision;
 		
 		do{
@@ -195,6 +195,7 @@ public class Drone extends SingleAgent {
 		switch(msg.getProtocol()){
 		case "SendMeMyStatus":
 		case "IMoved":
+		case "Register":
 			queue = answerQueue;
 			break;
 		case "BatteryQuery":
@@ -372,11 +373,50 @@ public class Drone extends SingleAgent {
 	}
 
 	/**
-	 * Realiza el registro en el satelite
+	 * Realiza el registro en el satelite.
 	 */
 	protected void register() {
-		// TODO Auto-generated method stub
+		ACLMessage msg=null;
+		JSONObject data = new JSONObject();
 		
+		try {
+			data.put("ID", this.getAid().toString());
+			data.put("nombre_alumno", this.getAid().name);
+		} catch (JSONException e) {
+			e.printStackTrace();
+			throw new RuntimeException("Fallo en el registro: error al crear content del mensaje de envio");
+		}
+		
+		send(ACLMessage.REQUEST, "Register" , sateliteID, data);
+		
+		try {
+			msg = answerQueue.take();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+			throw new RuntimeException("Fallo en el registro: error al cojer mensaje de la cola");
+		}
+		
+		switch(msg.getPerformativeInt()){
+		case ACLMessage.INFORM:
+			try{
+				JSONObject content = new JSONObject(msg.getContent());
+				JSONArray idsArray = content.getJSONArray("ids");
+				int n = idsArray.length();
+				teammates = new AgentID[n];
+				for(int i=0; i<n; i++){
+					teammates[i] = new AgentID(idsArray.getString(i));
+					System.out.println(teammates[i]);
+				}
+			}catch(JSONException e){
+				e.printStackTrace();
+				throw new RuntimeException("Fallo en el content de la respuesta de registro");
+			}
+			break;
+		case ACLMessage.REFUSE:
+		case ACLMessage.FAILURE:
+			throw new RuntimeException("Fallo en el registro");
+			
+		}
 	}
 
 	/**
@@ -885,6 +925,7 @@ public class Drone extends SingleAgent {
 			msg.setContent(datas.toString());
 		else
 			msg.setContent("");
+		
 		this.send(msg);
 	}
 	
@@ -1341,7 +1382,7 @@ public class Drone extends SingleAgent {
 	@Override
 	public void finalize() {
 		System.out.println("Agente " + this.getName() + " ha finalizado");
-		practica.util.ImgMapConverter.mapToImg("src/maps/miresultado.png", droneMap);
+		practica.util.ImgMapConverter.mapToImg("src/maps/miresultado"+this.getAid().name+".png", droneMap);
 		super.finalize();
 	}
 
