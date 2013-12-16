@@ -498,10 +498,11 @@ public class Satellite extends SingleAgent {
 						System.out.print("");//Necesario para volver a comprobar la condición del while.
 					}
 
-			JSONObject aux = null;
+			JSONObject content = null;
 			try {
-				aux = new JSONObject(msg.getContent());
+				content = new JSONObject(msg.getContent());
 			} catch (JSONException e) {
+				e.printStackTrace();
 				//TODO enviar error
 				//sendError("IMoved", msg.getSender(),"Error al crear objeto JSON con la decision");
 			}
@@ -511,7 +512,7 @@ public class Satellite extends SingleAgent {
 			 * TODO no se debe de salir, sino que debe de gestionar la llegada del drone al objetivo.
 			 */
 			exit = evalueDecision(msg);
-			send(ACLMessage.INFORM, msg.getSender(), "IMoved", null, msg.getReplyWith(), msg.getConversationId(), null);	
+			send(ACLMessage.INFORM, msg.getSender(), "IMoved", null, msg.getReplyWith(), msg.getConversationId(), null);				
 		}
 		else{
 			// El mensaje recibido es de tipo distinto a Request, se manda un not understood.

@@ -4,9 +4,11 @@ public class StringLibrary {
 	
 	//==========================================================================================================
 	//Cadenas de Charger
-	public static String reasonWontReachGoal = "You won't reach goal";
-	public static String reasonExplorerDidntReachGoal = "Current explorer didn't reach goal";
-	public static String reasonWaitingForBetterDrone = "I'm waiting for a better drone than you to reach goal";
+	public static final String reasonWontReachGoal = "You won't reach goal";
+	public static final String reasonExplorerDidntReachGoal = "Current explorer didn't reach goal";
+	public static final String reasonWaitingForBetterDrone = "I'm waiting for a better drone than you to reach goal";
+	public static final String reasonUnspectedAmount = "You asked for an invalid amount of battery";
+	public static final String reasonEmptyBattery = "I haven't any battery left";
 	
 	
 	
@@ -27,7 +29,7 @@ public class StringLibrary {
 	
 
 	//==========================================================================================================
-	
+	//Cadenas de Drone
 	
 	
 	
@@ -48,9 +50,22 @@ public class StringLibrary {
 	
 
 	//==========================================================================================================
+	//Cadenas de Satellite
 
-	public StringLibrary() {
-		// TODO Auto-generated constructor stub
-	}
-
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 }

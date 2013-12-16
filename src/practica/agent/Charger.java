@@ -40,7 +40,8 @@ public class Charger extends SingleAgent {
 	 * @param typeMessage 		performativa del mensaje.
 	 * @param id				destinatario del mensaje.
 	 * @param protocol			protocolo de comunicación del mensaje.
-	 * @param replyWith			reply-with o reply-to del mensaje,
+	 * @param replyWith			reply-with del mensaje. Será null si se usa in-reply-to.
+	 * @param inReplyTo			in-reply-to del mensaje. Será null si se usa reply-with.
 	 * @param conversationId	id de la conversación del mensaje,
 	 * @param datas				content del mensaje.
 	 */
