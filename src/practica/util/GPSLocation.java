@@ -12,6 +12,11 @@ public class GPSLocation {
 		positionX = positionY = 0;
 	}
 	
+	public GPSLocation(int x, int y) {
+		positionX = x;
+		positionY = y;
+	}
+
 	/**
 	 * Setter de la posición X
 	 * @param x Coordenada X en el mapa

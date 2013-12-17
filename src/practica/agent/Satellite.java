@@ -2,10 +2,13 @@ package practica.agent;
 
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.ListIterator;
+import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import edu.emory.mathcs.backport.java.util.concurrent.PriorityBlockingQueue;
+import es.upv.dsic.gti_ia.architecture.RefuseException;
 import es.upv.dsic.gti_ia.core.ACLMessage;
 import es.upv.dsic.gti_ia.core.AgentID;
 import es.upv.dsic.gti_ia.core.SingleAgent;
@@ -35,6 +38,7 @@ public class Satellite extends SingleAgent {
 	private Visualizer visualizer;					//Visualizador.
 	private boolean usingVisualizer;				//Variable para controlar si se está usando el visualizador.
 	private boolean exit;							//Variable para controlar la terminación de la ejecución del satélite.
+	private static List<Integer> posXIniciales;
 	
 	/**
 	 * Constructor
@@ -75,6 +79,10 @@ public class Satellite extends SingleAgent {
 		goalPosY = verticalPositions / adjacentSquares;
 		
 		usingVisualizer = false;
+		
+		posXIniciales = new ArrayList<Integer>();
+		for(int i=0; i<maxDrones; i++)
+			posXIniciales.add(new Integer(i*5));
 	}
 	
 	/**
@@ -99,6 +107,7 @@ public class Satellite extends SingleAgent {
 	 */
 	public void onMessage (ACLMessage msg){	
 		try {
+			System.out.println(msg.getPerformative() + " " + msg.getContent());
 			messageQueue.put(msg);
 			System.out.println("mensaje recibido!");	
 		} catch (InterruptedException e) {
@@ -107,30 +116,52 @@ public class Satellite extends SingleAgent {
 	}
 	
 	/**
-	 * Se envia un mensaje del tipo "typeMessag" al agente "id" con el contenido "datas".
+	 * Manda un mensaje.
 	 * @author Dani
-	 * FIXME: otros autores añadiros.
-	 * @param typeMessage 	Tipo del mensaje
-	 * @param id   			Identificador del destinatario
-	 * @param protocolo		Protocolo del mensaje.
-	 * @param datas			Contenido del mensaje
+	 * @author Jahiel
+	 * @param typeMessage 		performativa del mensaje.
+	 * @param id				destinatario del mensaje.
+	 * @param protocol			protocolo de comunicación del mensaje.
+	 * @param replyWith			reply-with del mensaje. Será null si se usa in-reply-to.
+	 * @param inReplyTo			in-reply-to del mensaje. Será null si se usa reply-with.
+	 * @param conversationId	id de la conversación del mensaje,
+	 * @param datas				content del mensaje.
 	 */
-	private void send(int typeMessage, String protocol, AgentID id, JSONObject datas) {
+	private void send(int typeMessage, AgentID id, String protocol, String replyWith, String inReplyTo, String conversationId, JSONObject datas) {
 
 		ACLMessage msg = new ACLMessage(typeMessage);
 		msg.setSender(this.getAid());
 		msg.addReceiver(id);
-		msg.setProtocol(protocol);
+		
+		if (/*replyWith.isEmpty() ||*/ replyWith == null) //Doble comprobación, nunca está de más.
+			msg.setReplyWith("");
+		else
+			msg.setProtocol(protocol);
+		msg.setInReplyTo(replyWith);
+		
+		if (/*inReplyTo.isEmpty() ||*/ inReplyTo == null) //Doble comprobación, nunca está de más.
+			msg.setInReplyTo("");
+		else
+			msg.setProtocol(protocol);
+		msg.setInReplyTo(inReplyTo);
+		
+		if (/*conversationId.isEmpty() ||*/ conversationId == null) //Doble comprobación, nunca está de más.
+			msg.setConversationId("");
+		else
+			msg.setProtocol(protocol);
+		msg.setInReplyTo(conversationId);
+		
 		if (datas != null)
 			msg.setContent(datas.toString());
 		else
 			msg.setContent("");
 		this.send(msg);
-	}	
+	}
 
 	/**
 	 * Se crea un mensaje del tipo FAIL para informar de algun fallo al agente dron.
 	 * FIXME otros autores añadiros.
+	 * FIXME Este método ahora mismo creo que no se debe de usar. No lo borro, sino que dejo comentada la línea del send para que el programa compile.
 	 * @author Dani.
 	 * @param dron 			Identificador del agente dron.
 	 * @param cad_error 	Cadena descriptiva del error producido.
@@ -145,7 +176,7 @@ public class Satellite extends SingleAgent {
 		}
 		System.err.println("Agente " + this.getName() + " " + cad_error);
 
-		send(ACLMessage.FAILURE, "", dron, error);
+		//send(ACLMessage.FAILURE, "", dron, error);
 	}
 	
 	/**
@@ -206,7 +237,26 @@ public class Satellite extends SingleAgent {
 		// Recorre desde la posición dron -1  hasta la del dron + 1, tanto en X como en Y
 		for (int i = 0; i< 3; i++){
 			for(int j = 0; j < 3; j++){
-				surroundings[i+j*3] = mapSeguimiento.getValue(posX-1+i, posY-1+j);
+				//Si la casilla esta visitada hay que comprobar si ha sido visitada por el drone que pide su status para evitar conflictos
+				if(mapSeguimiento.getValue(posX-1+i, posY-1+j) == Map.VISITADO){
+					boolean visited=false;
+					List<AgentID> visitingAgents = new ArrayList<AgentID>(mapSeguimiento.getVisitingAgents(posX-1+i, posY-1+j));
+					//Recorremos la lista de drones que han pasado por esa casilla buscando al drone en cuestion. 
+					for(AgentID id : visitingAgents)
+						if(id.toString().equals(status.getId().toString()))
+							visited=true;
+
+					//Si el drone esta en la lista es que ya ha pasado por esa casilla y por lo tanto se le pone un valor de visitado
+					if(visited){
+						surroundings[i+j*3] = Map.VISITADO;
+					}else{
+						//Si no lo esta se le da el valor original de esa casilla
+						surroundings[i+j*3] = mapOriginal.getValue(posX-1+i, posY-1+j);
+					}
+				}else{
+					//Si no ha sido visitada no nos complicamos
+					surroundings[i+j*3] = mapSeguimiento.getValue(posX-1+i, posY-1+j);
+				}
 			}
 		}
 		
@@ -266,59 +316,62 @@ public class Satellite extends SingleAgent {
 	 * dirección elegida) o se da por finalizada la comunicación.
 	 * @author Dani
 	 * FIXME: otros autores añadiros.
-	 * @param droneID		Identificador del agente dron.
-	 * @param ob		Objeto JSon con los valores de la decision del drone: 
-	 * 					-  0 : El dron decide ir al Este. 
-	 * 					-  1 : El dron decide ir al Sur. 
-	 * 					-  2 : El dron decide ir al Oeste. 
-	 * 					-  3 : El dron decide ir al Norte.
-	 *            		- -1: Fin de la comunicación
+	 * @param msg mensaje que contiene la decisión del drone
 	 * @return Se devuelve "true" si se debe finalizar la comunicación y "false" en caso contrario.
 	 */
-	private boolean evalueDecision(AgentID droneID, JSONObject ob) {
+	private boolean evalueDecision(ACLMessage msg) {
 		//Busco el status del drone
+		AgentID droneID = msg.getSender();
 		DroneStatus droneStatus = findStatus(droneID);
 		GPSLocation gps = droneStatus.getLocation();
 		
 		int decision, x = -1, y = -1;
 
 		try {
+			JSONObject ob = new JSONObject(msg.getContent());
 			decision = ob.getInt("decision");
 		} catch (JSONException e) {
 			//Cambio de P3: si el JSON no está creado el satélite devuelve NOT_UNDERSTOOD en lugar de FAILURE, ya que no es culpa del satélite.
-			send(ACLMessage.NOT_UNDERSTOOD,"IMoved", droneID, null);
+			send(ACLMessage.NOT_UNDERSTOOD, msg.getSender(), msg.getProtocol(), null, msg.getInReplyTo(), msg.getConversationId(), null);
 			return true;
 		}
 
 		switch (decision) {
-
-		case Drone.ESTE: // Este
-			x = gps.getPositionX() + 1;
-			y = gps.getPositionY();
-			break;
-
-		case Drone.SUR: // Sur
-			x = gps.getPositionX();
-			y = gps.getPositionY() + 1;
-			break;
-
-		case Drone.OESTE: // Oeste
-			x = gps.getPositionX() - 1;
-			y = gps.getPositionY();
-			break;
-
-		case Drone.NORTE: // Norte
-			x = gps.getPositionX();
-			y = gps.getPositionY() - 1;
-			break;
-		case Drone.END_SUCCESS:
-			return true;
-		case Drone.END_FAIL:
-			return true;
-		default: // Fin, No me gusta, prefiero un case para el fin y en el default sea un caso de error pero no me deja poner -1 en el case.
-			sendError("IMoved", droneID, "Error al actualizar el mapa");
-			break;
+			case Drone.ESTE: // Este
+				x = gps.getPositionX() + 1;
+				y = gps.getPositionY();
+				break;
+	
+			case Drone.SUR: // Sur
+				x = gps.getPositionX();
+				y = gps.getPositionY() + 1;
+				break;
+	
+			case Drone.OESTE: // Oeste
+				x = gps.getPositionX() - 1;
+				y = gps.getPositionY();
+				break;
+	
+			case Drone.NORTE: // Norte
+				x = gps.getPositionX();
+				y = gps.getPositionY() - 1;
+				break;
+			case Drone.END_SUCCESS:
+				return true;
+			case Drone.END_FAIL:
+				return true;
+			default: // Fin, No me gusta, prefiero un case para el fin y en el default sea un caso de error pero no me deja poner -1 en el case.
+				/**
+				 * @TODOauthor Dani
+				 * TODO mandar error.
+				 */
+				//sendError("IMoved", droneID, "Error al actualizar el mapa");
+				break;
 		}
+		//Actualizar status
+		//Si se movió, consumir una unidad de batería.
+		if (decision == Drone.ESTE || decision == Drone.SUR || decision == Drone.OESTE || decision == Drone.NORTE)
+			droneStatus.setBattery(droneStatus.getBattery() - 1);
 
 		try {
 			gps.setPositionX(x);
@@ -408,9 +461,37 @@ public class Satellite extends SingleAgent {
 	//TODO Implementation
 	//Esto es un placeholder y el código siguiente deberá de ser borrado/comentado por quien implemente el protocolo de comunicación inicial
 	public void onRegister (ACLMessage msg){
-		drones[connectedDrones] = msg.getSender();
-		droneStuses[connectedDrones] = new DroneStatus(msg.getSender(), "DroneP2", new GPSLocation());
-		connectedDrones ++;
+		try{
+			System.out.println("REcibido registro de: " + msg.getSender().toString());
+			drones[connectedDrones] = msg.getSender();
+			Random r=new Random();
+			int randomPos = r.nextInt(posXIniciales.size());
+			GPSLocation location = new GPSLocation(posXIniciales.get(randomPos).intValue(), 0);
+			droneStuses[connectedDrones] = new DroneStatus(msg.getSender(), drones[connectedDrones].name, location);
+			connectedDrones ++;
+
+			if(connectedDrones == maxDrones){
+				List<String> idsList = new ArrayList<String>();
+				for(int i=0; i<maxDrones; i++)
+					idsList.add(drones[i].toString());
+
+				String receiver;
+				for(int i=0; i<maxDrones; i++){
+					receiver = drones[i].toString();
+					idsList.remove(receiver);
+					JSONObject content = new JSONObject();
+					content.put("ids", idsList);
+					send(ACLMessage.INFORM, drones[i], "Register", null, msg.getReplyWith(), msg.getConversationId(), content);
+				}
+			}
+		}catch(Exception e){
+			e.printStackTrace();
+			ACLMessage error = new RefuseException("Error en el registro").getACLMessage();
+			for(int i=0; i<connectedDrones; i++)
+				error.addReceiver(drones[i]);
+			this.send(error);
+			throw new RuntimeException("Error en el registro (Satelite)");
+		}
 	}
 	
 	/**
@@ -444,18 +525,19 @@ public class Satellite extends SingleAgent {
 			
 			try {				
 				//Mando el status en formato JSON del drone que me lo solicitó.
-				send (ACLMessage.INFORM, "SendMeMyStatus", msg.getSender(), createJSONStatus(findStatus(msg.getSender())));		
+				send(ACLMessage.INFORM, msg.getSender(), "SendMeMyStatus", null, msg.getInReplyTo(), msg.getConversationId(), createJSONStatus(findStatus(msg.getSender())));
 
 				System.out.println("Mensaje mandado con su status.");
 			} catch (JSONException e) {
 				//Si hubo error al crear el objeto JSOn se manda un error.
 				e.printStackTrace();
-				sendError("SendMeMyStatus", msg.getSender(), "Error al crear Status");
+				//TODO enviar error.
+				//sendError("SendMeMyStatus", msg.getSender(), "Error al crear Status");
 			}
 		}
 		else{
 			// El mensaje recibido es de tipo distinto a Request, se manda un not understood.
-			send(ACLMessage.NOT_UNDERSTOOD, "SendMeMyStatus", msg.getSender(), null);
+			send(ACLMessage.NOT_UNDERSTOOD, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), null);
 		}
 	}
 	
@@ -478,24 +560,28 @@ public class Satellite extends SingleAgent {
 						System.out.print("");//Necesario para volver a comprobar la condición del while.
 					}
 
-			JSONObject aux = null;
+			JSONObject content = null;
 			try {
-				aux = new JSONObject(msg.getContent());
+				content = new JSONObject(msg.getContent());
 			} catch (JSONException e) {
-				sendError("IMoved", msg.getSender(),"Error al crear objeto JSON con la decision");
+				e.printStackTrace();
+				//TODO enviar error
+				//sendError("IMoved", msg.getSender(),"Error al crear objeto JSON con la decision");
 			}
 
+			exit = evalueDecision(msg);
+			send(ACLMessage.INFORM, msg.getSender(), "IMoved", null, msg.getReplyWith(), msg.getConversationId(), null);				
+			
 			/**
 			 * @TODOauthor Dani
-			 * TODO no se debe de salir, sino que debe de gestionar la llegada del drone al objetivo.
+			 * Cambiar esta línea por la gestión de la finalización
 			 */
-			exit = evalueDecision(msg.getSender(), aux);
-			//FIXME if (!exit) (enviar incluso cuando ha terminado
-				send(ACLMessage.INFORM, "IMoved", msg.getSender(), null);
+			exit=false;
+				
 		}
 		else{
 			// El mensaje recibido es de tipo distinto a Request, se manda un not understood.
-			send(ACLMessage.NOT_UNDERSTOOD, "IMoved", msg.getSender(), null);
+			send(ACLMessage.NOT_UNDERSTOOD, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), null);
 		}		
 	}
 	

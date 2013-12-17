@@ -6,6 +6,8 @@ import java.util.concurrent.LinkedTransferQueue;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import practica.util.StringLibrary;
+
 import es.upv.dsic.gti_ia.core.ACLMessage;
 import es.upv.dsic.gti_ia.core.AgentID;
 import es.upv.dsic.gti_ia.core.SingleAgent;
@@ -31,12 +33,41 @@ public class Charger extends SingleAgent {
 		IDSatellite = satellite;
 	}
 	
-	private void send(int typeMessage, AgentID id, JSONObject datas, String replyWith) {
+	/**
+	 * Manda un mensaje.
+	 * @author Dani
+	 * @author Jahiel
+	 * @param typeMessage 		performativa del mensaje.
+	 * @param id				destinatario del mensaje.
+	 * @param protocol			protocolo de comunicación del mensaje.
+	 * @param replyWith			reply-with del mensaje. Será null si se usa in-reply-to.
+	 * @param inReplyTo			in-reply-to del mensaje. Será null si se usa reply-with.
+	 * @param conversationId	id de la conversación del mensaje,
+	 * @param datas				content del mensaje.
+	 */
+	private void send(int typeMessage, AgentID id, String protocol, String replyWith, String inReplyTo, String conversationId, JSONObject datas) {
 
 		ACLMessage msg = new ACLMessage(typeMessage);
 		msg.setSender(this.getAid());
 		msg.addReceiver(id);
+		
+		if (replyWith.isEmpty() || replyWith == null) //Doble comprobación, nunca está de más.
+			msg.setReplyWith("");
+		else
+			msg.setProtocol(protocol);
 		msg.setInReplyTo(replyWith);
+		
+		if (inReplyTo.isEmpty() || inReplyTo == null) //Doble comprobación, nunca está de más.
+			msg.setInReplyTo("");
+		else
+			msg.setProtocol(protocol);
+		msg.setInReplyTo(inReplyTo);
+		
+		if (conversationId.isEmpty() || conversationId == null) //Doble comprobación, nunca está de más.
+			msg.setConversationId("");
+		else
+			msg.setProtocol(protocol);
+		msg.setInReplyTo(conversationId);
 		
 		if (datas != null)
 			msg.setContent(datas.toString());
@@ -69,9 +100,9 @@ public class Charger extends SingleAgent {
 			}
 			
 			if(msg != null){
-				switch (msg.getReplyWith()){
+				switch (msg.getProtocol()){
 				
-				case "Get-Battery":
+				case "ChargeMe":
 					try {
 						onBatteryRequest(msg);
 					} catch (JSONException e) {  
@@ -81,7 +112,7 @@ public class Charger extends SingleAgent {
 						} catch (JSONException e1) {
 							// ni caso esta excepcion jamas se lanzará
 						}
-						send(ACLMessage.REFUSE, msg.getSender(), error, msg.getReplyWith());
+						//send(ACLMessage.REFUSE, msg.getSender(), error, msg.getReplyWith());
 					}
 					break;
 				
@@ -92,7 +123,7 @@ public class Charger extends SingleAgent {
 					} catch (JSONException e1) {
 						// ni caso esta excepcion jamas se lanzará
 					}
-					send(ACLMessage.REFUSE, msg.getSender(), error, msg.getReplyWith());
+					//send(ACLMessage.REFUSE, msg.getSender(), error, msg.getReplyWith());
 					break;
 				} // FIN SWICHT
 				
@@ -101,33 +132,44 @@ public class Charger extends SingleAgent {
 		}//FIN WHILE
 	}
 	
-	protected void onBatteryRequest(ACLMessage msgReceive) throws JSONException{
-		JSONObject contentReceive = new JSONObject(msgReceive.getContent());
-		JSONObject contentSend = new JSONObject();
-		int level;
-		
-		if(battery > 0 ){
-			try{
-				level = contentReceive.getInt("LevelBattery");
+	protected void onBatteryRequest(ACLMessage msg) throws JSONException{
+		if (msg.getPerformativeInt() == ACLMessage.REQUEST){
+			JSONObject content = new JSONObject(msg.getContent());
+			int requestedBattery = content.getInt("RequestAmmount");
+			int givenBattery;
 			
-			}catch(JSONException e){
-				level = 75;
-			}
-		
-			if(battery >= level){
-				contentSend.put("Recharge", level);
-				battery -= level;
-			}else{
-				contentSend.put("Recharge", battery);
-				battery = 0;
+			if (requestedBattery <= 0 || requestedBattery > 75){
+				JSONObject reason = new JSONObject();
+				reason.put("reason", StringLibrary.reasonUnspectedAmount);
+				send (ACLMessage.REFUSE, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), reason);
 			}
 			
-			send(ACLMessage.INFORM, msgReceive.getSender(), contentSend, msgReceive.getReplyWith());
-
-		}else{
-			JSONObject rejection = new JSONObject();
-			rejection.put("error", "No quedan más cargas de batería");
-			send(ACLMessage.REFUSE, msgReceive.getSender(), rejection, msgReceive.getReplyWith());
+			else{
+				/**
+				 * @TODOauthor Dani
+				 * TODO heurística tempora, hay que implementar la que decidamos.
+				 */
+				if (battery <= 0){
+					JSONObject reason = new JSONObject();
+					reason.put("reason", StringLibrary.reasonEmptyBattery);
+					send (ACLMessage.REFUSE, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), reason);
+				}
+				else{
+					if (battery > requestedBattery)
+						givenBattery = requestedBattery;
+					else 
+						givenBattery = battery;
+					battery -= requestedBattery;
+					
+					JSONObject sendContent = new JSONObject();
+					sendContent.put ("GivenAmount", requestedBattery);
+					send (ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), sendContent);
+				}
+					
+			}
+		}
+		else{
+			send(ACLMessage.NOT_UNDERSTOOD, msg.getSender(), msg.getProtocol(), null, null, msg.getConversationId(), null);
 		}
 	}
 }
