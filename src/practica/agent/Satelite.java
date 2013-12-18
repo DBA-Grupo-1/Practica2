@@ -14,6 +14,14 @@ import practica.util.ImgMapConverter;
 import practica.util.Map;
 import practica.util.Visualizer;
 
+/**
+ * Satélite omnisciente que guía al drone para que llegue al objetivo. 
+ * @author Dani
+ * 
+ * 
+ * 
+ */
+
 public class Satelite extends SingleAgent {
 	private final int SolicitudStatus = 0, EsperarInform = 1; // Estos nombres no me gustan
 	private int state;
@@ -24,7 +32,10 @@ public class Satelite extends SingleAgent {
 	private Visualizer visualizer;
 	private boolean usingVisualizer;
 	
-	
+	/**
+	 * Constructor sin visualizador
+	 * @author Dani
+	 */ 
 	public Satelite(AgentID sat, Map mapa) throws Exception{
 		super(sat);
 		mapOriginal = new Map(mapa);
@@ -52,7 +63,10 @@ public class Satelite extends SingleAgent {
 		
 		usingVisualizer = false;
 	}
-	
+	/**
+	 * Constructor con visualizador
+	 * @author Dani
+	 */ 
 	public Satelite(AgentID sat, Map mapa, Visualizer v) throws Exception{
 		this (sat, mapa);		
 		visualizer = v;
