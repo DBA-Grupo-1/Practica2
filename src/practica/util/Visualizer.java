@@ -14,6 +14,11 @@ import javax.swing.JLabel;
 import practica.Launcher;
 import practica.agent.Satelite;
 
+/**
+ * Visualizador que permite seleccionar un mapa de entre los que se encuentren en la carpeta maps y lanzar el launcher.
+ * @author Dani
+ * 
+ */
 public class Visualizer extends JFrame {
 	private JComboBox <String> mapSelector;
 	private JButton btnLoadMap;
@@ -28,6 +33,7 @@ public class Visualizer extends JFrame {
 	
 	/**
 	 * Setter de satelite.
+	 * @author Dani
 	 * @param sat satélite para poder comunicarse con él.
 	 */
 	public void setSatelite(Satelite sat){
@@ -36,6 +42,7 @@ public class Visualizer extends JFrame {
 	
 	/**
 	 * Getter del mapa.
+	 * @author Dani
 	 * @return el mapa que ha cargado.
 	 */
 	public Map getMapToLoad(){
@@ -43,6 +50,7 @@ public class Visualizer extends JFrame {
 	}
 	
 	/**
+	 * @author Dani
 	 * Constructor. Inicializa componentes y se hace visible.
 	 */
 	public Visualizer(Launcher l) {		
@@ -53,6 +61,7 @@ public class Visualizer extends JFrame {
 	
 	/**
 	 * Crea todos los componentes, los coloca, y asigna los eventos.
+	 * @author Dani
 	 */
 	private void initialize() {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -94,6 +103,7 @@ public class Visualizer extends JFrame {
 	
 	/**
 	 * Activa el botón "Think Once"
+	 * @author Dani
 	 */
 	public void enableThinkOnce(){
 		btnThinkOnce.setEnabled(true);
@@ -101,6 +111,7 @@ public class Visualizer extends JFrame {
 	
 	/**
 	 * Mira si el botón "Think Once" está habilitado.
+	 * @author Dani
 	 * @return true si está deshabilitado (y por lo tanto se pulsó). False si no.
 	 */
 	public boolean isBtnThinkOnceEnabled(){
@@ -109,6 +120,7 @@ public class Visualizer extends JFrame {
 	
 	/**
 	 * Mira si el botón "Find target" está habilitado.
+	 * @author Dani
 	 * @return true si está deshabilitado (y por lo tanto se pulsó). False si no.
 	 */
 	public boolean isBtnFindTargetEnabled(){
@@ -117,11 +129,16 @@ public class Visualizer extends JFrame {
 	
 	/**
 	 * Actualiza el mapa.
+	 * @author Dani
 	 */
 	public void updateMap(){
         satelliteMapIcon.setIcon(new ImageIcon(ImgMapConverter.mapToScalatedImg(satelite.getMapSeguimiento(), 500, 500)));
 	}
 	
+	/**
+	 * ActionListener del selector de mapas.
+	 * @author Dani 
+	 */
 	private class MapSelectorActionListener implements ActionListener {
 		public void actionPerformed(ActionEvent arg0) {
 			btnLoadMap.setEnabled(true);
@@ -136,6 +153,11 @@ public class Visualizer extends JFrame {
 			miniMap.setIcon(mapIcon);
 		}
 	}
+	
+	/**
+	 * ActionListener del selector del botón "Load Map".
+	 * @author Dani 
+	 */
 	private class BtnLoadMapActionListener implements ActionListener {
 		public void actionPerformed(ActionEvent arg0) {
 			setBounds(100, 100, 550, 600);
@@ -147,6 +169,11 @@ public class Visualizer extends JFrame {
 	        launcher.launch();			
 		}
 	}
+	
+	/**
+	 * ActionListener del botón "Find Target".
+	 * @author Dani 
+	 */
 	private class BtnFindTargetActionListener implements ActionListener {
 		public void actionPerformed(ActionEvent arg0) {
 			btnThinkOnce.setEnabled(false);
@@ -154,6 +181,11 @@ public class Visualizer extends JFrame {
 			System.out.println("Botones desactivados");
 		}
 	}
+	
+	/**
+	 * ActionListener del botón "Think Once".
+	 * @author Dani 
+	 */
 	private class BtnThinkOnceActionListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
 			btnThinkOnce.setEnabled(false);
