@@ -15,6 +15,7 @@ public abstract class ImgMapConverter {
 	/**
 	 * Convierte un objeto del tipo BufferedImage a uno del tipo Map traduciendo los valores RGB a los distintos tipos
 	 * de posibles valores.
+	 * @author Dani
 	 * @param bf BufferedImage a convertir.
 	 * @return Objeto del tipo Map correspondiente a traducir los valores de bf a su correspondiente.
 	 */
@@ -47,6 +48,7 @@ public abstract class ImgMapConverter {
 	/**
 	 * Convierte un objeto del tipo Image a uno del tipo BufferedImage, heredando algunas de sus propiedades importantes 
 	 * (ancho, alto, valores RGB de cada píxel...)
+	 * @author Dani
 	 * @param image Imagen a convertir.
 	 * @return Objeto del tipo BufferedImage para poder trabajar con él.
 	 */
@@ -94,6 +96,7 @@ public abstract class ImgMapConverter {
 		
 	/**
 	 * Convierte una imagen con el formato de las imágenes de prácticas a un mapa.
+	 * @author Dani
 	 * @param path Localización de la imagen.
 	 * @return Objeto del tipo Map correspondiente a traducir cada píxel de la imagen a un valor determinado.
 	 */
@@ -127,6 +130,7 @@ public abstract class ImgMapConverter {
 	
 	/**
 	 * Crea una imagen escalada a partir de un mapa de datos
+	 * @author Dani
 	 * @param map Mapa de datos del que se obtendrá la imagen.
 	 * @param width Ancho de la imagen
 	 * @param height Alto de la imagen
