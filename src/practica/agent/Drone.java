@@ -970,6 +970,7 @@ public class Drone extends SingleAgent {
 	}	
 	
 	/**
+	 * 
 	 * Método donde el dron decide a qué dirección mover.
 	 * @return dirección a la que se moverá.
 	 */
@@ -1129,6 +1130,7 @@ public class Drone extends SingleAgent {
 	}
 
 	/**
+	 * author Ismael (Parte del codigo es mio pero lo de basicon creo que lo añadio alberto)
 	 * Calcula las distancias y las condiciones de los cuatro posibles movimientos.
 	 * @return Array con los movimientos
 	 */
@@ -1174,6 +1176,7 @@ public class Drone extends SingleAgent {
 	
 	
 	/**
+	 * @author Ismael
 	 * Método para obtener un array con los movimientos libres del drone usando la memoria del mismo.
 	 * @return Un array con lo que hay en las posiciones Este, Sur, Oeste y Norte a las que se podría mover, en ese orden.
 	 */
@@ -1245,6 +1248,7 @@ public class Drone extends SingleAgent {
 	}
 
 	/**
+	 * @author Ismael
 	 * createStatus: Crea estado para un objeto JSON de tipo drone
 	 * @return estado
 	 * @throws JSONException
@@ -1270,6 +1274,7 @@ public class Drone extends SingleAgent {
 	}
 
 	/**
+	 * @author Ismael
 	 * sendInform se envia señal de confrimación al agente junto con su acción.
 	 * @param id
 	 * @param dec
@@ -1299,6 +1304,7 @@ public class Drone extends SingleAgent {
 	}
 
 	/**
+	 * @author Ismael
 	 * receiveStatus metodo para comunicar al satélite que le envie información.
 	 * @param id
 	 * @param dec
@@ -1381,7 +1387,9 @@ public class Drone extends SingleAgent {
 
 	}
 
-
+	/**
+	 * @author Ismael
+	 */
 	@Override
 	public void finalize() {
 		System.out.println("Agente " + this.getName() + " ha finalizado");
@@ -1390,6 +1398,7 @@ public class Drone extends SingleAgent {
 	}
 
 	/*
+	 * @author Ismael
 	 * Método para las acciones del drone.
 	 */
 	protected void executev1() {
