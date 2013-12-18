@@ -17,6 +17,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+/**
+ * Drone que recorre el mapa para buscar al objetivo.
+ * @author Dani
+ * 
+ * 
+ */ 
+
 public class Drone extends SingleAgent {
 	private final int ESTADOREQUEST = 0, ESTADOINFORM = 1;
 	private final int LIMIT_MOVEMENTS;
@@ -85,6 +92,7 @@ public class Drone extends SingleAgent {
 	}
 	/**
 	 * Método donde el dron decide a qué dirección mover.
+	 * @author Dani
 	 * @return dirección a la que se moverá.
 	 */
 	public int think(){
@@ -315,6 +323,7 @@ public class Drone extends SingleAgent {
 	
 	/**
 	 * Método para obtener un array con los movimientos libres del drone usando la memoria del mismo.
+	 * @author Dani
 	 * @return Un array con lo que hay en las posiciones Este, Sur, Oeste y Norte a las que se podría mover, en ese orden.
 	 */
 	// POST DIAGRAMA DE CLASES
