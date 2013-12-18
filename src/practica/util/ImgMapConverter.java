@@ -10,10 +10,15 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 
+/**
+ * Clase que convierte imágenes en mapas y viceversa. También tiene algunas utilidades para tratamiento de imágenes.
+ * @author Dani
+ */ 
+
 public abstract class ImgMapConverter {
 	
 	/**
-	 * Convierte un objeto del tipo BufferedImage a uno del tipo Map traduciendo los valores RGB a los distintos tipos
+	 * @briefConvierte un objeto del tipo BufferedImage a uno del tipo Map traduciendo los valores RGB a los distintos tipos
 	 * de posibles valores.
 	 * @author Dani
 	 * @param bf BufferedImage a convertir.
@@ -49,7 +54,7 @@ public abstract class ImgMapConverter {
 	 * Convierte un objeto del tipo Image a uno del tipo BufferedImage, heredando algunas de sus propiedades importantes 
 	 * (ancho, alto, valores RGB de cada píxel...)
 	 * @author Dani
-	 * @param image Imagen a convertir.
+	 * @param image La imagen a convertir.
 	 * @return Objeto del tipo BufferedImage para poder trabajar con él.
 	 */
 	private static BufferedImage imageToBufferedImage(Image image) {
