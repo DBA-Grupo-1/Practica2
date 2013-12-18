@@ -1,5 +1,10 @@
 package practica.util;
 
+/**
+ * Estructura de datos que contiene el mapa por donde se mueve el drone.
+ * @author Dani
+ */ 
+
 public class Map {
 	private int matrix[][];
 	private int heigh;
@@ -11,6 +16,7 @@ public class Map {
 
 	/**
 	 * Constructor por defecto. Todas las celdas se rellenan con el valor LIBRE.
+	 * @author Dani
 	 * @param heigh 	Altura del mapa
 	 * @param width 	Anchura del mapa
 	 */
@@ -27,6 +33,7 @@ public class Map {
 
 	/**
 	 * Constructor por copia.
+	 * @author Dani
 	 * @param map 	Mapa original a copiar.
 	 */
 	public Map(Map map) {
@@ -59,6 +66,7 @@ public class Map {
 
 	/**
 	 * Getter del valor de una celda.
+	 * @author Dani
 	 * @param x 	Columna.
 	 * @param y 	Fila.
 	 * @return Valor de la celda en la posición x,y.
