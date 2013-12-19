@@ -63,6 +63,7 @@ public class Drone extends SingleAgent {
 	protected Map droneMap;
 	protected float distanceMin;
 	protected int counterStop;
+	protected int battery;
 	/** Decisión de pedir batería */
 	public static final int ASK_FOR_BATTERY = 4;
 	/** Decision de mover al norte */
@@ -107,6 +108,7 @@ public class Drone extends SingleAgent {
 		posY = 0;
 		distanceMin = 999999;
 		counterStop = 0;
+		battery=75;
 		
 		standBy = 0;
 		answerQueue = new LinkedBlockingQueue<ACLMessage>();
@@ -234,6 +236,9 @@ public class Drone extends SingleAgent {
 					}while(dispatch(msg));
 				}catch(InterruptedException e){
 					
+				} catch (JSONException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
 			}
 		};
@@ -782,20 +787,45 @@ public class Drone extends SingleAgent {
 	 * Si el protocolo no esta entre los aceptados envia un mensaje NOT_UNDERSTOOD
 	 * @param msg Mensaje a analizar
 	 * @return True si el dispatcher debe continuar su ejecucion. False en caso contrario.
+	 * @throws JSONException 
 	 */
-	protected boolean dispatch(ACLMessage msg){
+	protected boolean dispatch(ACLMessage msg) throws JSONException{
 		String protocol = msg.getProtocol();
 		boolean res = true;
+		JSONObject resp= new JSONObject();
+		
 		
 		try{
 			switch(protocol){
 			case "BatteryQuery":
-				int battery = onBatteryQueried(msg);
+				int battery2 = onBatteryQueried(msg);
+				if(battery2 < 0|| battery2 > 75){
+					resp.put("error","error en la peticion de bateria");
+					send(ACLMessage.INFORM, protocol, msg.getSender(), resp);
+				}
+				else{
+					resp.put("battery",battery2);
+					send(ACLMessage.INFORM, protocol, msg.getSender(), resp);
+				}
 				//TODO enviar bateria
 				break;
 			case "TraceQuery":
 				Trace trace = onTraceQueried(msg);
+				resp.put("trace", trace);
+				send(ACLMessage.INFORM, protocol, msg.getSender(), resp);
 				//TODO enviar traza
+				break;
+			case "Steps":
+				Trace trc = onTraceQueried(msg);
+				int valor= trc.size();
+				if(valor < 0){
+					resp.put("error", "numero de valor erroneo");
+					send(ACLMessage.REFUSE, protocol, msg.getSender(),resp);
+				}
+				else{
+					resp.put("steps",valor);
+					send(ACLMessage.INFORM, protocol, msg.getSender(), resp);
+				}
 				break;
 			case "DroneReachedGoal":
 				onDroneReachedGoalInform(msg);
@@ -908,7 +938,7 @@ public class Drone extends SingleAgent {
 	 */
 	protected int onBatteryQueried(ACLMessage msg) throws IllegalArgumentException, RuntimeException{
 		// TODO Auto-generated method stub
-		return 0;
+		return battery;
 	}
 	
 	/**
