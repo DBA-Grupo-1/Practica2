@@ -24,7 +24,13 @@ public class Charger extends SingleAgent {
 	private AgentID IDSatellite;
 	private int battery;
 	
-	
+	/**
+	 * @author Jahiel
+	 * @param aid
+	 * @param Levelbattery
+	 * @param satellite
+	 * @throws Exception
+	 */
 	public Charger(AgentID aid, int Levelbattery, AgentID satellite) throws Exception {
 		super(aid);
 		
@@ -35,8 +41,8 @@ public class Charger extends SingleAgent {
 	
 	/**
 	 * Manda un mensaje.
-	 * @author Dani
 	 * @author Jahiel
+	 * @author Dani
 	 * @param typeMessage 		performativa del mensaje.
 	 * @param id				destinatario del mensaje.
 	 * @param protocol			protocolo de comunicación del mensaje.
@@ -76,6 +82,11 @@ public class Charger extends SingleAgent {
 		this.send(msg);
 	}
 	
+	/**
+	 * Hebra encargada del tratamiento de la cola sin prioridad de mensajes.
+	 * @author Jahiel
+	 * @param msg Mensaje ACL recivido y listo para introducir en la cola.
+	 */
 	@Override
 	public void onMessage(ACLMessage msg){
 		
@@ -88,6 +99,10 @@ public class Charger extends SingleAgent {
 		}
 	}
 	
+	/**
+	 * Metodo execute del agente. Aquie se añade la lógica de ejecución para el agente Cargador.
+	 * @author Jahiel
+	 */
 	@Override
 	public void execute(){ 
 		ACLMessage msg = null;
@@ -132,6 +147,14 @@ public class Charger extends SingleAgent {
 		}//FIN WHILE
 	}
 	
+	/**
+	 * Método encargado del tratamiento de la petición de bateria. 
+	 *   Heuristicas Base inicial: se otorga el nivel de batería que se a solicitado el Drone, con una carga máxima de 75U y
+	 *   una carga mínima de 1U.
+	 * @author Jahiel   
+	 * @param msg
+	 * @throws JSONException
+	 */
 	protected void onBatteryRequest(ACLMessage msg) throws JSONException{
 		if (msg.getPerformativeInt() == ACLMessage.REQUEST){
 			JSONObject content = new JSONObject(msg.getContent());

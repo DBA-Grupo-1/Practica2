@@ -254,6 +254,7 @@ public class Drone extends SingleAgent {
 			e.printStackTrace();
 		}
 		
+		//FUNCIONAMIENTO TONTO Y BASICO : COMPRUEBO SI TENGO BATERIA: SI TENGO -> MOVER, SI NO TENGO ->PEDIR
 		send(ACLMessage.REQUEST, "IMoved", sateliteID, data);
 		
 		try {
