@@ -16,7 +16,8 @@ import practica.util.Visualizer;
 
 /**
  * Satélite omnisciente que guía al drone para que llegue al objetivo. 
- * @author Dani, Jahiel
+ * @author Jahiel
+ * @author Dani
  * 
  * 
  * 
@@ -34,7 +35,8 @@ public class Satelite extends SingleAgent {
 	
 	/**
 	 * Constructor sin visualizador
-	 * @author Dani, Jahiel
+	 * @author Jahiel
+	 * @author Danij
 	 */ 
 	public Satelite(AgentID sat, Map mapa) throws Exception{
 		super(sat);
