@@ -13,6 +13,7 @@ import javax.swing.ImageIcon;
 /**
  * Clase que convierte imágenes en mapas y viceversa. También tiene algunas utilidades para tratamiento de imágenes.
  * @author Dani
+ * @author Jonay
  */ 
 
 public abstract class ImgMapConverter {
@@ -72,6 +73,7 @@ public abstract class ImgMapConverter {
 	
 	/**
 	 * Convierte el mapa de datos a un bÃºffer de imagen
+	 * @author Jonay
 	 * @param map El mapa de datos a convertir
 	 * @return Devuelve un BufferedImage con los datos del mapa ya traducidos e introducidos 
 	 */
@@ -118,6 +120,7 @@ public abstract class ImgMapConverter {
 	
 	/**
 	 * Crea una imagen a partir de un mapa de datos
+	 * @author Jonay
 	 * @param path Ruta en la que se guardarÃ¡ la imagen
 	 * @param map Mapa de datos del que se obtendrÃ¡ la imagen
 	 */
