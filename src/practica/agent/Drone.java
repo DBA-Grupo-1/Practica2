@@ -21,7 +21,7 @@ import org.json.JSONObject;
  * Drone que recorre el mapa para buscar al objetivo.
  * @author Jahiel
  * @author Dani
- * 
+ * @author Jonay
  * 
  */ 
 
@@ -326,6 +326,7 @@ public class Drone extends SingleAgent {
 	/**
 	 * Método para obtener un array con los movimientos libres del drone usando la memoria del mismo.
 	 * @author Dani
+	 * @author Jonay
 	 * @return Un array con lo que hay en las posiciones Este, Sur, Oeste y Norte a las que se podría mover, en ese orden.
 	 */
 	// POST DIAGRAMA DE CLASES
@@ -451,6 +452,7 @@ public class Drone extends SingleAgent {
 
 	/**
 	 * receiveStatus metodo para comunicar al satélite que le envie información.
+	 * @author Jonay
 	 * @param id
 	 * @param dec
 	 */
@@ -530,7 +532,10 @@ public class Drone extends SingleAgent {
 
 	}
 
-
+	/**
+	 * Finaliza el agente Drone
+	 * @author Jonay
+	 */
 	@Override
 	public void finalize() {
 		System.out.println("Agente " + this.getName() + " ha finalizado");
@@ -538,6 +543,11 @@ public class Drone extends SingleAgent {
 		super.finalize();
 	}
 
+	/**
+	 * Muestra por consola la traza que ha seguido el dron desde el comienzo hasta que finalizó,
+	 * alcanzando o no su objetivo.
+	 * @author Jonay
+	 */
 	private void mostrarTrazaEjecucion() {
 		System.out.print("Traza de la ejecución: ");
 		for (int i : trazaEjecucion){
@@ -559,8 +569,9 @@ public class Drone extends SingleAgent {
 		}
 	}
 
-	/*
+	/**
 	 * Método para las acciones del drone.
+	 * @author Jonay
 	 */
 	@Override
 	protected void execute() {
