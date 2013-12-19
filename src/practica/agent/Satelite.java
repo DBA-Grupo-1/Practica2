@@ -18,7 +18,7 @@ import practica.util.Visualizer;
  * Satélite omnisciente que guía al drone para que llegue al objetivo. 
  * @author Jahiel
  * @author Dani
- * 
+ * @author Jonay
  * 
  * 
  */
@@ -128,6 +128,7 @@ public class Satelite extends SingleAgent {
 	 * @return Objeto JSon con el contenido de Status
 	 * @throws JSONException  Si la clave es null
 	 * @author jahiel
+	 * @author Jonay
 	 */
 	private JSONObject createStatus() throws JSONException {
 		int posXDrone = gps.getPositionX(), posYDrone = gps.getPositionY();
@@ -165,6 +166,7 @@ public class Satelite extends SingleAgent {
 	/**
 	 * Este método obtiene los valores de las celdas en las 9 casillas que rodean el drone 
 	 * (incluyendo en la que se encuentra el drone)
+	 * @author Jonay
 	 * @return Array de enteros con las 
 	 */
 	private int[] obtenerAlrededores(){
@@ -288,6 +290,7 @@ public class Satelite extends SingleAgent {
 	/**
 	 * Secuencia de acciones del satelite. Ver diagrama de secuencia para ver la secuencia de acciones.
 	 * @author jahiel
+	 * @author Jonay
 	 */
 	@Override
 	protected void execute() {
@@ -387,6 +390,7 @@ public class Satelite extends SingleAgent {
 
 	/**
 	 * @author jahiel
+	 * @author Jonay
 	 */
 	@Override
 	public void finalize() {
