@@ -19,7 +19,8 @@ import org.json.JSONObject;
 
 /**
  * Drone que recorre el mapa para buscar al objetivo.
- * @author Dani, Jahiel
+ * @author Jahiel
+ * @author Dani
  * 
  * 
  */ 
