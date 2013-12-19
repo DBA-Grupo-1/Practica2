@@ -19,7 +19,7 @@ import org.json.JSONObject;
 
 /**
  * Drone que recorre el mapa para buscar al objetivo.
- * @author Dani
+ * @author Dani, Jahiel
  * 
  * 
  */ 
@@ -74,6 +74,7 @@ public class Drone extends SingleAgent {
 	 *  haber encontrado solución al problema.
 	 * @param distance Distancia absoluta a la que se encuentra el drone con respecto a la baliza.
 	 * @return Se devuelve True si se debe finalizar y False en caso contrario.
+	 * @author jahiel
 	 */
 	private boolean stop(float distance){
 		

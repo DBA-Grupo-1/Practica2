@@ -10,6 +10,11 @@ import practica.util.Visualizer;
 import es.upv.dsic.gti_ia.core.AgentID;
 import es.upv.dsic.gti_ia.core.AgentsConnection;
 
+/**
+ * 
+ * @author jahiel
+ *
+ */
 public class Launcher {
 	
 	AgentID id_satelite;
@@ -18,6 +23,10 @@ public class Launcher {
 	Visualizer visualizer;
 	Map map;
 
+	/**
+	 * @author jahiel
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		DOMConfigurator.configure("src/Configuration/loggin.xml"); // ERR
         Logger logger = Logger.getLogger(Launcher.class);

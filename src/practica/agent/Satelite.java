@@ -16,7 +16,7 @@ import practica.util.Visualizer;
 
 /**
  * Satélite omnisciente que guía al drone para que llegue al objetivo. 
- * @author Dani
+ * @author Dani, Jahiel
  * 
  * 
  * 
@@ -34,7 +34,7 @@ public class Satelite extends SingleAgent {
 	
 	/**
 	 * Constructor sin visualizador
-	 * @author Dani
+	 * @author Dani, Jahiel
 	 */ 
 	public Satelite(AgentID sat, Map mapa) throws Exception{
 		super(sat);
@@ -98,6 +98,7 @@ public class Satelite extends SingleAgent {
 	 * @param posX Posición relativa de la baliza con respecto al drone.
 	 * @param posY Posición relativa de la baliza con respecto al drone.
 	 * @return valor del ángulo.
+	 * @author jahiel
 	 */
 	private double calculateAngle(double posX, double posY){
 		double angle = 0;
@@ -124,6 +125,7 @@ public class Satelite extends SingleAgent {
 	 * 
 	 * @return Objeto JSon con el contenido de Status
 	 * @throws JSONException  Si la clave es null
+	 * @author jahiel
 	 */
 	private JSONObject createStatus() throws JSONException {
 		int posXDrone = gps.getPositionX(), posYDrone = gps.getPositionY();
@@ -186,6 +188,7 @@ public class Satelite extends SingleAgent {
 	 * @param typeMessage 	Tipo del mensaje: REQUEST, INFORM, FAIL
 	 * @param id   			Identificador del destinatario
 	 * @param datas			Contenido del mensaje
+	 * @author jahiel
 	 */
 	private void send(int typeMessage, AgentID id, JSONObject datas) {
 
@@ -211,6 +214,7 @@ public class Satelite extends SingleAgent {
 	 * 					-  3 : El dorn decide ir al Norte.
 	 *            		- -1: Fin de la comunicación
 	 * @return Se devuelve "true" si se debe finalizar la comunicación y "false" en caso contrario.
+	 * @author jahiel
 	 */
 	private boolean evalueDecision(AgentID dron, JSONObject ob) {
 		int decision, x = -1, y = -1;
@@ -263,6 +267,7 @@ public class Satelite extends SingleAgent {
 	 * Se crea un mensaje del tipo FAIL para informar de algun fallo al agente dron.
 	 * @param dron 			Identificador del agente dron.
 	 * @param cad_error 	Cadena descriptiva del error producido.
+	 * @author jahiel
 	 */
 	private void sendError(AgentID dron, String cad_error) {
 		JSONObject error = new JSONObject();
@@ -280,6 +285,7 @@ public class Satelite extends SingleAgent {
 
 	/**
 	 * Secuencia de acciones del satelite. Ver diagrama de secuencia para ver la secuencia de acciones.
+	 * @author jahiel
 	 */
 	@Override
 	protected void execute() {
@@ -377,6 +383,9 @@ public class Satelite extends SingleAgent {
 		}
 	}
 
+	/**
+	 * @author jahiel
+	 */
 	@Override
 	public void finalize() {
 		System.out.println("Agente " + this.getName() + " ha finalizado");
