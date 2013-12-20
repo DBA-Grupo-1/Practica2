@@ -3,6 +3,7 @@ package practica.agent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 
 import practica.util.Map;
@@ -102,6 +103,9 @@ public class Drone extends SingleAgent {
 	protected Thread dispatcher;
 	private AgentID[] teammates;
 	private int conversationCounter = 0;
+	
+	private HashMap<String, String> idsCombersationSubscribe;   // {nombreSubscripcion, id-combersation}
+	private HashMap<String, String> subscribers;				// {ID_Agente, id-combersation}
 
 	/**
 	 * Constructor del Drone.
@@ -132,6 +136,9 @@ public class Drone extends SingleAgent {
 		standBy = 0;
 		answerQueue = new LinkedBlockingQueue<ACLMessage>();
 		requestQueue = new LinkedBlockingQueue<ACLMessage>();
+		
+		idsCombersationSubscribe = new HashMap<String, String>();
+		subscribers = new HashMap<String, String>();
 	}
 	
 	/**
@@ -243,11 +250,12 @@ public class Drone extends SingleAgent {
 		case SubjectLibrary.DroneRecharged:
 		case SubjectLibrary.DroneReachedGoal:
 		case SubjectLibrary.YourMovements:
-		case SubjectLibrary.EveryOneMovements:
+		case SubjectLibrary.AllMovements:
 		case SubjectLibrary.ConflictiveSections:
 			
 			queue = requestQueue;
 			break;
+			
 		default:
 			sendError(new NotUnderstoodException("Subject no encontrado"), msg);
 			break;
@@ -328,10 +336,13 @@ public class Drone extends SingleAgent {
 	 * Se comunica con el satelite para recibir su status y actualizarlo.
 	 * 
 	 * @author Alberto
+	 * @author Jahiel
 	 */
 	protected void getStatus() {
 		ACLMessage msg=null;
 		JSONObject contenido = null;
+		int X = posX, Y = posY;  // posicion previa 
+		
 		try {
 			contenido = new JSONObject();
 			contenido.put("Subject", SubjectLibrary.Status);
@@ -349,6 +360,27 @@ public class Drone extends SingleAgent {
 		}
 		
 		updateStatus(msg);
+		
+		JSONObject content = new JSONObject();
+		
+		try {
+			content.put("type", SubjectLibrary.YourMovements);
+			int[] previousPosition = {X, Y};
+			content.put("PreviousPosition", new JSONArray(previousPosition));
+			int[] position = {posX, posY};
+			content.put("CurrentPosition", new JSONArray(position));
+		} catch (JSONException e) {
+			// nunca sucede porque las claves no son vacias
+			e.printStackTrace();
+		}
+		
+		for(String name: subscribers.keySet()){
+	
+			send(ACLMessage.INFORM, new AgentID(name), "Subscribe", null, null,
+					this.subscribers.get(name), content); 			// Con el nombre del agente sacamos la ID-combersation
+		}
+		
+		
 	}
 
 	/**
@@ -435,46 +467,211 @@ public class Drone extends SingleAgent {
 	/**
 	 * Realiza las subscripciones del drone. El drone se subscribe a:
 	 * 
-	 * - DroneReachedGoal: un drone a llegado al Goal. Se te informa de drone que ha finalizado exitosamente.
-	 * - DroneRecharged: La recarga de otro drone. Se te informa cuanto a recargado.
-	 * - YourMovements: los movimientos de un drone específico. Si el drone se mueve se te informa de su movimiento.
-	 * - AllMovements: a los movimientos de todos los drones. Si cualquier drone se mueve se te informa de su movimiento.
-	 * - ConflictiveSections: a las casillas conflictivas. Si se anota una nueva se te informa.
+	 * - DroneReachedGoal: un drone a llegado al Goal. 
+	 * - DroneRecharged: La recarga de otro drone. 
+	 * - YourMovements: los movimientos de un drone específico. 
+	 * - AllMovements: a los movimientos de todos los drones. 
+	 * - ConflictiveSections: a las casillas conflictivas. 
 	 * 
 	 * @author Jahiel
 	 */
 	protected void subscribe() {
-		ACLMessage msg = new ACLMessage();
-		JSONObject content = new JSONObject();
-		String[] subscription = {"DroneReachedGoal", "DroneRecharged", "YourMovements", 
-								"AllMovements", "ConflictiveSections"};
 		
-		for(int i=0; i<subscription.length; i++){
+		subscribeDroneReachedGoal();
+		subscribeDroneRecharged();
+		subscribeYourMovements();
+		subscribeAllMovements();
+		subscribeConflictiveSections();
+		
+	}
+	
+	/**
+	 * Se subscribe a la llegada de un drone al objetivo.
+	 * Se te informa del drone que ha finalizado exitosamente.
+	 * 
+	 * @author Jahiel
+	 */
+	private void subscribeDroneReachedGoal(){
+		JSONObject content = new JSONObject();
+		
+		try {
+			content.put("Subject", SubjectLibrary.DroneReachedGoal);
+		} catch (JSONException e) {
+			// esto nunca pasa porque la clave nunca esta vacía
+			e.printStackTrace();
+		}
+		
+		idsCombersationSubscribe.put("DroneReachedGoal", this.getAid().toString()+"#"+conversationCounter);
+		
+		send(ACLMessage.SUBSCRIBE, sateliteID, "Subscribe", "confirmation", null,
+				buildConversationId(), content);
+		
+		WaitResponseSubscriber();
+	}
+
+	/**
+	 * Se subscribe a cuando un drone recargue. 
+	 * Se informa cuanto a recargado.
+	 * 
+	 * @author Jahiel
+	 */
+	private void subscribeDroneRecharged(){
+			JSONObject content = new JSONObject();
+			
 			try {
-				content.put("Subject", subscription[i]);
+				content.put("Subject", SubjectLibrary.DroneRecharged);
 			} catch (JSONException e) {
-				// no hace nada o no pasa nunca porque la clave nunca es vacia
+				// esto nunca pasa porque la clave nunca esta vacía
 				e.printStackTrace();
 			}
 			
-			msg.setSender(sender);
+			idsCombersationSubscribe.put("DroneRecharged", this.getAid().toString()+"#"+conversationCounter);
 			
-			if(subscription[i].equals("DroneReachedGoal") || subscription[i].equals("AllMovements")
-					|| subscription[i].equals("ConflictiveSections")){
-				msg.setReceiver(sateliteID);
-			}else if(subscription[i].equals("DroneRecharged")){
-				msg.setReceiver(chargerID);
-			}else
-				for(int i=0; i<teammates.length; i++){
-					
-				}
-		}
-
+			send(ACLMessage.SUBSCRIBE, chargerID, "Subscribe", "confirmation", null,
+					buildConversationId(), content);
+			
+			WaitResponseSubscriber();
 	}
 	
+	/**
+	 * Se subscribe a los movimientos que realiza un drone específico.
+	 * Si el drone se mueve se te informa de su movimiento.
+	 * 
+	 * De momento se subscribe a TODOS los drones registrados.
+	 * 
+	 * @author Jahiel
+	 */
+	private void subscribeYourMovements(){
+		JSONObject content = new JSONObject();
+		
+		try {
+			content.put("Subject", SubjectLibrary.YourMovements);
+		} catch (JSONException e) {
+			// esto nunca pasa porque la clave nunca esta vacía
+			e.printStackTrace();
+		}
 
+		for(int i=0; i<this.teammates.length; i++){
+			idsCombersationSubscribe.put("YourMovements"+teammates[i].getLocalName(), this.getAid().toString()+"#"+conversationCounter);
+			send(ACLMessage.SUBSCRIBE, teammates[i], "Subscribe", "confirmation", null,
+					buildConversationId(), content);
+			
+			WaitResponseSubscriber();
+		}
+		
+	}
+	
+	/**
+	 * Se subscribe a los movimientos que realize cualquier drone. 
+	 * Si cualquier drone se mueve se te informa de su movimiento.
+	 * 
+	 * @author Jahiel
+	 */
+	private void subscribeAllMovements(){
+		JSONObject content = new JSONObject();
+		
+		try {
+			content.put("Subject", SubjectLibrary.AllMovements);
+		} catch (JSONException e) {
+			// esto nunca pasa porque la clave nunca esta vacía
+			e.printStackTrace();
+		}
+		
+		idsCombersationSubscribe.put("AllMovements", this.getAid().toString()+"#"+conversationCounter);
+		
+		send(ACLMessage.SUBSCRIBE, sateliteID, "Subscribe", "confirmation", null,
+				buildConversationId(), content);
+		
+		WaitResponseSubscriber();
+	}
+	
+	/**
+	 * Se subscribe a las casillas conflictivas. 
+	 * Si se anota una nueva se te informa.
+	 * 
+	 * @author Jahiel
+	 */
+	private void subscribeConflictiveSections(){
+		JSONObject content = new JSONObject();
+		
+		try {
+			content.put("Subject", SubjectLibrary.ConflictiveSections);
+		} catch (JSONException e) {
+			// esto nunca pasa porque la clave nunca esta vacía
+			e.printStackTrace();
+		}
+		
+		idsCombersationSubscribe.put("ConflictiveSections", this.getAid().toString()+"#"+conversationCounter);
+		
+		send(ACLMessage.SUBSCRIBE, sateliteID, "Subscribe", "confirmation", null,
+				buildConversationId(), content);
+		
+		WaitResponseSubscriber();
+		
+	}
+	
+	/**
+	 * Se trata la respuesta a la petición de subscripción.
+	 * 
+	 * @author Jahiel
+	 */
+	public void WaitResponseSubscriber(){
+		ACLMessage msg = new ACLMessage();
+		
+		try {
+			msg = answerQueue.take();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+			throw new RuntimeException("Fallo en la respuesta de subscripcion: error al cojer la respuesta");
+		}
+		
+		switch(msg.getPerformativeInt()){
+		case ACLMessage.ACCEPT_PROPOSAL:
+			break;
+		case ACLMessage.REFUSE:
+		case ACLMessage.FAILURE:
+			throw new RuntimeException("Fallo en la respuesta de subscripcion: fallo en la petición de subscripción");
+		
+		default: 
+			throw new RuntimeException("Fallo en la respuesta de subscripcion: error en la performativa");
+		}
+	}
+	
+	/**
+	 * Cancela la subscripción.
+	 * 
+	 * @author Jahiel
+	 */
+	
+	public void cancelSubscribe(String name){
+		JSONObject content = new JSONObject();
+		
+		try {
+			content.put("type", name);
+		} catch (JSONException e) {
+			// nunca se ejecuta porque la clave no es vacía
+			e.printStackTrace();
+		}
+		
+		send(ACLMessage.CANCEL, sateliteID, "Subscribe", null, null,
+				this.idsCombersationSubscribe.get(name), content);
+	}
+	
+	/**
+	 * Se subscribe un agente a un drone.
+	 * 
+	 * @author Jahiel
+	 * @param msg Mesaje de subscripción recibido
+	 */
+	public void newSubscription(ACLMessage msg){
+		
+		this.subscribers.put(msg.getSender().toString(), msg.getConversationId().toString());
+	}
+	
 	/**
 	 * Realiza el registro en el satelite.
+	 * 
+	 * @author Alberto
 	 */
 	protected void register() {
 		ACLMessage msg=null;
@@ -879,6 +1076,8 @@ public class Drone extends SingleAgent {
 	/**
 	 * Comprueba el campo "subject" dentro del Content y llama a la funcion correspondiente de ese protocolo.
 	 * Si el "subject" no esta entre los aceptados envia un mensaje NOT_UNDERSTOOD
+	 * 
+	 * @author Jahiel
 	 * @param msg Mensaje a analizar
 	 * @return True si el dispatcher debe continuar su ejecucion. False en caso contrario.
 	 * @throws JSONException 
@@ -929,9 +1128,12 @@ public class Drone extends SingleAgent {
 				onDroneChargedInform(msg);
 				break;
 			case SubjectLibrary.YourMovements:
-				onYourMovementsInform(msg);
+				if(msg.getPerformativeInt() == ACLMessage.SUBSCRIBE)
+					newSubscription(msg);
+				else
+					onYourMovementsInform(msg);
 				break;
-			case SubjectLibrary.EveryOneMovements:
+			case SubjectLibrary.AllMovements:
 				onEveryOneMovementsInform(msg);
 				break;
 			case SubjectLibrary.ConflictiveSections:
@@ -995,8 +1197,11 @@ public class Drone extends SingleAgent {
 		case "TraceQuery":
 			//TODO
 			break;
-		case "DroneReachedGoal":
-		case "DroneRecharged":
+		case SubjectLibrary.DroneReachedGoal:
+		case SubjectLibrary.DroneRecharged:
+		case SubjectLibrary.YourMovements:
+		case SubjectLibrary.AllMovements:
+		case SubjectLibrary.ConflictiveSections:
 			//TODO
 			break;
 		default:
@@ -1027,8 +1232,11 @@ public class Drone extends SingleAgent {
 		case "TraceQuery":
 			//TODO
 			break;
-		case "DroneReachedGoal":
-		case "DroneRecharged":
+		case SubjectLibrary.DroneReachedGoal:
+		case SubjectLibrary.DroneRecharged:
+		case SubjectLibrary.YourMovements:
+		case SubjectLibrary.AllMovements:
+		case SubjectLibrary.ConflictiveSections:
 			//TODO
 			break;
 		default:
@@ -1063,11 +1271,11 @@ public class Drone extends SingleAgent {
 	}
 
 	protected void onEveryOneMovementsInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException{
-		
+		// TODO
 	}
 	
 	protected void onConflictiveSectionsInform(ACLMessage msg)throws IllegalArgumentException, RuntimeException, FIPAException{
-		
+		// TODO
 	}
 	
 	/**
