@@ -7,7 +7,11 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import practica.util.ErrorLibrary;
+import practica.util.ProtocolLibrary;
 import practica.util.SubjectLibrary;
+import es.upv.dsic.gti_ia.architecture.FIPAException;
+import es.upv.dsic.gti_ia.architecture.NotUnderstoodException;
+import es.upv.dsic.gti_ia.architecture.RefuseException;
 import es.upv.dsic.gti_ia.core.ACLMessage;
 import es.upv.dsic.gti_ia.core.AgentID;
 import es.upv.dsic.gti_ia.core.SingleAgent;
@@ -102,6 +106,7 @@ public class Charger extends SingleAgent {
 	/**
 	 * Metodo execute del agente. Aquie se añade la lógica de ejecución para el agente Cargador.
 	 * @author Jahiel
+	 * @author Dani
 	 */
 	@Override
 	public void execute(){ 
@@ -117,17 +122,29 @@ public class Charger extends SingleAgent {
 			if(msg != null){
 				switch (msg.getProtocol()){
 				
-				case "ChargeMe":
+				case ProtocolLibrary.Reload:
 					try {
-						onBatteryRequest(msg);
+						onReload(msg);
 					} catch (JSONException e) {  
-						JSONObject error = new JSONObject();
+						JSONObject content = new JSONObject();
 						try {
-							error.put("error", "Error en la estructura del content");
+							content.put("Error", ErrorLibrary.BadlyStructuredContent);
 						} catch (JSONException e1) {
 							// ni caso esta excepcion jamas se lanzará
 						}
-						//send(ACLMessage.REFUSE, msg.getSender(), error, msg.getReplyWith());
+						send(ACLMessage.REFUSE, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), content);
+					} catch (RefuseException e) {
+						e.printStackTrace();
+						JSONObject content = new JSONObject();
+						try {
+							content.put("Error", e.getMessage());
+							send(ACLMessage.REFUSE, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), content);
+						} catch (JSONException e1) {
+							e1.printStackTrace();
+						}
+					} catch (NotUnderstoodException e) {
+						send(ACLMessage.NOT_UNDERSTOOD, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), null);
+						e.printStackTrace();
 					}
 					break;
 				
@@ -152,47 +169,60 @@ public class Charger extends SingleAgent {
 	 *   Heuristicas Base inicial: se otorga el nivel de batería que se a solicitado el Drone, con una carga máxima de 75U y
 	 *   una carga mínima de 1U.
 	 * @author Jahiel   
+	 * @author Dani
 	 * @param msg
 	 * @throws JSONException
 	 */
-	protected void onBatteryRequest(ACLMessage msg) throws JSONException{
+	protected void onReload(ACLMessage msg) throws RefuseException, NotUnderstoodException, JSONException{
+		//Primera comprobación: performativa correcta.
 		if (msg.getPerformativeInt() == ACLMessage.REQUEST){
 			JSONObject content = new JSONObject(msg.getContent());
 			int requestedBattery = content.getInt("RequestAmmount");
 			int givenBattery;
 			
-			if (requestedBattery <= 0 || requestedBattery > 75){
-				JSONObject reason = new JSONObject();
-				reason.put("reason", ErrorLibrary.UnespectedAmountReason);
-				send (ACLMessage.REFUSE, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), reason);
-			}
+			//Segunda comprobación: content vacío
+			if (content.length() == 0)
+				throw new RefuseException(ErrorLibrary.EmptyContent);
+			//Tercera comprobación: content incorrecto
+			if (!content.has("Subject") || !content.has("RequestAmount"))
+				throw new RefuseException(ErrorLibrary.BadlyStructuredContent);
 			
-			else{
-				/**
-				 * @TODOauthor Dani
-				 * TODO heurística tempora, hay que implementar la que decidamos.
+			
+			//Cuarta comprobación : batería pedida fuera de los límites.
+			if (requestedBattery < 0 || requestedBattery > 75)
+				/*JSONObject reason = new JSONObject();
+				reason.put("Error", ErrorLibrary.UnespectedAmountReason);
+				send (ACLMessage.REFUSE, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), reason);
 				 */
-				if (battery <= 0){
-					JSONObject reason = new JSONObject();
-					reason.put("reason", ErrorLibrary.NotBatteryAnymoreReason);
-					send (ACLMessage.REFUSE, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), reason);
-				}
-				else{
-					if (battery > requestedBattery)
-						givenBattery = requestedBattery;
-					else 
-						givenBattery = battery;
-					battery -= requestedBattery;
-					
-					JSONObject sendContent = new JSONObject();
-					sendContent.put ("GivenAmount", requestedBattery);
-					send (ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), sendContent);
-				}
-					
-			}
+				throw new RefuseException(ErrorLibrary.UnespectedAmount);
+			
+			//Quinta comprobación : No le queda batería al cargador.
+			if (battery <= 0)
+				/*JSONObject reason = new JSONObject();
+				reason.put("Error", ErrorLibrary.NotBatteryAnymoreReason);
+				send (ACLMessage.REFUSE, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), reason);
+			*/
+				throw new RefuseException(ErrorLibrary.NotBatteryAnymore);
+			
+
+			/**
+			 * @TODOauthor Dani
+			 * TODO heurística temporal, hay que implementar la que decidamos.
+			 */
+			if (battery > requestedBattery)
+				givenBattery = requestedBattery;
+			else 
+				givenBattery = battery;
+			battery -= requestedBattery;
+			
+			JSONObject sendContent = new JSONObject();
+			sendContent.put ("AmountGiven", requestedBattery);
+			sendContent.put ("Subject", SubjectLibrary.BatteryRequest);
+			send (ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), sendContent);
 		}
 		else{
-			send(ACLMessage.NOT_UNDERSTOOD, msg.getSender(), msg.getProtocol(), null, null, msg.getConversationId(), null);
+			send(ACLMessage.NOT_UNDERSTOOD, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), null);
+			throw new NotUnderstoodException("");
 		}
 	}
 }

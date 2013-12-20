@@ -69,7 +69,7 @@ public class Drone extends SingleAgent {
 	protected int counterStop;
 	protected int battery;
 	/** Decisión de pedir batería */
-	public static final int ASK_FOR_BATTERY = 4;
+	//public static final int ASK_FOR_BATTERY = 4;
 	/** Decision de mover al norte */
 	public static final int NORTE = 3;
 	/** Decision de mover al oeste */
@@ -208,7 +208,7 @@ public class Drone extends SingleAgent {
 	 * Recibe el mensaje y lo encola. La decision de a que cola mandarlo depende enteramente del protocolo del mensaje (campo protocol).<br>
 	 * Estado actual:<br>
 	 * answerQueue -> SendMeMyStatus, IMoved<br>
-	 * requestQueue -> BatteryQuery, TraceQuery, DroneReachedGoal, DroneRecharged
+	 * requestQueue -> BatteryQuery, TraceQuery, DroneReachedGoal, DroneRecharged, BatteryRequested
 	 * @author Jahiel
 	 * @param msg Mensaje recibido
 	 */
@@ -245,6 +245,7 @@ public class Drone extends SingleAgent {
 		case SubjectLibrary.YourMovements:
 		case SubjectLibrary.EveryOneMovements:
 		case SubjectLibrary.ConflictiveSections:
+		case SubjectLibrary.BatteryRequest:
 			
 			queue = requestQueue;
 			break;
@@ -430,6 +431,28 @@ public class Drone extends SingleAgent {
 	protected void updateTrace(int decision) {
 		// TODO Auto-generated method stub
 		
+	}
+	
+	
+	/**
+	 * Pide batería al cargador.
+	 * @author Dani.
+	 * @param amount cantidad que se le pide al cargador.
+	 */
+	protected void askForBattery (int amount){
+		if (battery > 0 && amount > 0 && amount <= 75){ //Comprobación extra
+			JSONObject content = new JSONObject();
+			try {
+				//Construcción del JSON
+				content.put("Subject", SubjectLibrary.BatteryRequest);
+				content.put("RequestAmmount", amount);
+				
+				//Envío del mensaje
+				send(ACLMessage.REQUEST, chargerID, ProtocolLibrary.Reload, "default", null, buildConversationId(), content);
+			} catch (JSONException e){
+				e.printStackTrace();
+			}
+		}
 	}
 
 	/**
@@ -704,8 +727,13 @@ public class Drone extends SingleAgent {
 	 * @return Decision tomada
 	 */
 	protected int criticalBehaviour(List<Pair> listaMovimientos, Object[] args) {
-		// TODO Auto-generated method stub
-		return NO_DEC;
+		//Si no le queda batería el drone la pide y se queda en standby.
+		if (battery == 0){
+			return ASK_FOR_BATTERY;
+			
+		}
+		else 
+			return NO_DEC;
 	}
 
 	/**
@@ -937,6 +965,10 @@ public class Drone extends SingleAgent {
 			case SubjectLibrary.ConflictiveSections:
 				onConflictiveSectionsInform(msg);
 				break;
+			case SubjectLibrary.BatteryRequest:
+				onBatteryReceived(msg);
+				break;
+				
 			default: 
 				sendError(new NotUnderstoodException("Subject no encontrado"), msg);
 				break;
@@ -952,7 +984,41 @@ public class Drone extends SingleAgent {
 		return res;
 	}
 	
-	
+	/**
+	 * Recepción de la respuesta del cargador a la petición de una recarga.
+	 * @author Dani
+	 * @param msg mensaje a analizar.
+	 * 
+	 */
+	private void onBatteryReceived(ACLMessage msg) {
+		if (msg.getPerformativeInt() == ACLMessage.INFORM){
+			//Se ha producido una recarga
+			try {
+				JSONObject content = new JSONObject(msg.getContent());
+				battery += content.getInt("AmountGiven");
+			} catch (JSONException e) {
+				System.out.println("Error JSON al recibir batería");
+				e.printStackTrace();
+			}
+		}	
+		//not-understood
+		else if (msg.getPerformativeInt() == ACLMessage.NOT_UNDERSTOOD){
+			System.out.println("onBatteryReceived: recibido not-understood.");
+		}
+		//refuse
+		else if (msg.getPerformativeInt() == ACLMessage.REFUSE){
+			System.out.println("onBatteryReceiver: recibido refuse.");
+			try {
+				JSONObject content = new JSONObject(msg.getContent());
+				System.out.println("Batería no recibida. Motivo: " + content.getDouble("Error"));
+				//TODO: gestionar algunos errores, como el de no más batería.
+			} catch (JSONException e) {
+				System.out.println("Error JSON al gestionar el refuse en la batería");
+				e.printStackTrace();
+			}
+		}
+	}
+
 	private void sendError(FIPAException fe, ACLMessage msgOrig) {
 		ACLMessage msgError = fe.getACLMessage();
 		JSONObject content = new JSONObject();
