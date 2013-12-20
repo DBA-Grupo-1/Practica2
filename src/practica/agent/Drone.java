@@ -1108,6 +1108,7 @@ public class Drone extends SingleAgent {
 	 * Si el "subject" no esta entre los aceptados envia un mensaje NOT_UNDERSTOOD
 	 * 
 	 * @author Jahiel
+	 * @author Dani
 	 * @param msg Mensaje a analizar
 	 * @return True si el dispatcher debe continuar su ejecucion. False en caso contrario.
 	 * @throws JSONException 
