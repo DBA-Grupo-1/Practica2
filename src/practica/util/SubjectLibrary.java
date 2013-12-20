@@ -18,6 +18,7 @@ public class SubjectLibrary {
 	public static final String Trace = "Trace";
 	public static final String Steps = "Steps";
 	
+	public static final String Status = "Status";
 	public static final String MapOriginal = "MapOriginal";
 	public static final String MapGlobal = "MapGlobal";
 	public static final String IdAgent = "IdAgent";

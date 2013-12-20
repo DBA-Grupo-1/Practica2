@@ -7,8 +7,11 @@ import java.util.List;
 
 import practica.util.Map;
 import practica.util.Pair;
+import practica.util.ProtocolLibrary;
+import practica.util.SubjectLibrary;
 import practica.util.Trace;
 import es.upv.dsic.gti_ia.architecture.FIPAException;
+import es.upv.dsic.gti_ia.architecture.NotUnderstoodException;
 import es.upv.dsic.gti_ia.core.AgentID;
 import es.upv.dsic.gti_ia.core.SingleAgent;
 import es.upv.dsic.gti_ia.core.ACLMessage;
@@ -97,6 +100,7 @@ public class Drone extends SingleAgent {
 	protected BlockingQueue<ACLMessage> requestQueue;
 	protected Thread dispatcher;
 	private AgentID[] teammates;
+	private int conversationCounter = 0;
 
 	public Drone(AgentID aid, int mapWidth, int mapHeight, AgentID sateliteID) throws Exception {
 		super(aid);
@@ -195,22 +199,41 @@ public class Drone extends SingleAgent {
 	 */
 	@Override
 	public void onMessage(ACLMessage msg){
+		JSONObject content;
+		String subject = null;
+		try {
+			content = new JSONObject(msg.getContent());
+			subject = content.getString("Subject");
+		} catch (JSONException e1) {
+			e1.printStackTrace();
+		}
 		BlockingQueue<ACLMessage> queue = null;
 		
-		switch(msg.getProtocol()){
-		case "SendMeMyStatus":
-		case "IMoved":
-		case "Register":
+		switch(subject){
+		case SubjectLibrary.Status:
+		case SubjectLibrary.IMoved:
+		case SubjectLibrary.Register:
 			queue = answerQueue;
 			break;
-		case "BatteryQuery":
-		case "TraceQuery":
-		case "DroneReachedGoal":
-		case "DroneRecharged":
-			queue = answerQueue;
+		case SubjectLibrary.BatteryLeft:
+		case SubjectLibrary.Trace:
+		case SubjectLibrary.Steps:
+			if(msg.getPerformativeInt() == ACLMessage.QUERY_REF){
+				queue = requestQueue;
+			}else{
+				queue = answerQueue;
+			}
+			break;
+		case SubjectLibrary.DroneReachedGoal:
+		case SubjectLibrary.DroneRecharged:
+			if(msg.getPerformativeInt() == ACLMessage.INFORM){
+				queue = requestQueue;
+			}else{
+				queue = answerQueue;
+			}
 			break;
 		default:
-			send(ACLMessage.NOT_UNDERSTOOD, msg.getProtocol(), msg.getSender(), null);
+			sendError(new NotUnderstoodException("Subject no encontrado"), msg);
 			break;
 		}
 		
@@ -256,19 +279,33 @@ public class Drone extends SingleAgent {
 		
 		try {
 			data.put("decision", decision);
+			data.put("Subject", SubjectLibrary.IMoved);
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
 		
-		//FUNCIONAMIENTO TONTO Y BASICO : COMPRUEBO SI TENGO BATERIA: SI TENGO -> MOVER, SI NO TENGO ->PEDIR
-		send(ACLMessage.REQUEST, "IMoved", sateliteID, data);
+		send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.DroneMove, "default", null, buildConversationId(), data);
 		
 		try {
 			answerQueue.take();
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+
+	/**
+	 * Construye un nuevo campo conversationID a partir del id del agente y el contador de conversacion
+	 * 
+	 * @author Alberto
+	 * @return Conversation id formado segun el patron acordado
+	 */
+	private String buildConversationId() {
+		String res;
+		synchronized(this){
+			res = this.getAid().toString()+"#"+conversationCounter;
+			conversationCounter++;
+		}
+		return res;
 	}
 
 	/**
@@ -278,8 +315,16 @@ public class Drone extends SingleAgent {
 	 */
 	protected void getStatus() {
 		ACLMessage msg=null;
+		JSONObject contenido = null;
+		try {
+			contenido = new JSONObject();
+			contenido.put("Subject", SubjectLibrary.Status);
+		} catch (JSONException ex) {
+			ex.printStackTrace();
+			Logger.getLogger(Drone.class.getName()).log(Level.SEVERE, null, ex);
+		}
 		
-		send(ACLMessage.REQUEST, "SendMeMyStatus", sateliteID, null);
+		send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), contenido);
 		
 		try {
 			msg = answerQueue.take();
@@ -391,12 +436,13 @@ public class Drone extends SingleAgent {
 		try {
 			data.put("ID", this.getAid().toString());
 			data.put("nombre_alumno", this.getAid().name);
+			data.put("Subject", SubjectLibrary.Register);
 		} catch (JSONException e) {
 			e.printStackTrace();
 			throw new RuntimeException("Fallo en el registro: error al crear content del mensaje de envio");
 		}
 		
-		send(ACLMessage.REQUEST, "Register" , sateliteID, data);
+		send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Registration, "default", null, buildConversationId(), data);
 		
 		try {
 			msg = answerQueue.take();
@@ -791,14 +837,15 @@ public class Drone extends SingleAgent {
 	 * @throws JSONException 
 	 */
 	protected boolean dispatch(ACLMessage msg) throws JSONException{
-		String protocol = msg.getProtocol();
+		JSONObject content = new JSONObject(msg.getContent());
+		String subject = content.getString("Subject");
 		boolean res = true;
 		JSONObject resp= new JSONObject();
 		
 		
 		try{
-			switch(protocol){
-			case "BatteryQuery":
+			switch(subject){
+			case SubjectLibrary.BatteryLeft:
 				int battery2 = onBatteryQueried(msg);
 				if(battery2 < 0|| battery2 > 75){
 					resp.put("error","error en la peticion de bateria");
@@ -810,13 +857,13 @@ public class Drone extends SingleAgent {
 				}
 				//TODO enviar bateria
 				break;
-			case "TraceQuery":
+			case SubjectLibrary.Trace:
 				Trace trace = onTraceQueried(msg);
 				resp.put("trace", trace);
 				send(ACLMessage.INFORM, protocol, msg.getSender(), resp);
 				//TODO enviar traza
 				break;
-			case "Steps":
+			case SubjectLibrary.Steps:
 				Trace trc = onTraceQueried(msg);
 				int valor= trc.size();
 				if(valor < 0){
@@ -828,14 +875,14 @@ public class Drone extends SingleAgent {
 					send(ACLMessage.INFORM, protocol, msg.getSender(), resp);
 				}
 				break;
-			case "DroneReachedGoal":
+			case SubjectLibrary.DroneReachedGoal:
 				onDroneReachedGoalInform(msg);
 				break;
-			case "DroneRecharged":
+			case SubjectLibrary.DroneRecharged:
 				onDroneChargedInform(msg);
 				break;
 			default: 
-				send(ACLMessage.NOT_UNDERSTOOD, protocol, msg.getSender(), null);
+				sendError(new NotUnderstoodException("Subject no encontrado"), msg);
 				break;
 			}
 		}catch(FIPAException fe){
@@ -876,10 +923,18 @@ public class Drone extends SingleAgent {
 	 * @return True si el dispatcher debe continuar, false en caso contrario
 	 */
 	protected boolean treatRuntimeError(ACLMessage msg, RuntimeException e) {
-		String protocol = msg.getProtocol();
+		JSONObject content;
+		String subject = null;
+		try {
+			content = new JSONObject(msg.getContent());
+			subject = content.getString("Subject");
+		} catch (JSONException e1) {
+			e1.printStackTrace();
+		}
+		
 		boolean res = true;
 		
-		switch(protocol){
+		switch(subject){
 		case "BatteryQuery":
 		case "TraceQuery":
 			//TODO
@@ -901,10 +956,17 @@ public class Drone extends SingleAgent {
 	 * @return True si el dispatcher debe continuar, false en caso contrario
 	 */
 	protected boolean treatMessageError(ACLMessage msg, IllegalArgumentException e) {
-		String protocol = msg.getProtocol();
+		JSONObject content;
+		String subject = null;
+		try {
+			content = new JSONObject(msg.getContent());
+			subject = content.getString("Subject");
+		} catch (JSONException e1) {
+			e1.printStackTrace();
+		}
 		boolean res = true;
 		
-		switch(protocol){
+		switch(subject){
 		case "BatteryQuery":
 		case "TraceQuery":
 			//TODO
@@ -960,29 +1022,50 @@ public class Drone extends SingleAgent {
 	 * @throws RuntimeException En caso de error en el procesamiento del mensaje (comportamiento del drone ante el mensaje).
 	 */
 	protected int onBatteryQueried(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException{
-		// TODO Auto-generated method stub
 		return battery;
 	}
 	
+	
 	/**
-	 * Se envia un mensaje del tipo "typeMessag" al agente "id" con el contenido "datas".
+	 * Manda un mensaje.
 	 * @author Dani
-	 * FIXME: otros autores añadiros.
-	 * @param typeMessage 	Tipo del mensaje
-	 * @param id   			Identificador del destinatario
-	 * @param protocolo		Protocolo del mensaje.
-	 * @param datas			Contenido del mensaje
+	 * @author Jahiel
+	 * @param typeMessage 		performativa del mensaje.
+	 * @param id				destinatario del mensaje.
+	 * @param protocol			protocolo de comunicación del mensaje.
+	 * @param replyWith			reply-with del mensaje. Será null si se usa in-reply-to.
+	 * @param inReplyTo			in-reply-to del mensaje. Será null si se usa reply-with.
+	 * @param conversationId	id de la conversación del mensaje,
+	 * @param datas				content del mensaje.
 	 */
-	private void send(int typeMessage, String protocol, AgentID id, JSONObject datas) {
+	private void send(int typeMessage, AgentID id, String protocol, String replyWith, String inReplyTo, String conversationId, JSONObject datas) {
+
 		ACLMessage msg = new ACLMessage(typeMessage);
 		msg.setSender(this.getAid());
 		msg.addReceiver(id);
-		msg.setProtocol(protocol);
+		
+		if (/*replyWith.isEmpty() ||*/ replyWith == null) //Doble comprobación, nunca está de más.
+			msg.setReplyWith("");
+		else
+			msg.setProtocol(protocol);
+		msg.setInReplyTo(replyWith);
+		
+		if (/*inReplyTo.isEmpty() ||*/ inReplyTo == null) //Doble comprobación, nunca está de más.
+			msg.setInReplyTo("");
+		else
+			msg.setProtocol(protocol);
+		msg.setInReplyTo(inReplyTo);
+		
+		if (/*conversationId.isEmpty() ||*/ conversationId == null) //Doble comprobación, nunca está de más.
+			msg.setConversationId("");
+		else
+			msg.setProtocol(protocol);
+		msg.setInReplyTo(conversationId);
+		
 		if (datas != null)
 			msg.setContent(datas.toString());
 		else
 			msg.setContent("");
-		
 		this.send(msg);
 	}
 	
