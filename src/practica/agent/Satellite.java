@@ -21,6 +21,7 @@ import practica.util.GPSLocation;
 import practica.util.ImgMapConverter;
 import practica.util.Map;
 import practica.util.MessageQueue;
+import practica.util.ProtocolLibrary;
 import practica.util.SharedMap;
 import practica.util.Visualizer;
 import practica.util.DroneStatus;
@@ -406,21 +407,13 @@ public class Satellite extends SingleAgent {
 				}
 				System.out.println("Procesando mensaje: protocolo " + proccesingMessage.getProtocol());
 				switch (proccesingMessage.getProtocol()){
-					case "Register" : onRegister(proccesingMessage); break;
-					case "SendMeMyStatus" : 
-						onStatusQueried (proccesingMessage); 			
-						break;
-					case "IMoved" : 
-						onDroneMoved (proccesingMessage); 
-						break;
-					case "DroneReachedGoalSubscription" : onSubscribe(proccesingMessage); break;
-					case "LetMeKnowWhenSomeoneMoves" : onSubscribe(proccesingMessage); break;
-					case "SendOriginalMap" : onMapQueried(proccesingMessage); break;
-					case "SendSharedMap" : onMapQueried(proccesingMessage); break;
-					case "SendAllDroneIDs" : onDronesIDQueried(proccesingMessage); break;
-					case "SendPositionOfDrone" : onDronePositionQueried(proccesingMessage); break;
-					case "SendDistanceOfDrone" : onDroneDistanceQueried(proccesingMessage); break;
-					case "SendBateryOfDrone" : onDroneBatteryQueried(proccesingMessage); break;
+				
+				case ProtocolLibrary.Registration : onRegister(proccesingMessage); break;
+				case ProtocolLibrary.Information : onInformation (proccesingMessage); break;
+				case ProtocolLibrary.DroneMove : onDroneMoved(proccesingMessage); break;
+				case ProtocolLibrary.Subscribe : onSubscribe(proccesingMessage); break;
+				case ProtocolLibrary.Finalize : onFinalize(proccesingMessage); break;
+				case ProtocolLibrary.Reload : onReload(proccesingMessage); break;
 				}		
 			}
 		}
@@ -451,11 +444,6 @@ public class Satellite extends SingleAgent {
 	 */
 	public Map getMapSeguimiento() {
 		return mapSeguimiento;
-	}
-	
-	//TODO Implementation
-	public void onMapQueried (ACLMessage msg){
-		
 	}
 	
 	//TODO Implementation
@@ -584,24 +572,29 @@ public class Satellite extends SingleAgent {
 			send(ACLMessage.NOT_UNDERSTOOD, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), null);
 		}		
 	}
-	
-	//TODO Implementation
-	public void onDronePositionQueried (ACLMessage msg){
-	}
-	
-	//TODO Implementation
-	public void onDronesIDQueried (ACLMessage msg){
-	}
-	
 	//TODO Implementation
 	public void onSubscribe (ACLMessage msg){
 	}
 	
 	//TODO Implementation
-	public void onDroneBatteryQueried (ACLMessage msg){
+	public void onReload (ACLMessage msg){
+		
+	}
+	
+	
+	/**
+	 * TODO Implementation
+	 * @see onStatusQueried para cuando te pidan el status. Si el que implementa esto lo usa que no sea perro y me ponga como autor >_<
+	 * @param msg
+	 */
+	
+	public void onInformation (ACLMessage msg){
+		
 	}
 	
 	//TODO Implementation
-	public void onDroneDistanceQueried (ACLMessage msg){
+	
+	public void onFinalize (ACLMessage msg){
+		
 	}
 }
