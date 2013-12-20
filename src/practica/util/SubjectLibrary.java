@@ -10,7 +10,7 @@ public class SubjectLibrary {
 	public static final String DroneRecharged = "DroneRecharged";
 	public static final String DroneReachedGoal = "DroneReachedGoal";
 	public static final String YourMovements = "YourMovements";
-	public static final String AllMovements = "AllMovements";
+	public static final String AllMovements = "AllMovements"; 
 	public static final String ConflictiveSections = "ConflictiveSections";
 	
 	// Información

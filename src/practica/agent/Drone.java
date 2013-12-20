@@ -1227,7 +1227,7 @@ public class Drone extends SingleAgent {
 		}
 		boolean res = true;
 		
-		switch(subject){
+		switch(subject){ 
 		case "BatteryQuery":
 		case "TraceQuery":
 			//TODO
