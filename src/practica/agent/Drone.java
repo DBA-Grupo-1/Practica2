@@ -22,6 +22,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.jaxen.function.StartsWithFunction;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -70,7 +71,7 @@ public class Drone extends SingleAgent {
 	protected int counterStop;
 	protected int battery;
 	/** Decisión de pedir batería */
-	//public static final int ASK_FOR_BATTERY = 4;
+	public static final int ASK_FOR_BATTERY = 4;
 	/** Decision de mover al norte */
 	public static final int NORTE = 3;
 	/** Decision de mover al oeste */
@@ -926,8 +927,9 @@ public class Drone extends SingleAgent {
 	protected int criticalBehaviour(List<Pair> listaMovimientos, Object[] args) {
 		//Si no le queda batería el drone la pide y se queda en standby.
 		if (battery == 0){
+			askForBattery(75);
+			enterStandBy();
 			return ASK_FOR_BATTERY;
-			
 		}
 		else 
 			return NO_DEC;

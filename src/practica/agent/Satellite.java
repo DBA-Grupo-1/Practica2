@@ -576,9 +576,28 @@ public class Satellite extends SingleAgent {
 	public void onSubscribe (ACLMessage msg){
 	}
 	
-	//TODO Implementation
+	/**
+	 * Rutina de tratamiento de un mensaje con el protocolo "Reload".
+	 * En este caso solo se puede recibir un único mensaje: la recarga de un drone. No se envían mensajes.
+	 * @author Dani
+	 * @param msg
+	 */
 	public void onReload (ACLMessage msg){
-		
+		if (msg.getPerformativeInt() == ACLMessage.INFORM){
+			try {
+				JSONObject content = new JSONObject(msg.getContent());
+				//Busco el status del drone
+				AgentID rechargedDrone = new AgentID (content.getString("DroneID"));
+				DroneStatus rechargedDroneStatus = findStatus(rechargedDrone);
+				//Lo actualizo
+				int rechargedAmmount = content.getInt("AmmountGiven");
+				rechargedDroneStatus.setBattery(rechargedDroneStatus.getBattery() + rechargedAmmount);
+			} catch (JSONException e) {
+				System.out.println("onReload - Error en JSON");
+				e.printStackTrace();
+			}
+		}
+		else throw new RuntimeException("onReload - Performativa no inform.");
 	}
 	
 	

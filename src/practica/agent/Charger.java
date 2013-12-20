@@ -19,7 +19,7 @@ import es.upv.dsic.gti_ia.core.SingleAgent;
 /**
  * 
  * @author jahiel
- *
+ * @author Dani
  * No documento la clase porque pronto cambiara todo
  * 
  */
@@ -27,9 +27,11 @@ public class Charger extends SingleAgent {
 	private BlockingQueue<ACLMessage> requestQueue;  //de momento es una cola sin priridad, primero en llegar primero en ser atendido
 	private AgentID IDSatellite;
 	private int battery;
+	private int conversationCounter;
 	
 	/**
 	 * @author Jahiel
+	 * @author Dani
 	 * @param aid
 	 * @param Levelbattery
 	 * @param satellite
@@ -41,6 +43,7 @@ public class Charger extends SingleAgent {
 		requestQueue = new LinkedTransferQueue<ACLMessage>();
 		battery = Levelbattery;
 		IDSatellite = satellite;
+		conversationCounter = 0;
 	}
 	
 	/**
@@ -84,6 +87,22 @@ public class Charger extends SingleAgent {
 		else
 			msg.setContent("");
 		this.send(msg);
+	}
+	
+
+	/**
+	 * Construye un nuevo campo conversationID a partir del id del agente y el contador de conversacion
+	 * 
+	 * @author Alberto
+	 * @return Conversation id formado segun el patron acordado
+	 */
+	private String buildConversationId() {
+		String res;
+		synchronized(this){
+			res = this.getAid().toString()+"#"+conversationCounter;
+			conversationCounter++;
+		}
+		return res;
 	}
 	
 	/**
@@ -219,6 +238,9 @@ public class Charger extends SingleAgent {
 			sendContent.put ("AmountGiven", requestedBattery);
 			sendContent.put ("Subject", SubjectLibrary.BatteryRequest);
 			send (ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), sendContent);
+			//Le mando la información al satélite
+			sendContent.put ("DroneID", msg.getSender().toString());
+			send (ACLMessage.INFORM, IDSatellite, msg.getProtocol(), null, null, buildConversationId(), sendContent);
 		}
 		else{
 			send(ACLMessage.NOT_UNDERSTOOD, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), null);
