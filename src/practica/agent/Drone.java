@@ -92,6 +92,7 @@ public class Drone extends SingleAgent {
 	public static final int RETHINK = -4;
 	
 	private AgentID sateliteID;
+	private AgentID chargerID;
 	
 	protected boolean dodging = false;
 	protected int betterMoveBeforeDodging = -1;
@@ -102,13 +103,26 @@ public class Drone extends SingleAgent {
 	private AgentID[] teammates;
 	private int conversationCounter = 0;
 
-	public Drone(AgentID aid, int mapWidth, int mapHeight, AgentID sateliteID) throws Exception {
+	/**
+	 * Constructor del Drone.
+	 * @author Jahiel
+	 * @param aid Identificador del drone.
+	 * @param mapWidth Ancho del mapa a explorar.
+	 * @param mapHeight Alto del mapa a explorar.
+	 * @param sateliteID Identificador del agente satelite.
+	 * @param charger Identificador del agente cargador.
+	 * @throws Exception
+	 */
+	public Drone(AgentID aid, int mapWidth, int mapHeight, AgentID sateliteID, AgentID charger) throws Exception {
 		super(aid);
 		surroundings = new int[9];
 		droneMap = new Map(mapWidth, mapHeight);
 		//Ahora el limite depende del tamaño del mapa
 		LIMIT_MOVEMENTS = mapWidth + mapHeight;
+		
 		this.sateliteID = sateliteID;
+		chargerID = charger;
+		
 		posX = 0;
 		posY = 0;
 		distanceMin = 999999;
@@ -195,12 +209,14 @@ public class Drone extends SingleAgent {
 	 * Estado actual:<br>
 	 * answerQueue -> SendMeMyStatus, IMoved<br>
 	 * requestQueue -> BatteryQuery, TraceQuery, DroneReachedGoal, DroneRecharged
+	 * @author Jahiel
 	 * @param msg Mensaje recibido
 	 */
 	@Override
 	public void onMessage(ACLMessage msg){
 		JSONObject content;
 		String subject = null;
+		
 		try {
 			content = new JSONObject(msg.getContent());
 			subject = content.getString("Subject");
@@ -224,13 +240,13 @@ public class Drone extends SingleAgent {
 				queue = answerQueue;
 			}
 			break;
-		case SubjectLibrary.DroneReachedGoal:
 		case SubjectLibrary.DroneRecharged:
-			if(msg.getPerformativeInt() == ACLMessage.INFORM){
-				queue = requestQueue;
-			}else{
-				queue = answerQueue;
-			}
+		case SubjectLibrary.DroneReachedGoal:
+		case SubjectLibrary.YourMovements:
+		case SubjectLibrary.EveryOneMovements:
+		case SubjectLibrary.ConflictiveSections:
+			
+			queue = requestQueue;
 			break;
 		default:
 			sendError(new NotUnderstoodException("Subject no encontrado"), msg);
@@ -417,14 +433,45 @@ public class Drone extends SingleAgent {
 	}
 
 	/**
-	 * Realiza las subscripciones del drone.
+	 * Realiza las subscripciones del drone. El drone se subscribe a:
 	 * 
-	 * Nota para desarrollo drone: Mejor que se componga de llamadas a las funciones de subscripcion concretas para que sea mas facil elegir a que nos subscribimos.
+	 * - DroneReachedGoal: un drone a llegado al Goal. Se te informa de drone que ha finalizado exitosamente.
+	 * - DroneRecharged: La recarga de otro drone. Se te informa cuanto a recargado.
+	 * - YourMovements: los movimientos de un drone específico. Si el drone se mueve se te informa de su movimiento.
+	 * - AllMovements: a los movimientos de todos los drones. Si cualquier drone se mueve se te informa de su movimiento.
+	 * - ConflictiveSections: a las casillas conflictivas. Si se anota una nueva se te informa.
+	 * 
+	 * @author Jahiel
 	 */
 	protected void subscribe() {
-		// TODO Auto-generated method stub
+		ACLMessage msg = new ACLMessage();
+		JSONObject content = new JSONObject();
+		String[] subscription = {"DroneReachedGoal", "DroneRecharged", "YourMovements", 
+								"AllMovements", "ConflictiveSections"};
 		
+		for(int i=0; i<subscription.length; i++){
+			try {
+				content.put("Subject", subscription[i]);
+			} catch (JSONException e) {
+				// no hace nada o no pasa nunca porque la clave nunca es vacia
+				e.printStackTrace();
+			}
+			
+			msg.setSender(sender);
+			
+			if(subscription[i].equals("DroneReachedGoal") || subscription[i].equals("AllMovements")
+					|| subscription[i].equals("ConflictiveSections")){
+				msg.setReceiver(sateliteID);
+			}else if(subscription[i].equals("DroneRecharged")){
+				msg.setReceiver(chargerID);
+			}else
+				for(int i=0; i<teammates.length; i++){
+					
+				}
+		}
+
 	}
+	
 
 	/**
 	 * Realiza el registro en el satelite.
@@ -830,8 +877,8 @@ public class Drone extends SingleAgent {
 	}
 
 	/**
-	 * Comprueba el campo protocol y llama a la funcion correspondiente de ese protocolo.
-	 * Si el protocolo no esta entre los aceptados envia un mensaje NOT_UNDERSTOOD
+	 * Comprueba el campo "subject" dentro del Content y llama a la funcion correspondiente de ese protocolo.
+	 * Si el "subject" no esta entre los aceptados envia un mensaje NOT_UNDERSTOOD
 	 * @param msg Mensaje a analizar
 	 * @return True si el dispatcher debe continuar su ejecucion. False en caso contrario.
 	 * @throws JSONException 
@@ -880,6 +927,15 @@ public class Drone extends SingleAgent {
 				break;
 			case SubjectLibrary.DroneRecharged:
 				onDroneChargedInform(msg);
+				break;
+			case SubjectLibrary.YourMovements:
+				onYourMovementsInform(msg);
+				break;
+			case SubjectLibrary.EveryOneMovements:
+				onEveryOneMovementsInform(msg);
+				break;
+			case SubjectLibrary.ConflictiveSections:
+				onConflictiveSectionsInform(msg);
 				break;
 			default: 
 				sendError(new NotUnderstoodException("Subject no encontrado"), msg);
@@ -1001,7 +1057,19 @@ public class Drone extends SingleAgent {
 	protected void onDroneReachedGoalInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException {
 		// TODO Auto-generated method stub
 	}
+	
+	protected void onYourMovementsInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException{
+		// TODO
+	}
 
+	protected void onEveryOneMovementsInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException{
+		
+	}
+	
+	protected void onConflictiveSectionsInform(ACLMessage msg)throws IllegalArgumentException, RuntimeException, FIPAException{
+		
+	}
+	
 	/**
 	 * Metodo llamado por el dispatcher para tratar la consulta de la traza del drone.
 	 * @param msg Mensaje original
