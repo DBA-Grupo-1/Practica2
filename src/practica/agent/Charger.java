@@ -6,8 +6,8 @@ import java.util.concurrent.LinkedTransferQueue;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import practica.util.StringLibrary;
-
+import practica.util.ErrorLibrary;
+import practica.util.SubjectLibrary;
 import es.upv.dsic.gti_ia.core.ACLMessage;
 import es.upv.dsic.gti_ia.core.AgentID;
 import es.upv.dsic.gti_ia.core.SingleAgent;
@@ -163,7 +163,7 @@ public class Charger extends SingleAgent {
 			
 			if (requestedBattery <= 0 || requestedBattery > 75){
 				JSONObject reason = new JSONObject();
-				reason.put("reason", StringLibrary.reasonUnspectedAmount);
+				reason.put("reason", ErrorLibrary.UnespectedAmountReason);
 				send (ACLMessage.REFUSE, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), reason);
 			}
 			
@@ -174,7 +174,7 @@ public class Charger extends SingleAgent {
 				 */
 				if (battery <= 0){
 					JSONObject reason = new JSONObject();
-					reason.put("reason", StringLibrary.reasonEmptyBattery);
+					reason.put("reason", ErrorLibrary.NotBatteryAnymoreReason);
 					send (ACLMessage.REFUSE, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), reason);
 				}
 				else{
