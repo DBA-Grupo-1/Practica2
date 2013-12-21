@@ -1,5 +1,6 @@
 package practica.agent;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
@@ -30,6 +31,7 @@ public class Charger extends SingleAgent {
 	private int battery;
 	private int conversationCounter;
 	private HashMap<String, String> subscribers;
+	private BlockingQueue<ACLMessage> answerQueue;
 	
 	/**
 	 * @author Jahiel
@@ -43,6 +45,7 @@ public class Charger extends SingleAgent {
 		super(aid);
 		
 		requestQueue = new LinkedTransferQueue<ACLMessage>();
+		answerQueue = new LinkedTransferQueue<ACLMessage>();
 		battery = Levelbattery;
 		IDSatellite = satellite;
 		conversationCounter = 0;
@@ -134,11 +137,12 @@ public class Charger extends SingleAgent {
 	/**
 	 * Hebra encargada del tratamiento de la cola sin prioridad de mensajes.
 	 * @author Jahiel
-	 * @param msg Mensaje ACL recivido y listo para introducir en la cola.
+	 * @author Andres
+	 * @param msg Mensaje ACL recibido y listo para introducir en la cola.
 	 */
 	@Override
 	public void onMessage(ACLMessage msg){
-		
+		/*
 		try {
 			requestQueue.put(msg);
 		} catch (InterruptedException e) {
@@ -146,12 +150,65 @@ public class Charger extends SingleAgent {
 			onMessage(msg);  //Nose si esto es una ida de olla pero se supone que la iterrupcion se genera para 
 			                 //despertar al agente porque la cola ya tiene espacio.
 		}
+		*/
+		JSONObject content;
+		String subject = null;
+		
+		try{
+			content = new JSONObject(msg.getContent());
+			subject = content.getString("Subject");
+		}
+		catch (JSONException e){
+			e.printStackTrace();
+		}
+		BlockingQueue<ACLMessage> q = null;     // Hasta aquí, coger mensaje y su subject.
+		
+		switch(subject)
+		{
+			case SubjectLibrary.ChargerBattery:
+			case SubjectLibrary.Charge:
+			case SubjectLibrary.DetailedCharges:
+				if(msg.getProtocol() == ProtocolLibrary.Information)
+					q=requestQueue;
+				break;
+				
+			case SubjectLibrary.BatteryRequest:
+				if(msg.getProtocol()==ProtocolLibrary.Reload)
+					q=requestQueue;
+				break;
+			
+			case SubjectLibrary.Position:
+			case SubjectLibrary.GoalDistance:
+			case SubjectLibrary.DroneBattery: //No sé qué mas cosas podría pedir el Cargador.
+				if(msg.getProtocol() == ProtocolLibrary.Information)
+					q=answerQueue;
+				break;
+			
+			default:
+			try {
+				throw new NotUnderstoodException("Subject no encontrado.");
+			} catch (NotUnderstoodException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+				break;
+		}
+		
+		if(q != null){
+			try{
+				q.put(msg);
+			}
+			catch (InterruptedException e){
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	/**
 	 * Metodo execute del agente. Aquie se añade la lógica de ejecución para el agente Cargador.
 	 * @author Jahiel
 	 * @author Dani
+	 * @author Andres
 	 */
 	@Override
 	public void execute(){ 
@@ -201,6 +258,93 @@ public class Charger extends SingleAgent {
 						sendError(fe, msg);
 					}	
 					break;
+					
+				case ProtocolLibrary.Information:
+					try{
+					JSONObject content = new JSONObject(msg.getContent());
+					String subject = content.getString("Subject");
+					JSONObject resp= new JSONObject();
+					switch(subject)
+					{
+						case SubjectLibrary.ChargerBattery:
+							try{
+							int totalBattery = onChargerBattery();
+							resp.put("Subject", subject);
+							resp.put("ChargerBattery", totalBattery);
+							send(ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), resp);
+							}
+							catch(JSONException e){ e.printStackTrace();}
+							break;
+							
+						case SubjectLibrary.Charge:
+						if(content.has("ID")){
+							try{
+							String droneid = content.getString("ID");
+							int totalDroneCharge = onCharge(droneid);
+							resp.put("Subject", subject);
+							resp.put("TotalCharge", totalDroneCharge);
+							send(ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), resp);
+							}
+							catch(JSONException e){ e.printStackTrace();}
+						}
+						else{
+							throw new RefuseException(ErrorLibrary.BadlyStructuredContent);
+						}
+							break;
+							
+						case SubjectLibrary.DetailedCharges:
+							if(content.has("ID")){
+							try{
+							String droneid = content.getString("ID");
+							ArrayList<Integer> DetailCharge = onDetailedCharges(droneid);
+							resp.put("Subject", subject);
+							resp.put("Charges", DetailCharge);
+							send(ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), resp);
+							}
+							catch(JSONException e){ e.printStackTrace();}
+							}
+							else{
+							throw new RefuseException(ErrorLibrary.BadlyStructuredContent);
+							}
+							break;
+							
+							// Hasta aquí las respuestas Charger -> Otro
+							
+						case SubjectLibrary.Position:
+							if(msg.getPerformativeInt()== ACLMessage.INFORM){
+								onPositionInform(msg);
+							}
+							else{
+								
+							}
+							break;
+							
+						case SubjectLibrary.GoalDistance:
+							if(msg.getPerformativeInt()==ACLMessage.INFORM){
+								onGoalDistanceInform(msg);
+							}
+							else{
+								
+							}
+							break;
+							
+						case SubjectLibrary.DroneBattery:
+							if(msg.getPerformativeInt()==ACLMessage.INFORM){
+								onDroneBatteryInform(msg);
+							}
+							else{
+								
+							}
+							break;
+					}
+					}
+					catch(FIPAException fe){
+						sendError(fe, msg);
+					} catch (JSONException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				
 				default: 
 					JSONObject error = new JSONObject();
 					try {
@@ -337,5 +481,46 @@ public class Charger extends SingleAgent {
 		for(String name: subscribers.keySet()){
 			send(ACLMessage.INFORM, new AgentID(name), "Subcribe", null, null, subscribers.get(name), content);
 		}
+	}
+	
+	/**
+	 * Método llamado cuando un mensaje pide el nivel de batería total del cargador.
+	 * @author Andres
+	 * @return Valor de la batería total del cargador
+	 */
+	private int onChargerBattery(){
+		return battery;
+	}
+
+	/**
+	 * Metodo llamado cuando un mensaje pide las cantidad de cargas totales que se le ha dado a un agente.
+	 * @param agentID
+	 * @return Número de cargas totales que ha recibido un agente
+	 */
+	private int onCharge(String agentID){
+		//De momento no hay datos para esto, pongo 75 (la carga inicial).
+		return 75;
+	}
+
+	/**
+	 * Metodo llamado cuando un mensaje pide las cargas de un agente de manera detallada.
+	 * @param agentID
+	 * @return Lista con las cargas detalladas que ha recibido un agente
+	 */
+	private ArrayList<Integer> onDetailedCharges(String agentID){
+		ArrayList<Integer> listaCargas = new ArrayList<Integer>(); // No hay datos para esto, de momento devuelvo este array sin nada.
+		return listaCargas;
+	}
+
+	private void onPositionInform(ACLMessage msg){
+		// TODO
+	}
+
+	private void onGoalDistanceInform(ACLMessage msg){
+		// TODO
+	}
+
+	private void onDroneBatteryInform(ACLMessage msg){
+		// TODO
 	}
 }
