@@ -314,27 +314,21 @@ public class Charger extends SingleAgent {
 							if(msg.getPerformativeInt()== ACLMessage.INFORM){
 								onPositionInform(msg);
 							}
-							else{
-								
-							}
+							
 							break;
 							
 						case SubjectLibrary.GoalDistance:
 							if(msg.getPerformativeInt()==ACLMessage.INFORM){
 								onGoalDistanceInform(msg);
 							}
-							else{
-								
-							}
+							
 							break;
 							
 						case SubjectLibrary.DroneBattery:
 							if(msg.getPerformativeInt()==ACLMessage.INFORM){
 								onDroneBatteryInform(msg);
 							}
-							else{
-								
-							}
+							
 							break;
 					}
 					}
