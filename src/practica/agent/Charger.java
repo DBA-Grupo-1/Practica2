@@ -1,5 +1,6 @@
 package practica.agent;
 
+import java.util.HashMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
 
@@ -28,6 +29,7 @@ public class Charger extends SingleAgent {
 	private AgentID IDSatellite;
 	private int battery;
 	private int conversationCounter;
+	private HashMap<String, String> subscribers;
 	
 	/**
 	 * @author Jahiel
@@ -44,6 +46,7 @@ public class Charger extends SingleAgent {
 		battery = Levelbattery;
 		IDSatellite = satellite;
 		conversationCounter = 0;
+		subscribers = new HashMap<String, String>();
 	}
 	
 	/**
@@ -246,5 +249,9 @@ public class Charger extends SingleAgent {
 			send(ACLMessage.NOT_UNDERSTOOD, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), null);
 			throw new NotUnderstoodException("");
 		}
+	}
+	
+	private void onSubscription(ACLMessage msg){
+		
 	}
 }

@@ -13,6 +13,7 @@ import practica.util.SubjectLibrary;
 import practica.util.Trace;
 import es.upv.dsic.gti_ia.architecture.FIPAException;
 import es.upv.dsic.gti_ia.architecture.NotUnderstoodException;
+import es.upv.dsic.gti_ia.architecture.RefuseException;
 import es.upv.dsic.gti_ia.core.AgentID;
 import es.upv.dsic.gti_ia.core.SingleAgent;
 import es.upv.dsic.gti_ia.core.ACLMessage;
@@ -255,6 +256,7 @@ public class Drone extends SingleAgent {
 		case SubjectLibrary.ConflictiveSections:
 		case SubjectLibrary.BatteryRequest:
 			
+			// falta meter la confirmacion en la answerQueue
 			queue = requestQueue;
 			break;
 			
@@ -653,6 +655,18 @@ public class Drone extends SingleAgent {
 		case ACLMessage.ACCEPT_PROPOSAL:
 			break;
 		case ACLMessage.REFUSE:
+			JSONObject content;
+			try {
+				content = new JSONObject(msg.getContent());
+				if(! (content.get("reason").equals("AlreadySubscribe") || content.get("reason").equals("AlreadyInGoal")
+						|| content.get("reason").equals("IWontReachGoal")) )
+					throw new RuntimeException("Fallo en la respuesta de subscripcion: petición denegada");
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			break;
 		case ACLMessage.FAILURE:
 			throw new RuntimeException("Fallo en la respuesta de subscripcion: fallo en la petición de subscripción");
 		
@@ -665,10 +679,13 @@ public class Drone extends SingleAgent {
 	 * Cancela la subscripción.
 	 * 
 	 * @author Jahiel
+	 * @param name Nombre de la subscripción a cancelar.
+	 * @param IDDrone Identificador del drone al que está subscrito, si la subscripción es del tipo YourMovements
 	 */
 	
-	public void cancelSubscribe(String name){
+	public void cancelSubscribe(String name, AgentID IDDrone){
 		JSONObject content = new JSONObject();
+		AgentID destino;
 		
 		try {
 			content.put("type", name);
@@ -677,19 +694,61 @@ public class Drone extends SingleAgent {
 			e.printStackTrace();
 		}
 		
-		send(ACLMessage.CANCEL, sateliteID, "Subscribe", null, null,
+		switch(name){
+		case SubjectLibrary.DroneReachedGoal:
+		case SubjectLibrary.AllMovements:
+		case SubjectLibrary.ConflictiveSections:
+			destino = sateliteID;
+			break;
+		case SubjectLibrary.DroneRecharged:
+			destino = chargerID;
+			break;
+		case SubjectLibrary.YourMovements:
+			destino = IDDrone;
+			break;
+		default: 
+			throw new RuntimeException("Fallo en la cancelación: el nombre de la subscripción no existe");
+		}
+		
+		send(ACLMessage.CANCEL, destino, "Subscribe", null, null,
 				this.idsCombersationSubscribe.get(name), content);
 	}
 	
 	/**
-	 * Se subscribe un agente a un drone.
+	 * Se recibe una subscripción de un agente a un drone. La subscripción se cancela si ocurre los siguientes casos:
+	 * - AlreadySubscribe: ya se encuentra subscrito a este tipo de subscripción.
+	 * - MissingAgent: aun no está todos los agentes registrados en el satélite.
 	 * 
 	 * @author Jahiel
 	 * @param msg Mesaje de subscripción recibido
 	 */
 	public void newSubscription(ACLMessage msg){
+		JSONObject content = new JSONObject();
+		int performative;
 		
-		this.subscribers.put(msg.getSender().toString(), msg.getConversationId().toString());
+		if(subscribers.containsKey(msg.getSender().toString())){
+			try {
+				content.put("reason", "AlreadySubscribe");
+			} catch (JSONException e) {
+				// nunca sucede
+				e.printStackTrace();
+			}
+			performative = ACLMessage.REFUSE;
+			
+		}else if(teammates.length != 6){      // Esta comprobación pienso que tambien hay que hacerla al mandar la petición.
+			try {
+				content.put("reason", "MissingAgent");
+			} catch (JSONException e) {
+				// nunca sucede
+				e.printStackTrace();
+			}
+			performative = ACLMessage.REFUSE;
+		}else{
+			subscribers.put(msg.getSender().toString(), msg.getConversationId().toString());
+			performative = ACLMessage.ACCEPT_PROPOSAL;
+		}
+		send(performative, msg.getSender(), "Subcribe", null, "confirmation", msg.getConversationId(), content);
+		
 	}
 	
 	/**

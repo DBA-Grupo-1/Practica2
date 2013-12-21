@@ -2,6 +2,7 @@ package practica.agent;
 
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Random;
@@ -40,9 +41,13 @@ public class Satellite extends SingleAgent {
 	private boolean usingVisualizer;				//Variable para controlar si se está usando el visualizador.
 	private boolean exit;							//Variable para controlar la terminación de la ejecución del satélite.
 	private static List<Integer> posXIniciales;
+
+	private HashMap<String, HashMap<String, String>> subscriptions;
+	
 	
 	/**
 	 * Constructor
+	 * @author Jahiel
 	 * @author Dani
 	 * FIXME otros autores añadiros.
 	 * @param sat ID del satélite.
@@ -62,6 +67,10 @@ public class Satellite extends SingleAgent {
 		connectedDrones = 0;	
 		//TODO cambiar a PriorityBlockingQueue.
 		messageQueue = new LinkedBlockingQueue();
+		subscriptions =new HashMap<String, HashMap<String, String>>();
+		subscriptions.put("DroneReachedGoal", new HashMap<String, String>());
+		subscriptions.put("AllMovements", new HashMap<String, String>());
+		subscriptions.put("ConflictiveSections", new HashMap<String, String>());
 		
 		
 		//Calcular la posición del objetivo.
@@ -118,8 +127,8 @@ public class Satellite extends SingleAgent {
 	
 	/**
 	 * Manda un mensaje.
-	 * @author Dani
 	 * @author Jahiel
+	 * @author Dani
 	 * @param typeMessage 		performativa del mensaje.
 	 * @param id				destinatario del mensaje.
 	 * @param protocol			protocolo de comunicación del mensaje.
@@ -161,7 +170,7 @@ public class Satellite extends SingleAgent {
 
 	/**
 	 * Se crea un mensaje del tipo FAIL para informar de algun fallo al agente dron.
-	 * FIXME otros autores añadiros.
+	 * @author Jahiel
 	 * FIXME Este método ahora mismo creo que no se debe de usar. No lo borro, sino que dejo comentada la línea del send para que el programa compile.
 	 * @author Dani.
 	 * @param dron 			Identificador del agente dron.
@@ -200,7 +209,7 @@ public class Satellite extends SingleAgent {
 	/**
 	 * Se calcula el valor del ángulo que forma la baliza y el EjeX horizontal tomando como centro
 	 * a el agente drone.
-	 * FIXME autores añadiros
+	 * @author Jahiel
 	 * @param posX Posición relativa de la baliza con respecto al drone.
 	 * @param posY Posición relativa de la baliza con respecto al drone.
 	 * @return valor del ángulo.
@@ -269,7 +278,7 @@ public class Satellite extends SingleAgent {
 	 * Status: {“connected”:”YES”, “ready”:”YES”, “gps”:{“x”:10,”y”:5},
 	 * “goal”:”No”, “gonio”:{“alpha”:0, “dist”:4.0}, “battery”:100,
 	 * “radar”:[0,0,0,0,0,0,0,1,1]}
-	 * FIXME autores añadiros.
+	 * @author Jahiel
 	 * @return Objeto JSon con el contenido de Status
 	 * @throws JSONException  Si la clave es null
 	 */
@@ -315,8 +324,8 @@ public class Satellite extends SingleAgent {
 	 * En función del valor recibido por el dron se actualiza el mapa interno
 	 * del satelite con la nueva posición del drone (x, y en funcion de la
 	 * dirección elegida) o se da por finalizada la comunicación.
+	 * @author Jahiel
 	 * @author Dani
-	 * FIXME: otros autores añadiros.
 	 * @param msg mensaje que contiene la decisión del drone
 	 * @return Se devuelve "true" si se debe finalizar la comunicación y "false" en caso contrario.
 	 */
@@ -388,6 +397,7 @@ public class Satellite extends SingleAgent {
 
 	/**
 	 * Hebra de ejecución del satélite. 
+	 * @author Jahiel
 	 * @author Dani
 	 * FIXME otros autores añadiros.
 	 */
@@ -423,7 +433,8 @@ public class Satellite extends SingleAgent {
 
 	@Override
 	/**
-	 * FIXME autores añdiros.
+	 * Método finalizador del satélite.
+	 * @author Jahiel
 	 */
 	public void finalize() {
 		System.out.println("Agente " + this.getName() + " ha finalizado");
@@ -572,8 +583,42 @@ public class Satellite extends SingleAgent {
 			send(ACLMessage.NOT_UNDERSTOOD, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), null);
 		}		
 	}
-	//TODO Implementation
+	
+	/**
+	 * Se tratan las peticiones de subscripciones recibidas.
+	 * 
+	 * @author Jahiel
+	 * @param msg Mensaje de petición de subscripción.
+	 */
 	public void onSubscribe (ACLMessage msg){
+		JSONObject content = null;
+		try {
+			content = new JSONObject(msg.getContent());
+		} catch (JSONException e1) {
+			// no se ejecuta
+			e1.printStackTrace();
+		}
+		int performative;
+		
+		try {
+			if(subscriptions.containsKey(content.get("type"))){
+				if(subscriptions.get(content.get("type")).containsKey(msg.getSender().toString())){
+					content.put("reason", "AlreadySubscribe");
+					performative = ACLMessage.REFUSE;
+				}else if(drones.length != 6){
+					content.put("reason", "AlreadySubscribe");
+					performative = ACLMessage.REFUSE;
+				}else{
+					subscriptions.get(content.get("type")).put(msg.getSender().toString(), msg.getConversationId());
+					performative = ACLMessage.ACCEPT_PROPOSAL;
+				}
+				send(performative, msg.getSender(), "Subcribe", null, "confirmation", msg.getConversationId(), content);	
+			}
+		} catch (JSONException e1) {
+			// no se ejecuta nunca
+			e1.printStackTrace();
+		}
+			
 	}
 	
 	/**
