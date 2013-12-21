@@ -92,7 +92,30 @@ public class Charger extends SingleAgent {
 		this.send(msg);
 	}
 	
-
+	/**
+	 * @author Alberto
+	 * @param fe
+	 * @param msgOrig
+	 */
+	private void sendError(FIPAException fe, ACLMessage msgOrig) {
+		ACLMessage msgError = fe.getACLMessage();
+		JSONObject content = new JSONObject();
+		
+		try {
+			content.put("error",fe.getMessage());
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		
+		msgError.addReceiver(msgOrig.getSender());
+		msgError.setContent(content.toString());
+		msgError.setProtocol(msgOrig.getProtocol());
+		msgError.setConversationId(msgOrig.getConversationId());
+		msgError.setInReplyTo(msgOrig.getReplyWith());
+		
+		this.send(msgError);
+	}
+	
 	/**
 	 * Construye un nuevo campo conversationID a partir del id del agente y el contador de conversacion
 	 * 
@@ -147,6 +170,7 @@ public class Charger extends SingleAgent {
 				case ProtocolLibrary.Reload:
 					try {
 						onReload(msg);
+	
 					} catch (JSONException e) {  
 						JSONObject content = new JSONObject();
 						try {
@@ -170,6 +194,13 @@ public class Charger extends SingleAgent {
 					}
 					break;
 				
+				case ProtocolLibrary.Subscribe:
+					try{
+						onSubscription(msg);
+					}catch(FIPAException fe){
+						sendError(fe, msg);
+					}	
+					break;
 				default: 
 					JSONObject error = new JSONObject();
 					try {
@@ -195,7 +226,7 @@ public class Charger extends SingleAgent {
 	 * @param msg
 	 * @throws JSONException
 	 */
-	protected void onReload(ACLMessage msg) throws RefuseException, NotUnderstoodException, JSONException{
+	private void onReload(ACLMessage msg) throws RefuseException, NotUnderstoodException, JSONException{
 		//Primera comprobación: performativa correcta.
 		if (msg.getPerformativeInt() == ACLMessage.REQUEST){
 			JSONObject content = new JSONObject(msg.getContent());
@@ -235,15 +266,17 @@ public class Charger extends SingleAgent {
 				givenBattery = requestedBattery;
 			else 
 				givenBattery = battery;
-			battery -= requestedBattery;
+			battery -= givenBattery; 
 			
 			JSONObject sendContent = new JSONObject();
-			sendContent.put ("AmountGiven", requestedBattery);
+			sendContent.put ("AmountGiven", givenBattery);
 			sendContent.put ("Subject", SubjectLibrary.BatteryRequest);
 			send (ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), sendContent);
 			//Le mando la información al satélite
 			sendContent.put ("DroneID", msg.getSender().toString());
 			send (ACLMessage.INFORM, IDSatellite, msg.getProtocol(), null, null, buildConversationId(), sendContent);
+			
+			sendInformSubscribeReached( msg.getSender(), givenBattery); // Informa a los drones subscritos
 		}
 		else{
 			send(ACLMessage.NOT_UNDERSTOOD, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), null);
@@ -251,7 +284,58 @@ public class Charger extends SingleAgent {
 		}
 	}
 	
-	private void onSubscription(ACLMessage msg){
+	/**
+	 * Se recibe trata la petición de subscripción. Se rechaza si ocurre lo siguiente:
+	 *  - AlreadySubscribe: ya se encuentra subscrito a este tipo de subscripción.
+	 * 
+	 * @param msg Mensaje recibido de petición de subscripción
+	 * @throws RefuseException 
+	 * @throws NotUnderstoodException
+	 */
+	private void onSubscription(ACLMessage msg)throws RefuseException, NotUnderstoodException{
+		JSONObject content = null;
+		try {
+			content = new JSONObject(msg.getContent());
+		} catch (JSONException e1) {
+			throw new NotUnderstoodException("");
+		}
 		
+		try {
+			if(content.get("type").equals("DroneRecharger")){
+				if(subscribers.containsKey(msg.getSender().toString()))
+					throw new RefuseException(ErrorLibrary.AlreadySubscribed);
+				else{
+					subscribers.put(msg.getSender().toString(), msg.getConversationId());
+					send(ACLMessage.ACCEPT_PROPOSAL, msg.getSender(), "Subcribe", null, "confirmation", msg.getConversationId(), content);
+				}
+			
+			}else
+				throw new NotUnderstoodException("");
+		} catch (JSONException e) {
+			// no sucede nunca
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Se informa a todos los drones subscritos que ha habido una recarga.
+	 * 
+	 * @author Jahiel
+	 */
+	private void sendInformSubscribeReached(AgentID droneRecharger, int levelRecharge){
+		JSONObject content = new JSONObject();
+		
+		try {
+			content.put("type", "DroneRecharger");
+			content.put("ID-Drone", droneRecharger.toString());
+			content.put("amount", levelRecharge);
+		} catch (JSONException e) {
+			// no sudece nunca
+			e.printStackTrace();
+		}
+		
+		for(String name: subscribers.keySet()){
+			send(ACLMessage.INFORM, new AgentID(name), "Subcribe", null, null, subscribers.get(name), content);
+		}
 	}
 }

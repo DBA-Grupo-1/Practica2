@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
+import practica.util.ErrorLibrary;
 import practica.util.Map;
 import practica.util.Pair;
 import practica.util.ProtocolLibrary;
@@ -722,32 +723,17 @@ public class Drone extends SingleAgent {
 	 * @author Jahiel
 	 * @param msg Mesaje de subscripción recibido
 	 */
-	public void newSubscription(ACLMessage msg){
+	public void newSubscription(ACLMessage msg)throws RefuseException{
 		JSONObject content = new JSONObject();
-		int performative;
-		
-		if(subscribers.containsKey(msg.getSender().toString())){
-			try {
-				content.put("reason", "AlreadySubscribe");
-			} catch (JSONException e) {
-				// nunca sucede
-				e.printStackTrace();
-			}
-			performative = ACLMessage.REFUSE;
-			
-		}else if(teammates.length != 6){      // Esta comprobación pienso que tambien hay que hacerla al mandar la petición.
-			try {
-				content.put("reason", "MissingAgent");
-			} catch (JSONException e) {
-				// nunca sucede
-				e.printStackTrace();
-			}
-			performative = ACLMessage.REFUSE;
-		}else{
+	
+		if(subscribers.containsKey(msg.getSender().toString()))
+			throw new RefuseException(ErrorLibrary.AlreadySubscribed);
+		else if(teammates.length != 6)      // Esta comprobación pienso que tambien hay que hacerla al mandar la petición.
+			throw new RefuseException(ErrorLibrary.MissingAgents);
+		else{
 			subscribers.put(msg.getSender().toString(), msg.getConversationId().toString());
-			performative = ACLMessage.ACCEPT_PROPOSAL;
+			send(ACLMessage.ACCEPT_PROPOSAL, msg.getSender(), "Subcribe", null, "confirmation", msg.getConversationId(), content);	
 		}
-		send(performative, msg.getSender(), "Subcribe", null, "confirmation", msg.getConversationId(), content);
 		
 	}
 	
@@ -1283,6 +1269,11 @@ public class Drone extends SingleAgent {
 		}
 	}
 
+	/**
+	 * @author Alberto
+	 * @param fe
+	 * @param msgOrig
+	 */
 	private void sendError(FIPAException fe, ACLMessage msgOrig) {
 		ACLMessage msgError = fe.getACLMessage();
 		JSONObject content = new JSONObject();

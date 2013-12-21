@@ -9,6 +9,8 @@ import java.util.Random;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import edu.emory.mathcs.backport.java.util.concurrent.PriorityBlockingQueue;
+import es.upv.dsic.gti_ia.architecture.FIPAException;
+import es.upv.dsic.gti_ia.architecture.NotUnderstoodException;
 import es.upv.dsic.gti_ia.architecture.RefuseException;
 import es.upv.dsic.gti_ia.core.ACLMessage;
 import es.upv.dsic.gti_ia.core.AgentID;
@@ -18,6 +20,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import practica.util.ErrorLibrary;
 import practica.util.GPSLocation;
 import practica.util.ImgMapConverter;
 import practica.util.Map;
@@ -42,7 +45,7 @@ public class Satellite extends SingleAgent {
 	private boolean exit;							//Variable para controlar la terminación de la ejecución del satélite.
 	private static List<Integer> posXIniciales;
 
-	private HashMap<String, HashMap<String, String>> subscriptions;
+	private HashMap<String, HashMap<String, String>> subscriptions;  // <tipoSubcripcion, < IDAgent, ID-combersation>>
 	
 	
 	/**
@@ -416,19 +419,50 @@ public class Satellite extends SingleAgent {
 					e.printStackTrace();
 				}
 				System.out.println("Procesando mensaje: protocolo " + proccesingMessage.getProtocol());
-				switch (proccesingMessage.getProtocol()){
 				
-				case ProtocolLibrary.Registration : onRegister(proccesingMessage); break;
-				case ProtocolLibrary.Information : onInformation (proccesingMessage); break;
-				case ProtocolLibrary.DroneMove : onDroneMoved(proccesingMessage); break;
-				case ProtocolLibrary.Subscribe : onSubscribe(proccesingMessage); break;
-				case ProtocolLibrary.Finalize : onFinalize(proccesingMessage); break;
-				case ProtocolLibrary.Reload : onReload(proccesingMessage); break;
-				}		
+				try{
+					switch (proccesingMessage.getProtocol()){
+					
+					case ProtocolLibrary.Registration : onRegister(proccesingMessage); break;
+					case ProtocolLibrary.Information : onInformation (proccesingMessage); break;
+					case ProtocolLibrary.DroneMove : onDroneMoved(proccesingMessage); break;
+					case ProtocolLibrary.Subscribe : onSubscribe(proccesingMessage); break;
+					case ProtocolLibrary.Finalize : onFinalize(proccesingMessage); break;
+					case ProtocolLibrary.Reload : onReload(proccesingMessage); break;
+					default:
+						throw new NotUnderstoodException("");
+					}		
+			
+				}catch(FIPAException fe){
+					sendError(fe, proccesingMessage);
+				}	
 			}
 		}
 	}
-
+	
+	/**
+	 * @author Alberto
+	 * @param fe
+	 * @param msgOrig
+	 */
+	private void sendError(FIPAException fe, ACLMessage msgOrig) {
+		ACLMessage msgError = fe.getACLMessage();
+		JSONObject content = new JSONObject();
+		
+		try {
+			content.put("error",fe.getMessage());
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		
+		msgError.addReceiver(msgOrig.getSender());
+		msgError.setContent(content.toString());
+		msgError.setProtocol(msgOrig.getProtocol());
+		msgError.setConversationId(msgOrig.getConversationId());
+		msgError.setInReplyTo(msgOrig.getReplyWith());
+		
+		this.send(msgError);
+	}
 	
 
 	@Override
@@ -585,34 +619,33 @@ public class Satellite extends SingleAgent {
 	}
 	
 	/**
-	 * Se tratan las peticiones de subscripciones recibidas.
+	 * Se tratan las peticiones de subscripciones recibidas. Se rechaza si ocurre lo siguiente:
+	 *  - AlreadySubscribe: ya se encuentra subscrito a este tipo de subscripción.
+	 *  - MissingAgent: aun no está todos los agentes registrados en el satélite.
 	 * 
 	 * @author Jahiel
 	 * @param msg Mensaje de petición de subscripción.
+	 * @throws RefuseException 
+	 * @throws NotUnderstoodException
 	 */
-	public void onSubscribe (ACLMessage msg){
+	public void onSubscribe (ACLMessage msg)throws RefuseException, NotUnderstoodException{
 		JSONObject content = null;
 		try {
 			content = new JSONObject(msg.getContent());
 		} catch (JSONException e1) {
-			// no se ejecuta
-			e1.printStackTrace();
+			throw new NotUnderstoodException("");
 		}
-		int performative;
 		
 		try {
 			if(subscriptions.containsKey(content.get("type"))){
 				if(subscriptions.get(content.get("type")).containsKey(msg.getSender().toString())){
-					content.put("reason", "AlreadySubscribe");
-					performative = ACLMessage.REFUSE;
+					throw new RefuseException(ErrorLibrary.AlreadySubscribed);
 				}else if(drones.length != 6){
-					content.put("reason", "AlreadySubscribe");
-					performative = ACLMessage.REFUSE;
+					throw new RefuseException(ErrorLibrary.MissingAgents);
 				}else{
 					subscriptions.get(content.get("type")).put(msg.getSender().toString(), msg.getConversationId());
-					performative = ACLMessage.ACCEPT_PROPOSAL;
+					send(ACLMessage.ACCEPT_PROPOSAL, msg.getSender(), "Subcribe", null, "confirmation", msg.getConversationId(), content);	
 				}
-				send(performative, msg.getSender(), "Subcribe", null, "confirmation", msg.getConversationId(), content);	
 			}
 		} catch (JSONException e1) {
 			// no se ejecuta nunca
@@ -648,6 +681,7 @@ public class Satellite extends SingleAgent {
 	
 	/**
 	 * TODO Implementation
+	 * 
 	 * @see onStatusQueried para cuando te pidan el status. Si el que implementa esto lo usa que no sea perro y me ponga como autor >_<
 	 * @param msg
 	 */
