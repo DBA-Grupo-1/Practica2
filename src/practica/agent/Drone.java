@@ -72,8 +72,6 @@ public class Drone extends SingleAgent {
 	protected float distanceMin;
 	protected int counterStop;
 	protected int battery;
-	/** Decisión de pedir batería */
-	public static final int ASK_FOR_BATTERY = 4;
 	/** Decision de mover al norte */
 	public static final int NORTE = 3;
 	/** Decision de mover al oeste */
@@ -975,7 +973,7 @@ public class Drone extends SingleAgent {
 		if (battery == 0){
 			askForBattery(75);
 			enterStandBy();
-			return ASK_FOR_BATTERY;
+			return RETHINK;
 		}
 		else 
 			return NO_DEC;
@@ -1247,6 +1245,7 @@ public class Drone extends SingleAgent {
 			try {
 				JSONObject content = new JSONObject(msg.getContent());
 				battery += content.getInt("AmountGiven");
+				leaveStandBy();
 			} catch (JSONException e) {
 				System.out.println("Error JSON al recibir batería");
 				e.printStackTrace();
