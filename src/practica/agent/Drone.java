@@ -255,10 +255,11 @@ public class Drone extends SingleAgent {
 		case SubjectLibrary.ConflictiveSections:
 		case SubjectLibrary.BatteryRequest:
 			
-			// falta meter la confirmacion en la answerQueue
-			queue = requestQueue;
-			break;
-			
+			if(msg.getInReplyTo().equals("Confirmation"))
+				queue = answerQueue;
+			else
+				queue = requestQueue;
+			break;	
 		default:
 			sendError(new NotUnderstoodException("Subject no encontrado"), msg);
 			break;
