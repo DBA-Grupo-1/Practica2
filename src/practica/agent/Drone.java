@@ -251,7 +251,7 @@ public class Drone extends SingleAgent {
 		case SubjectLibrary.YourMovements:
 			
 			if(msg.getInReplyTo()!=null){
-				if(msg.getInReplyTo().equals("Confirmation"))
+				if(msg.getInReplyTo().equals("Confirmation") && msg.getPerformativeInt() == ACLMessage.ACCEPT_PROPOSAL)
 					queue = answerQueue;
 				else
 					sendError(new NotUnderstoodException("Campo Reply-with inválido"), msg);
