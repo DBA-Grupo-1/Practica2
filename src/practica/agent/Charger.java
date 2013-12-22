@@ -168,20 +168,14 @@ public class Charger extends SingleAgent {
 			case SubjectLibrary.ChargerBattery:
 			case SubjectLibrary.Charge:
 			case SubjectLibrary.DetailedCharges:
-				if(msg.getProtocol() == ProtocolLibrary.Information)
-					q=requestQueue;
-				break;
-				
 			case SubjectLibrary.BatteryRequest:
-				if(msg.getProtocol()==ProtocolLibrary.Reload)
-					q=requestQueue;
+				q=requestQueue;
 				break;
 			
 			case SubjectLibrary.Position:
 			case SubjectLibrary.GoalDistance:
 			case SubjectLibrary.DroneBattery: //No sé qué mas cosas podría pedir el Cargador.
-				if(msg.getProtocol() == ProtocolLibrary.Information)
-					q=answerQueue;
+				q=answerQueue;
 				break;
 			
 			default:
