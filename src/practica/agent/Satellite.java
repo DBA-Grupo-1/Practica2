@@ -44,7 +44,7 @@ public class Satellite extends SingleAgent {
 	private boolean usingVisualizer;				//Variable para controlar si se está usando el visualizador.
 	private boolean exit;							//Variable para controlar la terminación de la ejecución del satélite.
 	private static List<Integer> posXIniciales;
-
+	
 	private HashMap<String, HashMap<String, String>> subscriptions;  // <tipoSubcripcion, < IDAgent, ID-combersation>>
 	
 	
@@ -389,6 +389,7 @@ public class Satellite extends SingleAgent {
 		try {
 			gps.setPositionX(x);
 			gps.setPositionY(y);
+			//droneStatus.setLocation(gps);
 			mapSeguimiento.setValue(x, y, Map.VISITADO, droneID);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -583,6 +584,7 @@ public class Satellite extends SingleAgent {
 	 * - Hay un fallo al actualizar el mapa => FAILURE + "Error al actualizar el mapa".
 	 * - Todo va bien => INFORM.
 	 * @author Dani
+	 * @author Jahiel
 	 * @param msg mensaje a tratar.
 	 */
 	public void onDroneMoved(ACLMessage msg) {
@@ -601,9 +603,19 @@ public class Satellite extends SingleAgent {
 				//TODO enviar error
 				//sendError("IMoved", msg.getSender(),"Error al crear objeto JSON con la decision");
 			}
-
+			
+			//@author Jahiel
+			AgentID droneID = msg.getSender();  //obtenemos la posicion actual
+			DroneStatus droneStatus = findStatus(droneID);
+			GPSLocation currentPosition = droneStatus.getLocation();
+			
 			exit = evalueDecision(msg);
 			send(ACLMessage.INFORM, msg.getSender(), "IMoved", null, msg.getReplyWith(), msg.getConversationId(), null);				
+			
+			GPSLocation newPosition = droneStatus.getLocation();
+			
+			sendInformSubscribeAllMovement(msg, currentPosition, newPosition);
+			
 			
 			/**
 			 * @TODOauthor Dani
@@ -655,6 +667,62 @@ public class Satellite extends SingleAgent {
 	}
 	
 	/**
+	 * Se notifica a los subscriptores que el drone (ID-Drone) se a movido.
+	 * 
+	 * @author Jahiel
+	 * @param msg Mensaje del drone ID-Drone con su decision de moverse.
+	 * @param currentPosition Posición antes de moverse.
+	 * @param newPosition  Posición actualizada con la decisción del drone.
+	 */
+	private void sendInformSubscribeAllMovement(ACLMessage msg, GPSLocation currentPosition,
+												  GPSLocation newPosition){
+		JSONObject contentSub = new JSONObject();
+		
+		try {
+			contentSub.put("type", "AllMovement");
+			contentSub.put("ID-Drone", msg.getSender().toString());
+			int[] posPr = {currentPosition.getPositionX(), currentPosition.getPositionY()};
+			contentSub.put("PreviousPosition", new JSONArray(posPr));
+			int[] posNew = {newPosition.getPositionX(), newPosition.getPositionY()};
+			contentSub.put("CurrentPosition", new JSONArray(posNew));
+			JSONObject ob = new JSONObject(msg.getContent());
+			contentSub.put("Decision", ob.getInt("decision"));
+			
+		} catch (JSONException e) {
+			// no sudece nunca
+			e.printStackTrace();
+		}
+		
+		for(String name: this.subscriptions.get("AllMovement").keySet()){
+			send(ACLMessage.INFORM, new AgentID(name), "Subcribe", null, null,  this.subscriptions.get("AllMovement").get(name), contentSub);
+		}
+	}
+	
+	/**
+	 * Se notifica a los subscriptores de que un drone a llegado a la meta.
+	 * 
+	 * @author Jahiel
+	 * @param msg
+	 */
+	private void sendInformSubscribeFinalize(ACLMessage msg){
+		JSONObject contentSub = new JSONObject();
+		
+		try {
+			contentSub.put("type", "DroneReachedGoal");
+			contentSub.put("ID-Drone", msg.getSender().toString());
+			
+		} catch (JSONException e) {
+			// no sudece nunca
+			e.printStackTrace();
+		}
+		
+		for(String name: this.subscriptions.get("DroneReachedGoal").keySet()){
+			send(ACLMessage.INFORM, new AgentID(name), "Subcribe", null, null,  this.subscriptions.get("DroneReachedGoal").get(name), contentSub);
+		}
+		
+	}
+	
+	/**
 	 * Rutina de tratamiento de un mensaje con el protocolo "Reload".
 	 * En este caso solo se puede recibir un único mensaje: la recarga de un drone. No se envían mensajes.
 	 * @author Dani
@@ -692,7 +760,21 @@ public class Satellite extends SingleAgent {
 	
 	//TODO Implementation
 	
+	/**
+	 * TODO Implementación
+	 * 
+	 * @author Jahiel Me pongo para que el que haga este mensaje me informe cuando este para poner la linea en su sitio
+	 * @param msg
+	 */
 	public void onFinalize (ACLMessage msg){
 		
+		
+		/**
+		 * Realizar esta llamada solo cuando un drone finalize porque a llegado a la meta
+		 * 
+		 * @author Jahiel
+		 */
+		
+		sendInformSubscribeFinalize(msg);
 	}
 }

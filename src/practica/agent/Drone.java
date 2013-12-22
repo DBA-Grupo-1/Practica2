@@ -338,7 +338,8 @@ public class Drone extends SingleAgent {
 	}
 
 	/**
-	 * Se comunica con el satelite para recibir su status y actualizarlo.
+	 * Se comunica con el satelite para recibir su status y actualizarlo. Tambien se notifica a todos los agentes 
+	 * subscritos a él que se ha movido.
 	 * 
 	 * @author Alberto
 	 * @author Jahiel
