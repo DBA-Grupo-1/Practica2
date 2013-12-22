@@ -12,14 +12,18 @@ import es.upv.dsic.gti_ia.core.AgentsConnection;
 
 public class Launcher {
 	
-	AgentID id_satelite;
+	AgentID id_satelite, id_charger;
 	Satellite satellite;
 	Drone drone1, drone2;
 	Visualizer visualizer;
 	Map map;
 	Charger charger;
 	static int droneAmmount;
-
+	
+	/**
+	 * @author Jahiel
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		droneAmmount = 2;
 		DOMConfigurator.configure("src/Configuration/loggin.xml"); // ERR
@@ -31,6 +35,7 @@ public class Launcher {
         Launcher launcher = new Launcher();
         
         launcher.id_satelite = new AgentID("Satelite");  
+        launcher.id_charger = new AgentID("Charger");
 		//launcher.visualizer = new Visualizer(launcher);
 		
 		//Comentar la línea anterior y descomentar esta para lanzar sin visualizador.
@@ -45,9 +50,9 @@ public class Launcher {
             System.out.println("Main: Creando agentes");
         	map = visualizer.getMapToLoad();
         	satellite = new Satellite(id_satelite, map, droneAmmount, visualizer);
-        	drone1 = new Drone(new AgentID("Drone1"), map.getWidth(), map.getHeigh(), id_satelite);
-        	drone2 = new Drone(new AgentID("Drone2"), map.getWidth(), map.getHeigh(), id_satelite);
-        	charger = new Charger(new AgentID("Charger"), 500*droneAmmount, id_satelite);
+        	charger = new Charger(id_charger, 500*droneAmmount, id_satelite);
+        	drone1 = new Drone(new AgentID("Drone1"), map.getWidth(), map.getHeigh(), id_satelite, id_charger);
+        	drone2 = new Drone(new AgentID("Drone2"), map.getWidth(), map.getHeigh(), id_satelite, id_charger);
         	System.out.println("MAIN : Iniciando agentes...");
         	visualizer.setSatelite(satellite);
             satellite.start();
@@ -67,9 +72,9 @@ public class Launcher {
         	map = ImgMapConverter.imgToMap("src/maps/map2.png");
     		ImgMapConverter.mapToImg("src/maps/pruebaoriginal.png", map);
         	satellite = new Satellite(id_satelite, map, droneAmmount);
-        	drone1 = new Drone(new AgentID("Drone1"), map.getWidth(), map.getHeigh(), id_satelite);
-        	drone2 = new Drone(new AgentID("Drone2"), map.getWidth(), map.getHeigh(), id_satelite);
-        	charger = new Charger(new AgentID("Charger"), 500*droneAmmount, id_satelite);
+        	charger = new Charger(id_charger, 500*droneAmmount, id_satelite);
+        	drone1 = new Drone(new AgentID("Drone1"), map.getWidth(), map.getHeigh(), id_satelite, id_charger);
+        	drone2 = new Drone(new AgentID("Drone2"), map.getWidth(), map.getHeigh(), id_satelite, id_charger);
         	System.out.println("MAIN : Iniciando agentes...");
             satellite.start();
             drone1.start();
