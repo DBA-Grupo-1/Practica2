@@ -649,13 +649,13 @@ public class Satellite extends SingleAgent {
 		}
 		
 		try {
-			if(subscriptions.containsKey(content.get("type"))){
-				if(subscriptions.get(content.get("type")).containsKey(msg.getSender().toString())){
+			if(subscriptions.containsKey(content.get("Subject"))){
+				if(subscriptions.get(content.get("Subject")).containsKey(msg.getSender().toString())){
 					throw new RefuseException(ErrorLibrary.AlreadySubscribed);
 				}else if(drones.length != 6){
 					throw new RefuseException(ErrorLibrary.MissingAgents);
 				}else{
-					subscriptions.get(content.get("type")).put(msg.getSender().toString(), msg.getConversationId());
+					subscriptions.get(content.get("Subject")).put(msg.getSender().toString(), msg.getConversationId());
 					send(ACLMessage.ACCEPT_PROPOSAL, msg.getSender(), "Subcribe", null, "confirmation", msg.getConversationId(), content);	
 				}
 			}
@@ -679,7 +679,7 @@ public class Satellite extends SingleAgent {
 		JSONObject contentSub = new JSONObject();
 		
 		try {
-			contentSub.put("type", "AllMovement");
+			contentSub.put("Subject", "AllMovement");
 			contentSub.put("ID-Drone", msg.getSender().toString());
 			int[] posPr = {currentPosition.getPositionX(), currentPosition.getPositionY()};
 			contentSub.put("PreviousPosition", new JSONArray(posPr));
@@ -708,7 +708,7 @@ public class Satellite extends SingleAgent {
 		JSONObject contentSub = new JSONObject();
 		
 		try {
-			contentSub.put("type", "DroneReachedGoal");
+			contentSub.put("Subject", "DroneReachedGoal");
 			contentSub.put("ID-Drone", msg.getSender().toString());
 			
 		} catch (JSONException e) {

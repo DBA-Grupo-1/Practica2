@@ -439,7 +439,7 @@ public class Charger extends SingleAgent {
 		}
 		
 		try {
-			if(content.get("type").equals("DroneRecharger")){
+			if(content.get("Subject").equals("DroneRecharger")){
 				if(subscribers.containsKey(msg.getSender().toString()))
 					throw new RefuseException(ErrorLibrary.AlreadySubscribed);
 				else{
@@ -464,7 +464,7 @@ public class Charger extends SingleAgent {
 		JSONObject content = new JSONObject();
 		
 		try {
-			content.put("type", "DroneRecharger");
+			content.put("Subject", "DroneRecharger");
 			content.put("ID-Drone", droneRecharger.toString());
 			content.put("amount", levelRecharge);
 		} catch (JSONException e) {

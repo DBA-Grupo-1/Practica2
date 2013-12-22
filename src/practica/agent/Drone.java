@@ -248,17 +248,22 @@ public class Drone extends SingleAgent {
 				queue = answerQueue;
 			}
 			break;
+		case SubjectLibrary.YourMovements:
+			
+			if(msg.getInReplyTo()!=null){
+				if(msg.getInReplyTo().equals("Confirmation"))
+					queue = answerQueue;
+				else
+					sendError(new NotUnderstoodException("Campo Reply-with inválido"), msg);
+			}else
+				queue = requestQueue;
 		case SubjectLibrary.DroneRecharged:
 		case SubjectLibrary.DroneReachedGoal:
-		case SubjectLibrary.YourMovements:
 		case SubjectLibrary.AllMovements:
 		case SubjectLibrary.ConflictiveSections:
 		case SubjectLibrary.BatteryRequest:
 			
-			if(msg.getInReplyTo().equals("Confirmation"))
-				queue = answerQueue;
-			else
-				queue = requestQueue;
+			queue = requestQueue;
 			break;	
 		default:
 			sendError(new NotUnderstoodException("Subject no encontrado"), msg);
@@ -369,7 +374,7 @@ public class Drone extends SingleAgent {
 		JSONObject content = new JSONObject();
 		
 		try {
-			content.put("type", SubjectLibrary.YourMovements);
+			content.put("Subject", SubjectLibrary.YourMovements);
 			int[] previousPosition = {X, Y};
 			content.put("PreviousPosition", new JSONArray(previousPosition));
 			int[] position = {posX, posY};
@@ -506,9 +511,11 @@ public class Drone extends SingleAgent {
 		
 		subscribeDroneReachedGoal();
 		subscribeDroneRecharged();
-		subscribeYourMovements();
 		subscribeAllMovements();
 		subscribeConflictiveSections();
+		
+		for(int i=0; i<teammates.length; i++)
+			subscribeYourMovements(teammates[i]);
 		
 	}
 	
@@ -564,11 +571,10 @@ public class Drone extends SingleAgent {
 	 * Se subscribe a los movimientos que realiza un drone específico.
 	 * Si el drone se mueve se te informa de su movimiento.
 	 * 
-	 * De momento se subscribe a TODOS los drones registrados.
-	 * 
 	 * @author Jahiel
+	 * @param id Identificador del Drone a subscriberse.
 	 */
-	private void subscribeYourMovements(){
+	private void subscribeYourMovements(AgentID id){
 		JSONObject content = new JSONObject();
 		
 		try {
@@ -578,13 +584,13 @@ public class Drone extends SingleAgent {
 			e.printStackTrace();
 		}
 
-		for(int i=0; i<this.teammates.length; i++){
-			idsCombersationSubscribe.put("YourMovements"+teammates[i].getLocalName(), this.getAid().toString()+"#"+conversationCounter);
-			send(ACLMessage.SUBSCRIBE, teammates[i], "Subscribe", "confirmation", null,
+		
+		idsCombersationSubscribe.put("YourMovements"+id.getLocalName(), this.getAid().toString()+"#"+conversationCounter);
+		send(ACLMessage.SUBSCRIBE, id, "Subscribe", "confirmation", null,
 					buildConversationId(), content);
 			
-			WaitResponseSubscriber();
-		}
+		WaitResponseSubscriber();
+		
 		
 	}
 	
@@ -689,7 +695,7 @@ public class Drone extends SingleAgent {
 		AgentID destino;
 		
 		try {
-			content.put("type", name);
+			content.put("Subject", name);
 		} catch (JSONException e) {
 			// nunca se ejecuta porque la clave no es vacía
 			e.printStackTrace();
