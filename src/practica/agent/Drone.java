@@ -104,6 +104,7 @@ public class Drone extends SingleAgent {
 	protected Thread dispatcher;
 	private AgentID[] teammates;
 	private int conversationCounter = 0;
+	private Trace trace;
 	
 	private HashMap<String, String> idsCombersationSubscribe;   // {nombreSubscripcion, id-combersation}
 	private HashMap<String, String> subscribers;				// {ID_Agente, id-combersation}
@@ -133,6 +134,7 @@ public class Drone extends SingleAgent {
 		distanceMin = 999999;
 		counterStop = 0;
 		battery=75;
+		trace = new Trace();
 		
 		standBy = 0;
 		answerQueue = new LinkedBlockingQueue<ACLMessage>();
@@ -1160,6 +1162,7 @@ public class Drone extends SingleAgent {
 	 * 
 	 * @author Jahiel
 	 * @author Dani
+	 * @author Jonay
 	 * @param msg Mensaje a analizar
 	 * @return True si el dispatcher debe continuar su ejecucion. False en caso contrario.
 	 * @throws JSONException 
@@ -1170,38 +1173,31 @@ public class Drone extends SingleAgent {
 		boolean res = true;
 		JSONObject resp= new JSONObject();
 		
-		
 		try{
 			switch(subject){
 			case SubjectLibrary.BatteryLeft:
-				int battery2 = onBatteryQueried(msg);
-				if(battery2 < 0|| battery2 > 75){
-					resp.put("error","error en la peticion de bateria");
-					send(ACLMessage.INFORM, protocol, msg.getSender(), resp);
+				int batteryLeft = onBatteryQueried(msg);
+				if(batteryLeft < 0|| batteryLeft > 75){
+					throw new RefuseException(ErrorLibrary.UnespectedAmount);
 				}
 				else{
-					resp.put("battery",battery2);
-					send(ACLMessage.INFORM, protocol, msg.getSender(), resp);
+					resp.put("Subject", SubjectLibrary.BatteryLeft);
+					resp.put("EnergyLeft",batteryLeft);
+					send(ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), resp);
 				}
-				//TODO enviar bateria
 				break;
 			case SubjectLibrary.Trace:
-				Trace trace = onTraceQueried(msg);
-				resp.put("trace", trace);
-				send(ACLMessage.INFORM, protocol, msg.getSender(), resp);
-				//TODO enviar traza
+				Trace trc = onTraceQueried(msg);
+				JSONArray traceJSON = traceToJSONArray(trc);
+				resp.put("Subject", SubjectLibrary.Trace);
+				resp.put("trace", traceJSON);
+				send(ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), resp);
 				break;
 			case SubjectLibrary.Steps:
-				Trace trc = onTraceQueried(msg);
-				int valor= trc.size();
-				if(valor < 0){
-					resp.put("error", "numero de valor erroneo");
-					send(ACLMessage.REFUSE, protocol, msg.getSender(),resp);
-				}
-				else{
-					resp.put("steps",valor);
-					send(ACLMessage.INFORM, protocol, msg.getSender(), resp);
-				}
+				int nSteps = onStepsQueried(msg);
+				resp.put("Subject", SubjectLibrary.Steps);
+				resp.put("steps", nSteps);
+				send(ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), resp);
 				break;
 			case SubjectLibrary.DroneReachedGoal:
 				onDroneReachedGoalInform(msg);
@@ -1238,6 +1234,17 @@ public class Drone extends SingleAgent {
 		}
 		
 		return res;
+	}
+	
+	/**
+	 * Convierte una traza en un JSONArray
+	 * @author Jonay
+	 * @return el array JSONArray
+	 */
+	private JSONArray traceToJSONArray(Trace trc) {
+		// TODO: a la espera de la clase Trace
+		JSONArray trace = new JSONArray(trc.getTraceAsArray());
+		return trace;
 	}
 	
 	/**
@@ -1406,27 +1413,44 @@ public class Drone extends SingleAgent {
 	
 	/**
 	 * Metodo llamado por el dispatcher para tratar la consulta de la traza del drone.
+	 * @author Jonay
 	 * @param msg Mensaje original
 	 * @return Traza a enviar.
 	 * @throws IllegalArgumentException En caso de error en el mensaje original (performativa equivocada, content erroneo...).
 	 * @throws RuntimeException En caso de error en el procesamiento del mensaje (comportamiento del drone ante el mensaje).
 	 */
 	protected Trace onTraceQueried(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException {
-		// TODO Auto-generated method stub
-		return null;
+		basicErrorsComprobation(msg, ACLMessage.QUERY_REF);
+		
+		return trace;
 	}
 
 	/**
 	 * Metodo llamado por el dispatcher para tratar la consulta de la batería del drone.
+	 * @author Jonay
 	 * @param msg Mensaje original
 	 * @return Valor de bateria a enviar.
 	 * @throws IllegalArgumentException En caso de error en el mensaje original (performativa equivocada, content erroneo...).
 	 * @throws RuntimeException En caso de error en el procesamiento del mensaje (comportamiento del drone ante el mensaje).
 	 */
 	protected int onBatteryQueried(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException{
+		basicErrorsComprobation(msg, ACLMessage.QUERY_REF);
+		
 		return battery;
 	}
 	
+	/**
+	 * Métoro llamado por el dispacher para tratar la consulta del número de pasos que ha dado un drone.
+	 * @author Jonay
+	 * @param msg Mensaje original
+	 * @return El número de pasos que ha dado el drone.
+	 * @throws FIPAException En caso de error por algún motivo recogido en el protocolo de comunicación.
+	 */
+	protected int onStepsQueried(ACLMessage msg) throws FIPAException{
+		basicErrorsComprobation(msg, ACLMessage.QUERY_REF);
+		
+		return trace.size(); //TODO: a la espera de la clase traza
+	}
 	
 	/**
 	 * Manda un mensaje.
@@ -1471,10 +1495,30 @@ public class Drone extends SingleAgent {
 		this.send(msg);
 	}
 	
-	
-	
-	
-	
+	/**
+	 * Comprueba los errores básicos de comunicación y lanza las excepciones necesarias
+	 * @author Jonay
+	 * @param msg mensaje que vamos a comprobar
+	 * @param performative Performativa esperada del mensaje
+	 * @throws FIPAException Error en algún aspecto de la comunicación
+	 */
+	private void basicErrorsComprobation(ACLMessage msg, int performative) throws FIPAException{
+		//Primera comprobación: performativa correcta.
+		if (msg.getPerformativeInt() != performative)
+			throw new NotUnderstoodException(ErrorLibrary.NotUnderstood);
+			
+		JSONObject content;
+		try {
+			content = new JSONObject(msg.getContent());
+			if (content.length() == 0)
+				throw new RefuseException(ErrorLibrary.EmptyContent);
+
+			if (!content.has("Subject") )
+				throw new RefuseException(ErrorLibrary.BadlyStructuredContent);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+	}
 	
 	
 	/************************************************************************************************************************/

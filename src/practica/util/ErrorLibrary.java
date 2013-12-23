@@ -21,5 +21,5 @@ public class ErrorLibrary {
 	public static final String AlreadyInGoal = "Agent is already in a goal position.";
 	public static final String IWontReachGoal = "Agent is not going to reach the goal.";
 	public static final String MissingAgents = "There are agents not connected to platform";
-	public static final String Understood = "The message has not been understood.";
+	public static final String NotUnderstood = "The message has not been understood.";
 }
