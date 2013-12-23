@@ -27,6 +27,7 @@ import practica.util.Map;
 import practica.util.MessageQueue;
 import practica.util.ProtocolLibrary;
 import practica.util.SharedMap;
+import practica.util.SubjectLibrary;
 import practica.util.Visualizer;
 import practica.util.DroneStatus;
 
@@ -44,7 +45,7 @@ public class Satellite extends SingleAgent {
 	private boolean usingVisualizer;				//Variable para controlar si se está usando el visualizador.
 	private boolean exit;							//Variable para controlar la terminación de la ejecución del satélite.
 	private static List<Integer> posXIniciales;
-	
+	private int conversationCounter=0;
 	private HashMap<String, HashMap<String, String>> subscriptions;  // <tipoSubcripcion, < IDAgent, ID-combersation>>
 	
 	
@@ -746,7 +747,20 @@ public class Satellite extends SingleAgent {
 		else throw new RuntimeException("onReload - Performativa no inform.");
 	}
 	
-	
+	/**
+	 * Construye un nuevo campo conversationID a partir del id del agente y el contador de conversacion
+	 * 
+	 * @author Alberto
+	 * @return Conversation id formado segun el patron acordado
+	 */
+	private String buildConversationId() {
+		String res;
+		synchronized(this){
+			res = this.getAid().toString()+"#"+conversationCounter;
+			conversationCounter++;
+		}
+		return res;
+	}
 	/**
 	 * TODO Implementation
 	 * 
@@ -754,7 +768,152 @@ public class Satellite extends SingleAgent {
 	 * @param msg
 	 */
 	
-	public void onInformation (ACLMessage msg){
+	public void onInformation (ACLMessage msg) throws JSONException{
+		JSONObject content = new JSONObject(msg.getContent());
+		String subject = content.getString("Subject");
+		
+		JSONObject res = new JSONObject();
+		
+		
+		try{
+			switch(subject){
+				case SubjectLibrary.MapOriginal:
+					try{
+						res.put("Subject", "MapOriginal");
+						res.put("Height", mapOriginal.getHeigh());
+						res.put("Width",mapOriginal.getWidth());
+						JSONArray aux = new JSONArray();
+						if(mapOriginal.getHeigh()==0||mapOriginal.getWidth()==0){
+							throw new FIPAException(msg);
+						}
+						for(int i=0;i<mapOriginal.getHeigh();i++){
+							for(int j=0;i<mapOriginal.getWidth();j++){
+								if(mapOriginal.getValue(i,j)<-1||mapOriginal.getValue(i, j)>5){
+									throw new FIPAException(msg);
+								}
+								aux.put(mapOriginal.getValue(i, j));
+							}
+						}
+						res.put("Values", aux);
+					}catch(RuntimeException e){
+						//es = treatRuntimeError(msg, e);
+					}
+					send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);
+						
+						
+					
+					break;
+				case SubjectLibrary.MapGlobal:
+					try{
+						res.put("Subject", "MapSiguimiento");
+						res.put("Height", mapSeguimiento.getHeigh());
+						res.put("Width",mapSeguimiento.getWidth());
+						JSONArray aux = new JSONArray();
+						if(mapSeguimiento.getHeigh()==0||mapSeguimiento.getWidth()==0){
+							throw new FIPAException(msg);
+						}
+						for(int i=0;i<mapSeguimiento.getHeigh();i++){
+							for(int j=0;i<mapSeguimiento.getWidth();j++){
+								if(mapSeguimiento.getValue(i,j)<-1||mapSeguimiento.getValue(i, j)>5){
+									throw new FIPAException(msg);
+								}
+								aux.put(mapSeguimiento.getValue(i,j));
+							}
+						}
+						res.put("Values", aux);
+					}catch(RuntimeException e){
+						//es = treatRuntimeError(msg, e);
+					}
+					send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);
+					break;
+				case SubjectLibrary.IdAgent:
+					try{
+						
+						res.put("Subject","IdAgent");
+						AgentID id = msg.getSender();
+						DroneStatus status = findStatus(id);
+						if(status==null){
+							throw new FIPAException(msg);
+						}
+						else{
+							res.put("name",status.getName());
+							res.put("ID",id);
+						}
+					}catch(RuntimeException e){
+						//es = treatRuntimeError(msg, e);
+					}
+					send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);
+					break;
+				case SubjectLibrary.Position:
+					try{
+						
+						res.put("Subject","Position");
+						JSONObject aux = new JSONObject();
+						AgentID id = msg.getSender();
+						if(id==null){
+							throw new FIPAException(msg);
+						}
+						DroneStatus status = findStatus(id);
+						GPSLocation n= status.getLocation();
+						aux.put("x",n.getPositionX());
+						aux.put("y", n.getPositionY());
+						res.put("Position", aux);
+					}catch(RuntimeException e){
+						//es = treatRuntimeError(msg, e);
+					}
+					send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);
+					break;
+				case SubjectLibrary.GoalDistance:
+						try{
+							res.put("Subject","GoalDistance");
+							
+							AgentID id= msg.getSender();
+							if(id==null){
+								throw new FIPAException(msg);
+							}
+							DroneStatus status= findStatus(id);
+							GPSLocation n = status.getLocation();
+							double x=n.getPositionX();
+							double y=n.getPositionY();
+							double dist= Math.sqrt(Math.pow((goalPosX-x),2)+Math.pow((goalPosY-y),2));
+							res.put("Distance", dist);
+						}catch(RuntimeException e){
+							//es = treatRuntimeError(msg, e);
+						}
+						send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);
+					break;
+				case SubjectLibrary.DroneBattery:
+					try{
+						res.put("Subject","DroneBattery");
+						AgentID id = msg.getSender();
+						if(id==null){
+							throw new FIPAException(msg);
+						}
+						DroneStatus status = findStatus(id);
+						int bat=status.getBattery();
+						if(bat<0||bat>75){
+							throw new FIPAException(msg);
+						}
+						res.put("Battery",bat);
+					}catch(RuntimeException e){
+						//es = treatRuntimeError(msg, e);
+					}
+					send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);	
+						
+					break;
+				default: 
+					sendError(new NotUnderstoodException("Subject no encontrado"), msg);
+					break;
+					
+					
+			}
+		}catch(FIPAException fe){
+			sendError(fe, msg);
+		}catch(IllegalArgumentException e){
+			//res = treatMessageError(msg, e);
+		}catch(RuntimeException e){
+			//res = treatRuntimeError(msg, e);
+		}
 		
 	}
 	
