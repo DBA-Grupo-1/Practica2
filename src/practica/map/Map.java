@@ -1,4 +1,4 @@
-package practica.util;
+package practica.map;
 
 public class Map {
 	private int matrix[][];

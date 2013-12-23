@@ -20,14 +20,14 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import practica.util.ErrorLibrary;
+import practica.lib.ErrorLibrary;
+import practica.lib.ProtocolLibrary;
+import practica.lib.SubjectLibrary;
+import practica.map.Map;
+import practica.map.SharedMap;
 import practica.util.GPSLocation;
 import practica.util.ImgMapConverter;
-import practica.util.Map;
 import practica.util.MessageQueue;
-import practica.util.ProtocolLibrary;
-import practica.util.SharedMap;
-import practica.util.SubjectLibrary;
 import practica.util.Visualizer;
 import practica.util.DroneStatus;
 

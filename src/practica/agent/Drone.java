@@ -6,12 +6,12 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
-import practica.util.ErrorLibrary;
-import practica.util.Map;
+import practica.lib.ErrorLibrary;
+import practica.lib.ProtocolLibrary;
+import practica.lib.SubjectLibrary;
+import practica.map.Map;
+import practica.trace.Trace;
 import practica.util.Pair;
-import practica.util.ProtocolLibrary;
-import practica.util.SubjectLibrary;
-import practica.util.Trace;
 import es.upv.dsic.gti_ia.architecture.FIPAException;
 import es.upv.dsic.gti_ia.architecture.NotUnderstoodException;
 import es.upv.dsic.gti_ia.architecture.RefuseException;

@@ -4,8 +4,8 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.xml.DOMConfigurator;
 
 import practica.agent.*;
+import practica.map.Map;
 import practica.util.ImgMapConverter;
-import practica.util.Map;
 import practica.util.Visualizer;
 import es.upv.dsic.gti_ia.core.AgentID;
 import es.upv.dsic.gti_ia.core.AgentsConnection;

@@ -13,6 +13,7 @@ import javax.swing.JLabel;
 
 import practica.Launcher;
 import practica.agent.Satellite;
+import practica.map.Map;
 
 public class Visualizer extends JFrame {
 	private JComboBox <String> mapSelector;

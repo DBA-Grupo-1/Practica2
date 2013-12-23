@@ -1,7 +1,8 @@
-package practica.util;
+package practica.map;
 
 import java.util.ArrayList;
 
+import practica.trace.BadChoice;
 import es.upv.dsic.gti_ia.core.AgentID;
 
 /**

@@ -10,6 +10,8 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 
+import practica.map.Map;
+
 public abstract class ImgMapConverter {
 	
 	/**

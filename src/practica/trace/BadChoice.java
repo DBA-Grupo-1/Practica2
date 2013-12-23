@@ -1,5 +1,6 @@
-package practica.util;
+package practica.trace;
 
+import practica.util.GPSLocation;
 import es.upv.dsic.gti_ia.core.AgentID;
 
 /**

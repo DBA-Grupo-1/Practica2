@@ -1,4 +1,6 @@
-package practica.util;
+package practica.trace;
+
+import practica.util.GPSLocation;
 
 /**
  * Clase que permite almacenar la decisión tomada en un punto específicado mediante

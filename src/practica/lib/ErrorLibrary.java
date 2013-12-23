@@ -1,4 +1,4 @@
-package practica.util;
+package practica.lib;
 
 /**
  * Librería de Strings para los Errores de comunicación o rechazos.

@@ -8,9 +8,9 @@ import java.util.concurrent.LinkedTransferQueue;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import practica.util.ErrorLibrary;
-import practica.util.ProtocolLibrary;
-import practica.util.SubjectLibrary;
+import practica.lib.ErrorLibrary;
+import practica.lib.ProtocolLibrary;
+import practica.lib.SubjectLibrary;
 import es.upv.dsic.gti_ia.architecture.FIPAException;
 import es.upv.dsic.gti_ia.architecture.NotUnderstoodException;
 import es.upv.dsic.gti_ia.architecture.RefuseException;

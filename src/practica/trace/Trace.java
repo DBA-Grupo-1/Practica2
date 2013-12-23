@@ -1,4 +1,4 @@
-package practica.util;
+package practica.trace;
 
 public class Trace {
 
