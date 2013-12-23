@@ -25,7 +25,7 @@ import es.upv.dsic.gti_ia.core.SingleAgent;
  * No documento la clase porque pronto cambiara todo
  * 
  */
-public class Charger extends SingleAgent {
+public class Charger extends BaseAgent {
 	private BlockingQueue<ACLMessage> requestQueue;  //de momento es una cola sin priridad, primero en llegar primero en ser atendido
 	private AgentID IDSatellite;
 	private int battery;
@@ -51,95 +51,7 @@ public class Charger extends SingleAgent {
 		conversationCounter = 0;
 		subscribers = new HashMap<String, String>();
 	}
-	
-	/**
-	 * Manda un mensaje.
-	 * @author Jahiel
-	 * @author Dani
-	 * @param typeMessage 		performativa del mensaje.
-	 * @param id				destinatario del mensaje.
-	 * @param protocol			protocolo de comunicación del mensaje.
-	 * @param replyWith			reply-with del mensaje. Será null si se usa in-reply-to.
-	 * @param inReplyTo			in-reply-to del mensaje. Será null si se usa reply-with.
-	 * @param conversationId	id de la conversación del mensaje,
-	 * @param datas				content del mensaje.
-	 */
-	private void send(int typeMessage, AgentID id, String protocol, String replyWith, String inReplyTo, String conversationId, JSONObject datas) {
 
-		ACLMessage msg = new ACLMessage(typeMessage);
-		msg.setSender(this.getAid());
-		msg.addReceiver(id);
-		
-		if (replyWith.isEmpty() || replyWith == null) //Doble comprobación, nunca está de más.
-			msg.setReplyWith("");
-		else
-			msg.setProtocol(protocol);
-		msg.setInReplyTo(replyWith);
-		
-		if (inReplyTo.isEmpty() || inReplyTo == null) //Doble comprobación, nunca está de más.
-			msg.setInReplyTo("");
-		else
-			msg.setProtocol(protocol);
-		msg.setInReplyTo(inReplyTo);
-		
-		if (conversationId.isEmpty() || conversationId == null) //Doble comprobación, nunca está de más.
-			msg.setConversationId("");
-		else
-			msg.setProtocol(protocol);
-		msg.setInReplyTo(conversationId);
-		
-		if (datas != null)
-			msg.setContent(datas.toString());
-		else
-			msg.setContent("");
-		this.send(msg);
-	}
-	
-	/**
-	 * @author Alberto
-	 * @param fe
-	 * @param msgOrig
-	 */
-	private void sendError(FIPAException fe, ACLMessage msgOrig) {
-		ACLMessage msgError = fe.getACLMessage();
-		JSONObject content = new JSONObject();
-		
-		try {
-			content.put("error",fe.getMessage());
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
-		
-		msgError.addReceiver(msgOrig.getSender());
-		msgError.setContent(content.toString());
-		msgError.setProtocol(msgOrig.getProtocol());
-		msgError.setConversationId(msgOrig.getConversationId());
-		msgError.setInReplyTo(msgOrig.getReplyWith());
-		
-		this.send(msgError);
-	}
-	
-	/**
-	 * Construye un nuevo campo conversationID a partir del id del agente y el contador de conversacion
-	 * 
-	 * @author Alberto
-	 * @return Conversation id formado segun el patron acordado
-	 */
-	private String buildConversationId() {
-		String res;
-		synchronized(this){
-			res = this.getAid().toString()+"#"+conversationCounter;
-			conversationCounter++;
-		}
-		return res;
-	}
-	
-	/**
-	 * Hebra encargada del tratamiento de la cola sin prioridad de mensajes.
-	 * @author Jahiel
-	 * @author Andres
-	 * @param msg Mensaje ACL recibido y listo para introducir en la cola.
-	 */
 	@Override
 	public void onMessage(ACLMessage msg){
 		/*
