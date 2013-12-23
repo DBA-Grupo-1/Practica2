@@ -8,11 +8,12 @@ import es.upv.dsic.gti_ia.core.ACLMessage;
 import es.upv.dsic.gti_ia.core.AgentID;
 import es.upv.dsic.gti_ia.core.SingleAgent;
 
-public class BaseAgent extends SingleAgent {
+public class SuperAgent extends SingleAgent {
+		
 	
 	private int conversationCounter ;
 
-	public BaseAgent(AgentID aid) throws Exception {
+	public SuperAgent(AgentID aid) throws Exception {
 		super(aid);
 		conversationCounter = 0;
 	}

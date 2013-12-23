@@ -57,7 +57,7 @@ import org.json.JSONObject;
  *    o cuando queremos que espere a un evento determinado. 
  *
  */
-public class Drone extends BaseAgent {
+public class Drone extends SuperAgent {
 	private final int ESTADOREQUEST = 0, ESTADOINFORM = 1;
 	private final int LIMIT_MOVEMENTS;
 	private boolean exit;
@@ -103,7 +103,6 @@ public class Drone extends BaseAgent {
 	protected BlockingQueue<ACLMessage> requestQueue;
 	protected Thread dispatcher;
 	private AgentID[] teammates;
-	private int conversationCounter = 0;
 	private Trace trace;
 	
 	private HashMap<String, String> idsCombersationSubscribe;   // {nombreSubscripcion, id-combersation}

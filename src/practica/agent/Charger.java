@@ -25,7 +25,7 @@ import es.upv.dsic.gti_ia.core.SingleAgent;
  * No documento la clase porque pronto cambiara todo
  * 
  */
-public class Charger extends BaseAgent {
+public class Charger extends SuperAgent {
 	private BlockingQueue<ACLMessage> requestQueue;  //de momento es una cola sin priridad, primero en llegar primero en ser atendido
 	private AgentID IDSatellite;
 	private int battery;

@@ -31,7 +31,7 @@ import practica.util.MessageQueue;
 import practica.util.Visualizer;
 import practica.util.DroneStatus;
 
-public class Satellite extends BaseAgent {
+public class Satellite extends SuperAgent {
 	private SharedMap mapOriginal;						//Mapa original a partir del cual transcurre todo.
 	private SharedMap mapSeguimiento;						//Mapa que se va actualizando a medida que los drones se muevan.
 	private double goalPosX;						//Coordenada X del objetivo.
@@ -45,7 +45,6 @@ public class Satellite extends BaseAgent {
 	private boolean usingVisualizer;				//Variable para controlar si se está usando el visualizador.
 	private boolean exit;							//Variable para controlar la terminación de la ejecución del satélite.
 	private static List<Integer> posXIniciales;
-	private int conversationCounter=0;
 	private HashMap<String, HashMap<String, String>> subscriptions;  // <tipoSubcripcion, < IDAgent, ID-combersation>>
 	
 	
