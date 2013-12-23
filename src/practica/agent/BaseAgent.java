@@ -102,12 +102,6 @@ public class BaseAgent extends SingleAgent {
 		}
 		return res;
 	}
-	
-	/**
-	 * Hebra encargada del tratamiento de la cola sin prioridad de mensajes.
-	 * @author Jahiel
-	 * @author Andres
-	 * @param msg Mensaje ACL recibido y listo para introducir en la cola.
-	 */
+
 
 }

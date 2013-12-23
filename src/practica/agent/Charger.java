@@ -52,6 +52,13 @@ public class Charger extends BaseAgent {
 		subscribers = new HashMap<String, String>();
 	}
 
+	/**
+	 * Hebra encargada del tratamiento de la cola sin prioridad de mensajes.
+	 * @author Jahiel
+	 * @author Andres
+	 * @param msg Mensaje ACL recibido y listo para introducir en la cola.
+	 */
+	
 	@Override
 	public void onMessage(ACLMessage msg){
 		/*
