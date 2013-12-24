@@ -460,7 +460,96 @@ public class Drone extends SuperAgent {
 		
 	}
 	
+	//TODO estabecer donde y como usar estas funciones
+	/**
+	 * Pide mapa original
+	 * @author Ismael
+	 */
+	protected void askForMapOne(){
+		JSONObject ask = new JSONObject();
+		try{
+			ask.put("Subject", "MapOriginal");
+			
+			send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
+		} catch (JSONException e){
+			e.printStackTrace();
+		}
+	}
+	/**
+	 * Pide mapa común.
+	 * @author Ismael.
+	 * 
+	 */
+	protected void askForMapTwo(){
+		JSONObject ask = new JSONObject();
+		try{
+			ask.put("Subject", "MapSeguimiento");
+			
+			send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
+		} catch (JSONException e){
+			e.printStackTrace();
+		}
+	}
+	/**
+	 * Pide el nombre ID de un nombre.
+	 * @author Ismael
+	 * @param name
+	 */
+	protected void askForID(String name){
+		JSONObject ask = new JSONObject();
+		try{
+			ask.put("Subject", "GoalDistance");
+			ask.put("ID", id);
+			send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
+		} catch (JSONException e){
+			e.printStackTrace();
+		}
+	}
+	/**
+	 * Pide distancia de un drone especifico
+	 * @author Ismael
+	 * @param ID
+	 */
+	protected void askForGoal(AgentID id){
+		JSONObject ask = new JSONObject();
+		try{
+			ask.put("Subject", "GoalDistance");
+			ask.put("ID", id);
+			send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
+		} catch (JSONException e){
+			e.printStackTrace();
+		}
+	}
 	
+	/**
+	 * Pide posicion 
+	 * @author Ismael
+	 */
+	protected void askPosition(){
+		JSONObject ask = new JSONObject();
+		try{
+			ask.put("Subject", "Position");
+			send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
+		} catch (JSONException e){
+			e.printStackTrace();
+		}
+	}
+	/**
+	 * Pide batería al satelite de un drone ID
+	 * @author Ismael
+	 * @param identidad agente.
+	 */
+	protected void askForMyBatterySatellite(AgentID id){
+		JSONObject ask = new JSONObject();
+		try{
+			ask.put("Subject", "DroneBattery");
+			ask.put("AgentID", id);
+			//Envio mensaje
+			send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
+		} catch (JSONException e){
+			e.printStackTrace();
+		}
+	}
 	/**
 	 * Pide batería al cargador.
 	 * @author Dani.

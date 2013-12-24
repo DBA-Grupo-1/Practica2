@@ -394,6 +394,9 @@ public class Satellite extends SuperAgent {
 			
 				}catch(FIPAException fe){
 					sendError(fe, proccesingMessage);
+				} catch (JSONException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}	
 			}
 		}
@@ -679,7 +682,23 @@ public class Satellite extends SuperAgent {
 		}
 		else throw new RuntimeException("onReload - Performativa no inform.");
 	}
-
+	/**
+	 * @author Ismael
+	 * permite encontrar un estado a partir del nombre de un drone
+	 * @param Name
+	 * @return DroneStatus
+	 */
+	public DroneStatus searchByName(String Name){
+		
+		boolean find=false;
+				int i=0;
+				for(;i<maxDrones&&!find;i++){
+					if(droneStuses[i].getName()==Name){
+						find=true;
+					}
+				}
+		return droneStuses[i];
+	}
 	/**
 	 * TODO Implementation
 	 * 
@@ -696,6 +715,18 @@ public class Satellite extends SuperAgent {
 		
 		try{
 			switch(subject){
+			    case SubjectLibrary.Status:
+			    	try{
+			    		AgentID id= msg.getSender();
+			    		DroneStatus nm= findStatus(id);
+			    		res.put("Subject","Status");
+			    		res.put("values",nm);
+			    		send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);
+			    		//TODO Devuelvo el campo status al completo, hay que modificar el drone en updateStatus para recoger el campo values.
+			    	}catch(RuntimeException e){
+			    		throw new RuntimeException("Fallo en la obtencion respuesta mensaje");
+					}
+			    	break;
 				case SubjectLibrary.MapOriginal:
 					try{
 						res.put("Subject", "MapOriginal");
@@ -703,21 +734,22 @@ public class Satellite extends SuperAgent {
 						res.put("Width",mapOriginal.getWidth());
 						JSONArray aux = new JSONArray();
 						if(mapOriginal.getHeigh()==0||mapOriginal.getWidth()==0){
-							throw new FIPAException(msg);
+							throw new RuntimeException("Fallo: Mapa no existe");
 						}
 						for(int i=0;i<mapOriginal.getHeigh();i++){
 							for(int j=0;i<mapOriginal.getWidth();j++){
 								if(mapOriginal.getValue(i,j)<-1||mapOriginal.getValue(i, j)>5){
-									throw new FIPAException(msg);
+									throw new RuntimeException("Fallo: valor erroneo en mapa");
 								}
 								aux.put(mapOriginal.getValue(i, j));
 							}
 						}
 						res.put("Values", aux);
+						send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);
 					}catch(RuntimeException e){
-						//es = treatRuntimeError(msg, e);
+						throw new RuntimeException("Fallo en la obtencion respuesta mensaje");
 					}
-					send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);
+					
 						
 						
 					
@@ -729,39 +761,43 @@ public class Satellite extends SuperAgent {
 						res.put("Width",mapSeguimiento.getWidth());
 						JSONArray aux = new JSONArray();
 						if(mapSeguimiento.getHeigh()==0||mapSeguimiento.getWidth()==0){
-							throw new FIPAException(msg);
+							throw new RuntimeException("Fallo: Mapa no existente");
 						}
 						for(int i=0;i<mapSeguimiento.getHeigh();i++){
 							for(int j=0;i<mapSeguimiento.getWidth();j++){
 								if(mapSeguimiento.getValue(i,j)<-1||mapSeguimiento.getValue(i, j)>5){
-									throw new FIPAException(msg);
+									throw new RuntimeException("Fallo: valor erroneo en mapa");
 								}
 								aux.put(mapSeguimiento.getValue(i,j));
 							}
 						}
 						res.put("Values", aux);
+						send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);
 					}catch(RuntimeException e){
-						//es = treatRuntimeError(msg, e);
+						throw new RuntimeException("Fallo en la obtencion respuesta mensaje");
 					}
-					send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);
+					
 					break;
 				case SubjectLibrary.IdAgent:
 					try{
 						
 						res.put("Subject","IdAgent");
-						AgentID id = msg.getSender();
-						DroneStatus status = findStatus(id);
+						String names= content.getString("name");
+						
+						DroneStatus status =  searchByName(names);
 						if(status==null){
-							throw new FIPAException(msg);
+							throw new RuntimeException("Fallo: Status agente no existe");
 						}
 						else{
 							res.put("name",status.getName());
-							res.put("ID",id);
+							res.put("ID",status.getId());
+							
+							send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);
 						}
 					}catch(RuntimeException e){
-						//es = treatRuntimeError(msg, e);
+						throw new RuntimeException("Fallo en la obtencion respuesta mensaje");
 					}
-					send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);
+					
 					break;
 				case SubjectLibrary.Position:
 					try{
@@ -770,25 +806,26 @@ public class Satellite extends SuperAgent {
 						JSONObject aux = new JSONObject();
 						AgentID id = msg.getSender();
 						if(id==null){
-							throw new FIPAException(msg);
+							throw new RuntimeException("Fallo: ID agente no existe");
 						}
 						DroneStatus status = findStatus(id);
 						GPSLocation n= status.getLocation();
 						aux.put("x",n.getPositionX());
 						aux.put("y", n.getPositionY());
 						res.put("Position", aux);
+						send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);
 					}catch(RuntimeException e){
-						//es = treatRuntimeError(msg, e);
+						throw new RuntimeException("Fallo en la obtencion respuesta mensaje");
 					}
-					send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);
+					
 					break;
 				case SubjectLibrary.GoalDistance:
 						try{
 							res.put("Subject","GoalDistance");
 							
-							AgentID id= msg.getSender();
+							AgentID id= (AgentID)content.get("ID");
 							if(id==null){
-								throw new FIPAException(msg);
+								throw new RuntimeException("Fallo: ID agente no existe");
 							}
 							DroneStatus status= findStatus(id);
 							GPSLocation n = status.getLocation();
@@ -796,28 +833,31 @@ public class Satellite extends SuperAgent {
 							double y=n.getPositionY();
 							double dist= Math.sqrt(Math.pow((goalPosX-x),2)+Math.pow((goalPosY-y),2));
 							res.put("Distance", dist);
+							
+							send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);
 						}catch(RuntimeException e){
-							//es = treatRuntimeError(msg, e);
+							throw new RuntimeException("Fallo en la obtencion respuesta mensaje");
 						}
-						send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);
+						
 					break;
 				case SubjectLibrary.DroneBattery:
 					try{
 						res.put("Subject","DroneBattery");
-						AgentID id = msg.getSender();
+						AgentID id = (AgentID) content.get("AgetnID");
 						if(id==null){
-							throw new FIPAException(msg);
+							throw new RuntimeException("Fallo: ID agente no existe");
 						}
 						DroneStatus status = findStatus(id);
 						int bat=status.getBattery();
 						if(bat<0||bat>75){
-							throw new FIPAException(msg);
+							throw new RuntimeException("Fallo: valor de bateria erroneo");
 						}
 						res.put("Battery",bat);
+						send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);	
 					}catch(RuntimeException e){
-						//es = treatRuntimeError(msg, e);
+						throw new RuntimeException("Fallo en la obtencion respuesta mensaje");
 					}
-					send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);	
+					
 						
 					break;
 				default: 
@@ -826,12 +866,8 @@ public class Satellite extends SuperAgent {
 					
 					
 			}
-		}catch(FIPAException fe){
-			sendError(fe, msg);
-		}catch(IllegalArgumentException e){
-			//res = treatMessageError(msg, e);
 		}catch(RuntimeException e){
-			//res = treatRuntimeError(msg, e);
+			e.printStackTrace();
 		}
 		
 	}
