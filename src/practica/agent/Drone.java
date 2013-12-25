@@ -460,7 +460,7 @@ public class Drone extends SuperAgent {
 		
 	}
 	
-	//TODO estabecer donde y como usar estas funciones
+	//TODO estabecer donde y como usar estas funciones y en donde recoger las respuestas.
 	/**
 	 * Pide mapa original
 	 * @author Ismael
@@ -496,14 +496,25 @@ public class Drone extends SuperAgent {
 	 * @param name
 	 */
 	protected void askForID(String name){
+		ACLMessage msg = new ACLMessage();
 		JSONObject ask = new JSONObject();
 		try{
-			ask.put("Subject", "GoalDistance");
-			ask.put("ID", id);
+			ask.put("Subject", "AgentID");
+			ask.put("Name", name);
 			send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
 		} catch (JSONException e){
 			e.printStackTrace();
 		}
+		/**
+		 * No se si recoger el mensaje aquí o se debe hacer en el dispatcher por eso el resto de métodos no tienen esa parte.
+		try {
+			msg = answerQueue.take();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+			throw new RuntimeException("Fallo en la respuesta de subscripcion: error al cojer la respuesta");
+		}
+		content = msg.getContent();
+		**/
 	}
 	/**
 	 * Pide distancia de un drone especifico
