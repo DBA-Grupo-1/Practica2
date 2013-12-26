@@ -701,7 +701,7 @@ public class Satellite extends SuperAgent {
 	}
 	/**
 	 * TODO Implementation
-	 * 
+	 * @author Ismael
 	 * @see onStatusQueried para cuando te pidan el status. Si el que implementa esto lo usa que no sea perro y me ponga como autor >_<
 	 * @param msg
 	 */
@@ -723,7 +723,7 @@ public class Satellite extends SuperAgent {
 			    		res.put("values",nm);
 			    		send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);
 			    		//TODO Devuelvo el campo status al completo, hay que modificar el drone en updateStatus para recoger el campo values.
-			    	}catch(RuntimeException e){
+			    	}catch(JSONException e){
 			    		throw new RuntimeException("Fallo en la obtencion respuesta mensaje");
 					}
 			    	break;
@@ -746,7 +746,7 @@ public class Satellite extends SuperAgent {
 						}
 						res.put("Values", aux);
 						send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);
-					}catch(RuntimeException e){
+					}catch(JSONException e){
 						throw new RuntimeException("Fallo en la obtencion respuesta mensaje");
 					}
 					
@@ -773,7 +773,7 @@ public class Satellite extends SuperAgent {
 						}
 						res.put("Values", aux);
 						send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);
-					}catch(RuntimeException e){
+					}catch(JSONException e){
 						throw new RuntimeException("Fallo en la obtencion respuesta mensaje");
 					}
 					
@@ -794,7 +794,7 @@ public class Satellite extends SuperAgent {
 							
 							send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);
 						}
-					}catch(RuntimeException e){
+					}catch(JSONException e){
 						throw new RuntimeException("Fallo en la obtencion respuesta mensaje");
 					}
 					
@@ -814,7 +814,7 @@ public class Satellite extends SuperAgent {
 						aux.put("y", n.getPositionY());
 						res.put("Position", aux);
 						send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);
-					}catch(RuntimeException e){
+					}catch(JSONException e){
 						throw new RuntimeException("Fallo en la obtencion respuesta mensaje");
 					}
 					
@@ -835,7 +835,7 @@ public class Satellite extends SuperAgent {
 							res.put("Distance", dist);
 							
 							send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);
-						}catch(RuntimeException e){
+						}catch(JSONException e){
 							throw new RuntimeException("Fallo en la obtencion respuesta mensaje");
 						}
 						
@@ -854,7 +854,7 @@ public class Satellite extends SuperAgent {
 						}
 						res.put("Battery",bat);
 						send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);	
-					}catch(RuntimeException e){
+					}catch(JSONException e){
 						throw new RuntimeException("Fallo en la obtencion respuesta mensaje");
 					}
 					
@@ -866,9 +866,12 @@ public class Satellite extends SuperAgent {
 					
 					
 			}
-		}catch(RuntimeException e){
+		
+		} catch (RuntimeException e) {
+			// TODO Auto-generated catch block
+			sendError(new FIPAException("Error"),msg);
 			e.printStackTrace();
-		}
+		}	
 		
 	}
 	

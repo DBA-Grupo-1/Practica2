@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -266,6 +267,73 @@ public class Charger extends SuperAgent {
 			}//FIN IF
 			
 		}//FIN WHILE
+	}
+	
+	/**
+	 * author Ismael
+	 * Solicita al satelite el mapa original
+	 * @return matriz con el mapa original
+	 */
+	protected int[][] askForMap(){
+		JSONObject ask = new JSONObject();
+		ACLMessage msg= new ACLMessage();
+		JSONObject content;
+		int H,W,matriz[][] = null;
+		
+		try{
+			ask.put("Subject", "MapOriginal");
+			
+			send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
+		} catch (JSONException e){
+			e.printStackTrace();
+		}
+		try {
+			msg = answerQueue.take();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+			throw new RuntimeException();
+		}
+		
+		switch(msg.getPerformativeInt()){
+		
+		case ACLMessage.NOT_UNDERSTOOD:
+			
+				throw new RuntimeException("Fallo: no entendimiento de mensaje");
+			
+			
+		case ACLMessage.REFUSE:
+			try {
+				content = new JSONObject(msg.getContent());
+				if(! (content.get("reason").equals("FailureCommunication") || content.get("reason").equals("EmptyContent")
+						|| content.get("reason").equals("BadlyStructuredContent")) || content.get("reason").equals("FailureAccess") || content.get("reason").equals("SenderDrone") )
+					throw new RuntimeException("Fallo en la respuesta del satelite");
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		
+		case ACLMessage.INFORM:
+			try{
+				content = new JSONObject(msg.getContent());
+				H= content.getInt("Height");
+				W= content.getInt("Weight");
+				matriz = new int[H][W];
+				JSONArray data = (JSONArray) content.get("Values");
+			
+				for(int i=0,z=0;i<H;i++)
+					for(int j=0;j<W;j++,z++)
+						matriz[i][j] = data.getInt(z);
+				
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			break;
+		default: 
+			throw new RuntimeException("Fallo en cojer respuesta del satelite");
+		}
+		
+		return matriz;
 	}
 	
 	/**

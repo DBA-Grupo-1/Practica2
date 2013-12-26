@@ -461,105 +461,301 @@ public class Drone extends SuperAgent {
 	}
 	
 	//TODO estabecer donde y como usar estas funciones y en donde recoger las respuestas.
-	/**
-	 * Pide mapa original
-	 * @author Ismael
-	 */
-	protected void askForMapOne(){
-		JSONObject ask = new JSONObject();
-		try{
-			ask.put("Subject", "MapOriginal");
-			
-			send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
-		} catch (JSONException e){
-			e.printStackTrace();
-		}
-	}
+	
 	/**
 	 * Pide mapa común.
 	 * @author Ismael.
 	 * 
 	 */
-	protected void askForMapTwo(){
+	protected int[][] askForMap(){
 		JSONObject ask = new JSONObject();
+		ACLMessage msg= new ACLMessage();
+		JSONObject content;
+		int H,W,matriz[][] = null;
+		
 		try{
 			ask.put("Subject", "MapSeguimiento");
 			
-			send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
+			send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
 		} catch (JSONException e){
 			e.printStackTrace();
 		}
+		try {
+			msg = answerQueue.take();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+			throw new RuntimeException();
+		}
+		
+		switch(msg.getPerformativeInt()){
+		
+		case ACLMessage.NOT_UNDERSTOOD:
+			
+				throw new RuntimeException("Fallo: no entendimiento de mensaje");
+			
+			
+		case ACLMessage.REFUSE:
+			try {
+				content = new JSONObject(msg.getContent());
+				if(! (content.get("reason").equals("FailureCommunication") || content.get("reason").equals("EmptyContent")
+						|| content.get("reason").equals("BadlyStructuredContent")) || content.get("reason").equals("FailureAccess") || content.get("reason").equals("SenderDrone") )
+					throw new RuntimeException("Fallo en la respuesta del satelite");
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		
+		case ACLMessage.INFORM:
+			try{
+				content = new JSONObject(msg.getContent());
+				H= content.getInt("Height");
+				W= content.getInt("Weight");
+				matriz = new int[H][W];
+				JSONArray data = (JSONArray) content.get("Values");
+			
+				for(int i=0,z=0;i<H;i++)
+					for(int j=0;j<W;j++,z++)
+						matriz[i][j] = data.getInt(z);
+				
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			break;
+		default: 
+			throw new RuntimeException("Fallo en cojer respuesta del satelite");
+		}
+		
+		return matriz;
 	}
 	/**
 	 * Pide el nombre ID de un nombre.
 	 * @author Ismael
 	 * @param name
 	 */
-	protected void askForID(String name){
+	protected AgentID askForID(String name){
 		ACLMessage msg = new ACLMessage();
 		JSONObject ask = new JSONObject();
+		JSONObject content= null;
+		AgentID id=null;
 		try{
 			ask.put("Subject", "AgentID");
 			ask.put("Name", name);
-			send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
+			send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
 		} catch (JSONException e){
 			e.printStackTrace();
 		}
-		/**
-		 * No se si recoger el mensaje aquí o se debe hacer en el dispatcher por eso el resto de métodos no tienen esa parte.
+		
 		try {
 			msg = answerQueue.take();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
-			throw new RuntimeException("Fallo en la respuesta de subscripcion: error al cojer la respuesta");
+			throw new RuntimeException();
 		}
-		content = msg.getContent();
-		**/
+		
+		switch(msg.getPerformativeInt()){
+		
+		case ACLMessage.NOT_UNDERSTOOD:
+			
+				throw new RuntimeException("Fallo: no entendimiento de mensaje");
+			
+			
+		case ACLMessage.REFUSE:
+			try {
+				content = new JSONObject(msg.getContent());
+				if(! (content.get("reason").equals("FailureCommunication") || content.get("reason").equals("EmptyContent")
+						|| content.get("reason").equals("BadlyStructuredContent")) || content.get("reason").equals("FailureAgentID") )
+					throw new RuntimeException("Fallo en la respuesta del satelite");
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		
+		case ACLMessage.INFORM:
+			try{
+				content = new JSONObject(msg.getContent());
+				id = (AgentID) content.get("ID");
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			break;
+		default: 
+			throw new RuntimeException("Fallo en cojer respuesta del satelite");
+		}
+		return id;
 	}
 	/**
 	 * Pide distancia de un drone especifico
 	 * @author Ismael
 	 * @param ID
 	 */
-	protected void askForGoal(AgentID id){
+	protected double askForGoal(AgentID id){
 		JSONObject ask = new JSONObject();
+		ACLMessage msg = new ACLMessage();
+		JSONObject content;
+		double goal=0;
 		try{
 			ask.put("Subject", "GoalDistance");
 			ask.put("ID", id);
-			send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
+			send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
 		} catch (JSONException e){
 			e.printStackTrace();
 		}
+		try {
+			msg = answerQueue.take();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+			throw new RuntimeException();
+		}
+		
+		switch(msg.getPerformativeInt()){
+		
+		case ACLMessage.NOT_UNDERSTOOD:
+			
+				throw new RuntimeException("Fallo: no entendimiento de mensaje");
+			
+			
+		case ACLMessage.REFUSE:
+			try {
+				content = new JSONObject(msg.getContent());
+				if(! (content.get("reason").equals("FailureCommunication") || content.get("reason").equals("EmptyContent")
+						|| content.get("reason").equals("BadlyStructuredContent")) || content.get("reason").equals("FailureAgentID") ||content.get("reason").equals("FailureAccessDistance") )
+					throw new RuntimeException("Fallo en la respuesta del satelite");
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		
+		case ACLMessage.INFORM:
+			try{
+				content = new JSONObject(msg.getContent());
+				goal = content.getDouble("GoalDistance");
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			break;
+		default: 
+			throw new RuntimeException("Fallo en cojer respuesta del satelite");
+		}
+		return goal;
 	}
 	
 	/**
 	 * Pide posicion 
 	 * @author Ismael
 	 */
-	protected void askPosition(){
+	protected int[] askPosition(){
 		JSONObject ask = new JSONObject();
+		int pos[] = new int[2];
+		JSONObject content;
+		ACLMessage msg = new ACLMessage();
 		try{
 			ask.put("Subject", "Position");
-			send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
+			send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
 		} catch (JSONException e){
 			e.printStackTrace();
 		}
+		try {
+			msg = answerQueue.take();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+			throw new RuntimeException();
+		}
+		
+		switch(msg.getPerformativeInt()){
+		
+		case ACLMessage.NOT_UNDERSTOOD:
+			
+				throw new RuntimeException("Fallo: no entendimiento de mensaje");
+			
+			
+		case ACLMessage.REFUSE:
+			try {
+				content = new JSONObject(msg.getContent());
+				if(! (content.get("reason").equals("FailureCommunication") || content.get("reason").equals("EmptyContent")
+						|| content.get("reason").equals("BadlyStructuredContent")) || content.get("reason").equals("FailureAgentID") ||content.get("reason").equals("FailureAccessPossition") )
+					throw new RuntimeException("Fallo en la respuesta del satelite");
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		
+		case ACLMessage.INFORM:
+			try{
+				content = new JSONObject(msg.getContent());
+				JSONObject aux = new JSONObject();
+				aux = content.getJSONObject("Position");
+				pos[0]= aux.getInt("x");
+				pos[1]= aux.getInt("y");
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			break;
+		default: 
+			throw new RuntimeException("Fallo en cojer respuesta del satelite");
+		}
+		
+		return pos;
 	}
 	/**
 	 * Pide batería al satelite de un drone ID
 	 * @author Ismael
 	 * @param identidad agente.
 	 */
-	protected void askForMyBatterySatellite(AgentID id){
+	protected int askForMyBatterySatellite(AgentID id){
 		JSONObject ask = new JSONObject();
+		JSONObject content;
+		ACLMessage msg = new ACLMessage();
+		int bat=0;
 		try{
 			ask.put("Subject", "DroneBattery");
 			ask.put("AgentID", id);
 			//Envio mensaje
-			send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
+			send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
 		} catch (JSONException e){
 			e.printStackTrace();
 		}
+		try {
+			msg = answerQueue.take();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+			throw new RuntimeException();
+		}
+		
+		switch(msg.getPerformativeInt()){
+		
+		case ACLMessage.NOT_UNDERSTOOD:
+			
+				throw new RuntimeException("Fallo: no entendimiento de mensaje");
+			
+			
+		case ACLMessage.REFUSE:
+			try {
+				content = new JSONObject(msg.getContent());
+				if(! (content.get("reason").equals("FailureCommunication") || content.get("reason").equals("EmptyContent")
+						|| content.get("reason").equals("BadlyStructuredContent")) || content.get("reason").equals("FailureAgentID") ||content.get("reason").equals("FailureLevelBatteryDrone") )
+					throw new RuntimeException("Fallo en la respuesta del satelite");
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		
+		case ACLMessage.INFORM:
+			try{
+				content = new JSONObject(msg.getContent());
+				bat = content.getInt("Battery");
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			break;
+		default: 
+			throw new RuntimeException("Fallo en cojer respuesta del satelite");
+		}
+		return bat;
 	}
 	/**
 	 * Pide batería al cargador.
