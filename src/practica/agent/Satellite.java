@@ -429,8 +429,7 @@ public class Satellite extends SuperAgent {
 		return mapSeguimiento;
 	}
 	
-	//TODO Implementation
-	//Esto es un placeholder y el código siguiente deberá de ser borrado/comentado por quien implemente el protocolo de comunicación inicial
+	
 	public void onRegister (ACLMessage msg){
 		try{
 			System.out.println("REcibido registro de: " + msg.getSender().toString());
@@ -452,6 +451,7 @@ public class Satellite extends SuperAgent {
 					idsList.remove(receiver);
 					JSONObject content = new JSONObject();
 					content.put("ids", idsList);
+					content.put("Subject", SubjectLibrary.Register);
 					send(ACLMessage.INFORM, drones[i], "Register", null, msg.getReplyWith(), msg.getConversationId(), content);
 				}
 			}
@@ -589,9 +589,10 @@ public class Satellite extends SuperAgent {
 			if(subscriptions.containsKey(content.get("Subject"))){
 				if(subscriptions.get(content.get("Subject")).containsKey(msg.getSender().toString())){
 					throw new RefuseException(ErrorLibrary.AlreadySubscribed);
-				}else if(drones.length != 6){
+				}else if(drones.length != 6){//FIXME deberia ser maxDrones para que no de fallos cuando no se esta ejecutando con 6
 					throw new RefuseException(ErrorLibrary.MissingAgents);
 				}else{
+					//FIXME WTF???????
 					subscriptions.get(content.get("Subject")).put(msg.getSender().toString(), msg.getConversationId());
 					send(ACLMessage.ACCEPT_PROPOSAL, msg.getSender(), "Subcribe", null, "confirmation", msg.getConversationId(), content);	
 				}

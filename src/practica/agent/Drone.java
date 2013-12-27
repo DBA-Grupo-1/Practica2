@@ -232,6 +232,9 @@ public class Drone extends SuperAgent {
 	
 		register();
 		
+		System.out.println(this.getAid().toString() + ": registro completado.");
+		System.out.println(this.getAid().toString() + ": comenzando suscripcion.");
+
 		subscribe();
 		
 		int decision;
@@ -699,6 +702,7 @@ public class Drone extends SuperAgent {
 	
 	
 	
+	
 	/************************************************************************************************************************************
 	 ******** Recepcion de mensajes *****************************************************************************************************
 	 ************************************************************************************************************************************/
@@ -1135,7 +1139,7 @@ public class Drone extends SuperAgent {
 	protected int onStepsQueried(ACLMessage msg) throws FIPAException{
 		basicErrorsComprobation(msg, ACLMessage.QUERY_REF);
 		
-		return trace.size(); //TODO: a la espera de la clase traza
+		return 0;//trace.size(); //TODO: a la espera de la clase traza
 	}
 
 	/**
@@ -1288,7 +1292,7 @@ public class Drone extends SuperAgent {
 	 */
 	private JSONArray traceToJSONArray(Trace trc) {
 		// TODO: a la espera de la clase Trace
-		JSONArray trace = new JSONArray(trc.getTraceAsArray());
+		JSONArray trace = new JSONArray();//trc.getTraceAsArray());
 		return trace;
 	}
 	

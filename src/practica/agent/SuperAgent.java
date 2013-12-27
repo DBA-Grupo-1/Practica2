@@ -37,28 +37,23 @@ public class SuperAgent extends SingleAgent {
 		msg.setSender(this.getAid());
 		msg.addReceiver(id);
 		
-		if (replyWith.isEmpty() || replyWith == null) //Doble comprobación, nunca está de más.
-			msg.setReplyWith("");
-		else
-			msg.setProtocol(protocol);
-		msg.setInReplyTo(replyWith);
+		if(replyWith!=null && !replyWith.isEmpty())
+			msg.setReplyWith(replyWith);
 		
-		if (inReplyTo.isEmpty() || inReplyTo == null) //Doble comprobación, nunca está de más.
-			msg.setInReplyTo("");
-		else
-			msg.setProtocol(protocol);
-		msg.setInReplyTo(inReplyTo);
+		if(inReplyTo!=null && !inReplyTo.isEmpty())
+			msg.setInReplyTo(inReplyTo);
 		
-		if (conversationId.isEmpty() || conversationId == null) //Doble comprobación, nunca está de más.
-			msg.setConversationId("");
-		else
+		if(conversationId!=null && !conversationId.isEmpty())
+			msg.setConversationId(conversationId);
+		
+		if(protocol!=null && !protocol.isEmpty())
 			msg.setProtocol(protocol);
-		msg.setInReplyTo(conversationId);
 		
 		if (datas != null)
 			msg.setContent(datas.toString());
 		else
 			msg.setContent("");
+		
 		this.send(msg);
 	}	
 
@@ -74,6 +69,7 @@ public class SuperAgent extends SingleAgent {
 		
 		try {
 			content.put("error",fe.getMessage());
+			content.put("Subject", new JSONObject(msgOrig.getContent()).get("Subject"));
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
