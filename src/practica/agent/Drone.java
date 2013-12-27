@@ -809,6 +809,7 @@ public class Drone extends SuperAgent {
 	 */
 	private void subscribeDroneReachedGoal(){
 		JSONObject content = new JSONObject();
+		String combersationID;
 		
 		try {
 			content.put("Subject", SubjectLibrary.DroneReachedGoal);
@@ -817,10 +818,11 @@ public class Drone extends SuperAgent {
 			e.printStackTrace();
 		}
 		
-		idsCombersationSubscribe.put("DroneReachedGoal", this.getAid().toString()+"#"+conversationCounter);
+		combersationID = buildConversationId();
+		idsCombersationSubscribe.put("DroneReachedGoal", this.getAid().toString()+"#"+combersationID);
 		
 		send(ACLMessage.SUBSCRIBE, sateliteID, "Subscribe", "confirmation", null,
-				buildConversationId(), content);
+				combersationID, content);
 		
 		WaitResponseSubscriber();
 	}
@@ -833,6 +835,7 @@ public class Drone extends SuperAgent {
 	 */
 	private void subscribeDroneRecharged(){
 			JSONObject content = new JSONObject();
+			String combersationID;
 			
 			try {
 				content.put("Subject", SubjectLibrary.DroneRecharged);
@@ -841,10 +844,13 @@ public class Drone extends SuperAgent {
 				e.printStackTrace();
 			}
 			
-			idsCombersationSubscribe.put("DroneRecharged", this.getAid().toString()+"#"+conversationCounter);
+
+			combersationID = buildConversationId();
+			
+			idsCombersationSubscribe.put("DroneRecharged", this.getAid().toString()+"#"+combersationID);
 			
 			send(ACLMessage.SUBSCRIBE, chargerID, "Subscribe", "confirmation", null,
-					buildConversationId(), content);
+					combersationID, content);
 			
 			WaitResponseSubscriber();
 	}
@@ -858,6 +864,7 @@ public class Drone extends SuperAgent {
 	 */
 	private void subscribeYourMovements(AgentID id){
 		JSONObject content = new JSONObject();
+		String combersationID;
 		
 		try {
 			content.put("Subject", SubjectLibrary.YourMovements);
@@ -866,10 +873,11 @@ public class Drone extends SuperAgent {
 			e.printStackTrace();
 		}
 
+		combersationID = buildConversationId();
 		
-		idsCombersationSubscribe.put("YourMovements"+id.getLocalName(), this.getAid().toString()+"#"+conversationCounter);
+		idsCombersationSubscribe.put("YourMovements"+id.getLocalName(), this.getAid().toString()+"#"+combersationID);
 		send(ACLMessage.SUBSCRIBE, id, "Subscribe", "confirmation", null,
-					buildConversationId(), content);
+				combersationID, content);
 			
 		WaitResponseSubscriber();
 		
@@ -884,6 +892,7 @@ public class Drone extends SuperAgent {
 	 */
 	private void subscribeAllMovements(){
 		JSONObject content = new JSONObject();
+		String combersationID;
 		
 		try {
 			content.put("Subject", SubjectLibrary.AllMovements);
@@ -892,10 +901,12 @@ public class Drone extends SuperAgent {
 			e.printStackTrace();
 		}
 		
-		idsCombersationSubscribe.put("AllMovements", this.getAid().toString()+"#"+conversationCounter);
+		combersationID = buildConversationId();
+		
+		idsCombersationSubscribe.put("AllMovements", this.getAid().toString()+"#"+combersationID);
 		
 		send(ACLMessage.SUBSCRIBE, sateliteID, "Subscribe", "confirmation", null,
-				buildConversationId(), content);
+				combersationID, content);
 		
 		WaitResponseSubscriber();
 	}
@@ -908,6 +919,7 @@ public class Drone extends SuperAgent {
 	 */
 	private void subscribeConflictiveSections(){
 		JSONObject content = new JSONObject();
+		String combersationID;
 		
 		try {
 			content.put("Subject", SubjectLibrary.ConflictiveSections);
@@ -916,10 +928,12 @@ public class Drone extends SuperAgent {
 			e.printStackTrace();
 		}
 		
-		idsCombersationSubscribe.put("ConflictiveSections", this.getAid().toString()+"#"+conversationCounter);
+		combersationID = buildConversationId();
+		
+		idsCombersationSubscribe.put("ConflictiveSections", this.getAid().toString()+"#"+combersationID);
 		
 		send(ACLMessage.SUBSCRIBE, sateliteID, "Subscribe", "confirmation", null,
-				buildConversationId(), content);
+				combersationID, content);
 		
 		WaitResponseSubscriber();
 		

@@ -283,7 +283,7 @@ public class Charger extends SuperAgent {
 		try{
 			ask.put("Subject", "MapOriginal");
 			
-			send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
+			send(ACLMessage.QUERY_REF, IDSatellite, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
 		} catch (JSONException e){
 			e.printStackTrace();
 		}
