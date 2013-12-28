@@ -457,11 +457,14 @@ public class Satellite extends SuperAgent {
 			}
 		}catch(Exception e){
 			e.printStackTrace();
-			ACLMessage error = new RefuseException("Error en el registro").getACLMessage();
+			RefuseException error = new RefuseException(ErrorLibrary.FailureCommunication);
+			ACLMessage errorMsg = error.getACLMessage();
 			for(int i=0; i<connectedDrones; i++)
-				error.addReceiver(drones[i]);
-			this.send(error);
-			throw new RuntimeException("Error en el registro (Satelite)");
+				if(!drones[i].toString().equals(msg.getSender().toString()))
+					errorMsg.addReceiver(drones[i]);
+			
+			this.sendError(error, msg);
+			throw new RuntimeException(ErrorLibrary.FailureCommunication + " (Satelite)");
 		}
 	}
 	
