@@ -7,10 +7,16 @@ import practica.util.GPSLocation;
  * unas coordenadas.
  * 
  * @author jonay
+ * @author Daniel
  */
 public class Choice {
 	private int move;
 	private GPSLocation location;
+    private static final int NORTE = 3;
+    private static final int OESTE = 2;
+    private static final int SUR = 1;
+    private static final int ESTE = 0;
+	
 	
 	/**
 	 * Constructor de Choice que recibe dos parámetros
@@ -62,5 +68,24 @@ public class Choice {
 	 */
 	public void setLocation(GPSLocation location){
 		this.location = location;
+	}
+	
+	/**
+	 * Convierte la decisión en un String
+	 * @author Daniel
+	 */
+	public String toString (){
+		switch (move) {
+		case NORTE:
+			return "N";
+		case SUR:
+			return "S";
+		case ESTE:
+			return "E";
+		case OESTE:
+			return "O";
+		default:
+			throw new RuntimeException("Encontrade decisión no válida");
+		}
 	}
 }
