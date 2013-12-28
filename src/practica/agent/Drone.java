@@ -1519,11 +1519,11 @@ public class Drone extends SuperAgent {
 	/**
 	 * Convierte una traza en un JSONArray
 	 * @author Jonay
+	 * @author Daniel
 	 * @return el array JSONArray
 	 */
 	private JSONArray traceToJSONArray(Trace trc) {
-		// TODO: a la espera de la clase Trace
-		JSONArray trace = new JSONArray(trc.getTraceAsArray());
+		JSONArray trace = new JSONArray(trc);
 		return trace;
 	}
 	
