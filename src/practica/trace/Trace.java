@@ -31,6 +31,7 @@ public class Trace extends LinkedList<Choice>{
 	/**
 	 * 
 	 * Constructor por copia, crea una traza a partir de una subtraza.
+	 * @author Daniel
 	 * @param tr traza a copiar.
 	 * @param start posición inicial de la copia. 
 	 * @param end posición final de la copia.
@@ -47,6 +48,7 @@ public class Trace extends LinkedList<Choice>{
 	
 	/**
 	 * Devuelve la posición en el mapa que tenía un drone en un momento de la traza.
+	 * @author Daniel
 	 * @param i índice dentro de la traza de la posición.
 	 * @return posición en el mapa que tenía el drone.
 	 */	
@@ -54,7 +56,11 @@ public class Trace extends LinkedList<Choice>{
 		return get(i).getLocation();
 	}
 	
-	
+	/**
+	 * @author Daniel
+	 * @param mode modo en el que se imprimirá la traza.
+	 * @return cadena de caracteres con la traza.
+	 */
 	public String toString (int mode){
 		String resultado = "";
 		switch (mode){
