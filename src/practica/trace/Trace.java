@@ -15,6 +15,10 @@ import practica.util.GPSLocation;
 
 public class Trace extends LinkedList<Choice>{
 	
+	public static final int DECISION_ONLY = 0;
+	public static final int POSITION_ONLY = 1;
+	public static final int DECISION_AND_POSITION = 2;
+	
 	/**
 	 * Constructor vacío, crea una traza sin elementos.
 	 * @author Daniel
@@ -47,6 +51,10 @@ public class Trace extends LinkedList<Choice>{
 	 */	
 	public GPSLocation getLocation (int i){
 		return get(i).getLocation();
+	}
+	
+	public String toString (int mode){
+		return new String ("S");
 	}
 	
 	

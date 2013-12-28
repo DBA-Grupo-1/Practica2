@@ -29,6 +29,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.google.gson.Gson;
+
 /**
  * Funcionamiento del marco de trabajo drone.
  * 
@@ -1523,7 +1525,14 @@ public class Drone extends SuperAgent {
 	 * @return el array JSONArray
 	 */
 	private JSONArray traceToJSONArray(Trace trc) {
-		JSONArray trace = new JSONArray(trc);
+		Gson gson = new Gson();
+		JSONArray trace = new JSONArray();
+		try {
+			trace = new JSONArray(gson.toJson(trc));
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return trace;
 	}
 	
