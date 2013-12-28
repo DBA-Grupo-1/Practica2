@@ -4,6 +4,7 @@ package practica.lib;
  * Librería de Strings para los Errores de comunicación o rechazos.
  * 
  * @author Jonay
+ * @author Dani
  */
 public class ErrorLibrary {
 	public static final String FailureCommunication = "An error occurred during communication.";
@@ -22,4 +23,7 @@ public class ErrorLibrary {
 	public static final String IWontReachGoal = "Agent is not going to reach the goal.";
 	public static final String MissingAgents = "There are agents not connected to platform";
 	public static final String NotUnderstood = "The message has not been understood.";
+	
+	//Excepciones
+	public static final String TraceEndLowerThanStart = "\"End\" argument is lower than \"Start\" argument.";
 }
