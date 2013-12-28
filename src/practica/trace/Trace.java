@@ -1,6 +1,7 @@
 package practica.trace;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -43,8 +44,65 @@ public class Trace extends LinkedList<Choice>{
 			throw new IllegalArgumentException(ErrorLibrary.TraceEndLowerThanStart);
 		//Copio los elementos de la traza antigua.
 		for (int i = start; i <= end; i++)
-			push(tr.get(i));		
+			add(tr.get(i));		
 	}
+	
+	
+	/**
+	 * Extrae la subtraza desde una posición del GPS hasta el final de la misma.
+	 * @author Daniel
+	 * @param start posición del GPS inicial de la copia.
+	 * @return subtraza desde start hasta el final de la misma.
+	 * @throws IllegalArgumentException si no se encuentra start dentro de la traza.
+	 */
+	public Trace getSubtrace (GPSLocation start) throws IllegalArgumentException{
+		Trace tr;
+		//Busco la posición
+		int startLocation = -1;
+		for (int i = 0; i < size(); i++){
+			if (get(i).getLocation() == start)
+				startLocation = i;
+		}
+		
+		//Si la encuentro copio, si no lanzo excepción.
+		if (startLocation == -1)
+			throw new IllegalArgumentException(ErrorLibrary.TraceLocationNotFound);
+		else
+			tr = new Trace (this, startLocation, size() - 1);
+		return tr;
+	}
+	
+	/**
+	 * Extrae la subtraza entre dos posiciones del GPS.
+	 * @author Daniel
+	 * @param start posición del GPS inicial de la copia.
+	 * @param end posición del GPS final de la copia.
+	 * @return subtraza desde start hasta end.
+	 * @throws IllegalArgumentException si no se encuentra alguna de las dos posiciones o no siguen un orden correcto.
+	 */
+	public Trace getSubtrace (GPSLocation start, GPSLocation end) throws IllegalArgumentException{
+		Trace tr;
+		//Busco las posiciones
+		int startLocation = -2;
+		int endLocation = -1;
+		for (int i = 0; i < size(); i++){
+			if (get(i).getLocation() == start)
+				startLocation = i;
+			else if (get(i).getLocation() == end)
+				endLocation = i;
+		}
+		
+		//Si las posiciones se han encontrado y son correctas copio, si no lanzo excepción.
+		if (startLocation == -2 || endLocation == -1)
+			throw new IllegalArgumentException(ErrorLibrary.TraceLocationNotFound);
+		else if (startLocation >= endLocation)
+			throw new IllegalArgumentException(ErrorLibrary.TraceEndLowerThanStart);
+		else
+			tr = new Trace (this, startLocation, endLocation);
+		
+		return tr;			
+	}
+	
 	
 	/**
 	 * Devuelve la posición en el mapa que tenía un drone en un momento de la traza.
