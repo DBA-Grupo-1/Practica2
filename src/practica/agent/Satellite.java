@@ -459,7 +459,7 @@ public class Satellite extends SuperAgent {
 			e.printStackTrace();
 			RefuseException error = new RefuseException(ErrorLibrary.FailureCommunication);
 			ACLMessage errorMsg = error.getACLMessage();
-			for(int i=0; i<connectedDrones-1; i++)
+			for(int i=0; i<connectedDrones; i++)
 				if(!drones[i].toString().equals(msg.getSender().toString()))
 					errorMsg.addReceiver(drones[i]);
 			
