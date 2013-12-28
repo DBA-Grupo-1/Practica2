@@ -16,8 +16,9 @@ import practica.util.GPSLocation;
 public class Trace extends LinkedList<Choice>{
 	
 	public static final int DECISION_ONLY = 0;
-	public static final int POSITION_ONLY = 1;
-	public static final int DECISION_AND_POSITION = 2;
+	public static final int DECISION_ONLY_READABLE = 1;
+	public static final int POSITION_ONLY = 2;
+	public static final int DECISION_AND_POSITION = 3;
 	
 	/**
 	 * Constructor vacío, crea una traza sin elementos.
@@ -53,8 +54,43 @@ public class Trace extends LinkedList<Choice>{
 		return get(i).getLocation();
 	}
 	
+	
 	public String toString (int mode){
-		return new String ("S");
+		String resultado = "";
+		switch (mode){
+			case DECISION_ONLY:
+				for (int i = 0; i < size(); i++){
+					resultado += get(i).toString();
+				}
+				break;
+		
+			case DECISION_ONLY_READABLE:
+				for (int i = 0; i < size(); i++){
+					resultado += get(i).toString();
+					if (i != size() - 1)
+						resultado += ", ";
+				}
+				break;
+				
+			case POSITION_ONLY:
+				for (int i = 0; i < size(); i++){
+					resultado += ("{" + get(i).getLocation().getPositionX() + ", " + get(i).getLocation().getPositionY() + "}");
+					if (i != size() - 1)
+						resultado += ", ";
+				}
+				break;
+				
+			case DECISION_AND_POSITION: 
+				for (int i = 0; i < size(); i++){
+					resultado += ("{" + get(i).getLocation().getPositionX() + ", " + get(i).getLocation().getPositionY() + "}");
+					resultado += (" - " + get(i).toString());
+					if (i != size() - 1)
+						resultado += ", ";
+				}
+				break;
+			default: throw new IllegalArgumentException(ErrorLibrary.TraceNotAValidMode);
+		}
+		return resultado;
 	}
 	
 	

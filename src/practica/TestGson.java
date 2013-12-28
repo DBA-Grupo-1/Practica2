@@ -37,9 +37,7 @@ public class TestGson {
 			Trace t2 = gson.fromJson(ja.toString(), Trace.class); //Crar traza a partir de Json (deserializar)
 			//Sacar todo por pantalla para comprobar que todo ha ido bien.
 			System.out.println(t2.size());
-			System.out.println(t2.get(0).getLocation().getPositionX());
-			System.out.println(t2.get(1).getLocation().getPositionX());
-			System.out.println(t2.get(2).getLocation().getPositionX());
+			System.out.println(t2.toString(Trace.POSITION_ONLY));
 		} catch (JSONException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

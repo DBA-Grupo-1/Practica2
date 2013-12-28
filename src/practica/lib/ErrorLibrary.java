@@ -26,4 +26,5 @@ public class ErrorLibrary {
 	
 	//Excepciones
 	public static final String TraceEndLowerThanStart = "\"End\" argument is lower than \"Start\" argument.";
+	public static final String TraceNotAValidMode = "You entered an unvalid mode.";
 }
