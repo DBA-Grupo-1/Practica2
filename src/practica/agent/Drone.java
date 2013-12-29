@@ -239,17 +239,20 @@ public class Drone extends SuperAgent {
             int decision;
             
             do{
-                    getStatus();
+                    //getStatus();
                     
-                    decision = think();
+                    //decision = think();
+            		//sendInformYourMovement(posX, posY, decision);
+                    /*
                     System.out.println(""+decision);
                     //Por si las moscas
                     if(decision != NO_DEC){
                             sendDecision(decision);
                             updateTrace(decision);
                             postUpdateTrace();
-                    }
-            }while(decision != END_FAIL && decision != END_SUCCESS);
+                    }*/
+            //}while(decision != END_FAIL && decision != END_SUCCESS);
+            }while(true);
     }
     /**
      * Metodo llamado tras la actualizacion de la traza. Ideal para comprobaciones de la traza y del rendimiento del drone.
@@ -727,12 +730,12 @@ public class Drone extends SuperAgent {
             BlockingQueue<ACLMessage> queue = null;
             
             switch(subject){
-            case SubjectLibrary.Status:
-            case SubjectLibrary.IMoved:
+            //case SubjectLibrary.Status:
+            //case SubjectLibrary.IMoved:
             case SubjectLibrary.Register:
                     queue = answerQueue;
                     break;
-            case SubjectLibrary.BatteryLeft:
+            /*case SubjectLibrary.BatteryLeft:
             case SubjectLibrary.Trace:
             case SubjectLibrary.Steps:
                     if(msg.getPerformativeInt() == ACLMessage.QUERY_REF){
@@ -741,6 +744,7 @@ public class Drone extends SuperAgent {
                             queue = answerQueue;
                     }
                     break;
+                    */
             case SubjectLibrary.YourMovements:
             case SubjectLibrary.DroneRecharged:
             case SubjectLibrary.DroneReachedGoal:
@@ -755,6 +759,7 @@ public class Drone extends SuperAgent {
                     
                     break;        
             default:
+            		System.out.println("Drone: "+subject);
                     sendError(new NotUnderstoodException("Subject no encontrado"), msg);
                     break;
             }
@@ -1140,7 +1145,6 @@ public class Drone extends SuperAgent {
      * subscritos a él que se ha movido.
      * 
      * @author Alberto
-     * @author Jahiel
      */
     protected void getStatus() {
             ACLMessage msg=null;
@@ -1164,25 +1168,6 @@ public class Drone extends SuperAgent {
             }
             
             updateStatus(msg);
-            
-            JSONObject content = new JSONObject();
-            
-            try {
-                    content.put("Subject", SubjectLibrary.YourMovements);
-                    int[] previousPosition = {X, Y};
-                    content.put("PreviousPosition", new JSONArray(previousPosition));
-                    int[] position = {posX, posY};
-                    content.put("CurrentPosition", new JSONArray(position));
-            } catch (JSONException e) {
-                    // nunca sucede porque las claves no son vacias
-                    e.printStackTrace();
-            }
-            
-            for(String name: subscribers.keySet()){
-    
-                    send(ACLMessage.INFORM, new AgentID(name), "Subscribe", null, null,
-                                    this.subscribers.get(name), content);                         // Con el nombre del agente sacamos la ID-combersation
-            }
             
             
     }
@@ -1385,13 +1370,13 @@ public class Drone extends SuperAgent {
     protected void subscribe() {
             
             subscribeDroneReachedGoal();
-            subscribeDroneRecharged();
-            subscribeAllMovements();
-            subscribeConflictiveSections();
-            
+            //subscribeDroneRecharged();
+            //subscribeAllMovements();
+            //subscribeConflictiveSections();
+            /*
             for(int i=0; i<teammates.length; i++)
                     subscribeYourMovements(teammates[i]);
-            
+            */
     }
     
     /**
@@ -1414,9 +1399,9 @@ public class Drone extends SuperAgent {
             }
             
             combersationID = buildConversationId();
-            idsCombersationSubscribe.put("DroneReachedGoal", this.getAid().toString()+"#"+combersationID);
+            idsCombersationSubscribe.put(SubjectLibrary.DroneReachedGoal, this.getAid().toString()+"#"+combersationID);
             
-            send(ACLMessage.SUBSCRIBE, sateliteID, "Subscribe", "confirmation", null,
+            send(ACLMessage.SUBSCRIBE, sateliteID, ProtocolLibrary.Subscribe, "confirmation", null,
                             combersationID, content);
             
             WaitResponseSubscriber();
@@ -1444,9 +1429,9 @@ public class Drone extends SuperAgent {
 
                     combersationID = buildConversationId();
                     
-                    idsCombersationSubscribe.put("DroneRecharged", this.getAid().toString()+"#"+combersationID);
+                    idsCombersationSubscribe.put(SubjectLibrary.DroneRecharged, this.getAid().toString()+"#"+combersationID);
                     
-                    send(ACLMessage.SUBSCRIBE, chargerID, "Subscribe", "confirmation", null,
+                    send(ACLMessage.SUBSCRIBE, chargerID, ProtocolLibrary.Subscribe, "confirmation", null,
                                     combersationID, content);
                     
                     WaitResponseSubscriber();
@@ -1474,8 +1459,8 @@ public class Drone extends SuperAgent {
 
             combersationID = buildConversationId();
             
-            idsCombersationSubscribe.put("YourMovements"+id.getLocalName(), this.getAid().toString()+"#"+combersationID);
-            send(ACLMessage.SUBSCRIBE, id, "Subscribe", "confirmation", null,
+            idsCombersationSubscribe.put(SubjectLibrary.YourMovements+id.getLocalName(), this.getAid().toString()+"#"+combersationID);
+            send(ACLMessage.SUBSCRIBE, id, ProtocolLibrary.Subscribe, "confirmation", null,
                             combersationID, content);
                     
             WaitResponseSubscriber();
@@ -1504,9 +1489,9 @@ public class Drone extends SuperAgent {
             
             combersationID = buildConversationId();
             
-            idsCombersationSubscribe.put("AllMovements", this.getAid().toString()+"#"+combersationID);
+            idsCombersationSubscribe.put(SubjectLibrary.AllMovements, this.getAid().toString()+"#"+combersationID);
             
-            send(ACLMessage.SUBSCRIBE, sateliteID, "Subscribe", "confirmation", null,
+            send(ACLMessage.SUBSCRIBE, sateliteID, ProtocolLibrary.Subscribe, "confirmation", null,
                             combersationID, content);
             
             WaitResponseSubscriber();
@@ -1533,9 +1518,9 @@ public class Drone extends SuperAgent {
             
             combersationID = buildConversationId();
             
-            idsCombersationSubscribe.put("ConflictiveSections", this.getAid().toString()+"#"+combersationID);
+            idsCombersationSubscribe.put(SubjectLibrary.ConflictiveSections, this.getAid().toString()+"#"+combersationID);
             
-            send(ACLMessage.SUBSCRIBE, sateliteID, "Subscribe", "confirmation", null,
+            send(ACLMessage.SUBSCRIBE, sateliteID, ProtocolLibrary.Subscribe, "confirmation", null,
                             combersationID, content);
             
             WaitResponseSubscriber();
@@ -1557,7 +1542,6 @@ public class Drone extends SuperAgent {
                     throw new RuntimeException("Fallo en la respuesta de subscripcion: error al cojer la respuesta");
             }
             
-            System.out.println("Drone: respuesta ");
             switch(msg.getPerformativeInt()){
             case ACLMessage.ACCEPT_PROPOSAL:
                     break;
@@ -1617,7 +1601,7 @@ public class Drone extends SuperAgent {
                     throw new RuntimeException("Fallo en la cancelación: el nombre de la subscripción no existe");
             }
             
-            send(ACLMessage.CANCEL, destino, "Subscribe", null, null,
+            send(ACLMessage.CANCEL, destino, ProtocolLibrary.Subscribe, null, null,
                             this.idsCombersationSubscribe.get(name), content);
     }
     
@@ -1630,20 +1614,52 @@ public class Drone extends SuperAgent {
      * @param msg Mesaje de subscripción recibido
      */
     public void newSubscription(ACLMessage msg)throws RefuseException{
-            JSONObject content = new JSONObject();
+            JSONObject content = null;
+			try {
+				content = new JSONObject(msg.getContent());
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
     
-            System.out.println("ENTRA: Recibidad NUEVA SUBSCR DRONE");
+            System.out.println("ENTRA: Recibidad NUEVA SUBSCR DRONE "+msg.getSender().toString());
             
-            if(subscribers.containsKey(msg.getSender().toString()))
+            if(subscribers.containsKey(msg.getSender().toString())){
+                System.out.println("REFUSE 1  !!!!!!");
+
                     throw new RefuseException(ErrorLibrary.AlreadySubscribed);
-            else if(teammates.length != 2)      // Esta comprobación pienso que tambien hay que hacerla al mandar la petición.
+            }else{ /*if(teammates.length != 2){      // Esta comprobación pienso que tambien hay que hacerla al mandar la petición.
+            	System.out.println("REFUSE 2  !!!!!!");
+            	
                     throw new RefuseException(ErrorLibrary.MissingAgents);
-            else{
+            }else{*/
                     subscribers.put(msg.getSender().toString(), msg.getConversationId().toString());
-                    send(ACLMessage.ACCEPT_PROPOSAL, msg.getSender(), "Subcribe", null, "confirmation", msg.getConversationId(), content);        
+                    send(ACLMessage.ACCEPT_PROPOSAL, msg.getSender(), ProtocolLibrary.Subscribe, null, "confirmation", msg.getConversationId(), content);        
             }
             
     }
+    
+    private void sendInformYourMovement(int X, int Y, int decision){
+        JSONObject content = new JSONObject();
+        
+        if(! subscribers.isEmpty()){
+            try {
+                content.put("Subject", SubjectLibrary.YourMovements);
+                int[] previousPosition = {X, Y};
+                content.put("PreviousPosition", new JSONArray(previousPosition));
+                content.put("Decision", decision);
+            } catch (JSONException e) {
+                // nunca sucede porque las claves no son vacias
+                e.printStackTrace();
+            }
+        
+            for(String name: subscribers.keySet()){
+
+                send(ACLMessage.INFORM, new AgentID(name), ProtocolLibrary.Subscribe, null, null,
+                                this.subscribers.get(name), content);                         // Con el nombre del agente sacamos la ID-combersation
+            }
+        }
+    }
+    
     /**
      * Metodo llamado por el dispatcher para tratar el informe de que el cargador le ha concedido bateria a otro drone.
      * @param msg Mensaje original
@@ -1652,6 +1668,7 @@ public class Drone extends SuperAgent {
      */
     protected void onDroneChargedInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException {
             // TODO Auto-generated method stub
+    	System.out.println("Informado de CHARGER");
             
     }
 
@@ -1663,18 +1680,22 @@ public class Drone extends SuperAgent {
      */
     protected void onDroneReachedGoalInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException {
             // TODO Auto-generated method stub
+    	System.out.println("Informado de REACHEDGOAL");
     }
     
     protected void onYourMovementsInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException{
             // TODO
+    	System.out.println("Informado de YOURMOVEMENTs");
     }
 
-    protected void onEveryOneMovementsInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException{
+    protected void onAllMovementsInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException{
             // TODO
+    	System.out.println("Informado de ALLMOVEMENT");
     }
     
     protected void onConflictiveSectionsInform(ACLMessage msg)throws IllegalArgumentException, RuntimeException, FIPAException{
             // TODO
+    	System.out.println("Informado de CONFLICTIVE");
     }
     
     
@@ -1806,7 +1827,7 @@ public class Drone extends SuperAgent {
                                     onYourMovementsInform(msg);
                             break;
                     case SubjectLibrary.AllMovements:
-                            onEveryOneMovementsInform(msg);
+                            onAllMovementsInform(msg);
                             break;
                     case SubjectLibrary.ConflictiveSections:
                             onConflictiveSectionsInform(msg);

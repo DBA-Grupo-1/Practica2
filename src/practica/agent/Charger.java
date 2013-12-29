@@ -138,7 +138,7 @@ public class Charger extends SuperAgent {
 			
 			if(msg != null){
 				switch (msg.getProtocol()){
-				
+				/*
 				case ProtocolLibrary.Reload:
 					try {
 						onReload(msg);
@@ -165,15 +165,17 @@ public class Charger extends SuperAgent {
 						e.printStackTrace();
 					}
 					break;
-				
+				*/
 				case ProtocolLibrary.Subscribe:
 					try{
 						onSubscription(msg);
+						System.out.println("Charger: manda informacion!!!!!");
+						sendInformSubscribeReached( msg.getSender(), 10); // Informa a los drones subscritos
 					}catch(FIPAException fe){
 						sendError(fe, msg);
 					}	
 					break;
-					
+				/*	
 				case ProtocolLibrary.Information:
 					try{
 					JSONObject content = new JSONObject(msg.getContent());
@@ -253,13 +255,13 @@ public class Charger extends SuperAgent {
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
-				
+				*/
 				default: 
 					JSONObject error = new JSONObject();
 					try {
 						error.put("error", "Error Id-mensaje desconocido");
 					} catch (JSONException e1) {
-						// ni caso esta excepcion jamas se lanzará
+						// ni caso esexeta excepcion jamas se lanzará
 					}
 					//send(ACLMessage.REFUSE, msg.getSender(), error, msg.getReplyWith());
 					break;
@@ -446,7 +448,7 @@ public class Charger extends SuperAgent {
 		JSONObject content = new JSONObject();
 		
 		try {
-			content.put("Subject", "DroneRecharger");
+			content.put("Subject", SubjectLibrary.DroneRecharged);
 			content.put("ID-Drone", droneRecharger.toString());
 			content.put("amount", levelRecharge);
 		} catch (JSONException e) {
@@ -455,7 +457,8 @@ public class Charger extends SuperAgent {
 		}
 		
 		for(String name: subscribers.keySet()){
-			send(ACLMessage.INFORM, new AgentID(name), "Subcribe", null, null, subscribers.get(name), content);
+			System.out.println("CHARGER: "+name);
+			send(ACLMessage.INFORM, new AgentID(name), ProtocolLibrary.Subscribe, null, null, subscribers.get(name), content);
 		}
 	}
 	

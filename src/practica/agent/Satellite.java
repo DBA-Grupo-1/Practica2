@@ -385,7 +385,8 @@ public class Satellite extends SuperAgent {
 					case ProtocolLibrary.Registration : onRegister(proccesingMessage); break;
 					case ProtocolLibrary.Information : onInformation (proccesingMessage); break;
 					case ProtocolLibrary.DroneMove : onDroneMoved(proccesingMessage); break;
-					case ProtocolLibrary.Subscribe : onSubscribe(proccesingMessage); break;
+					case ProtocolLibrary.Subscribe : onSubscribe(proccesingMessage); 
+					this.sendInformSubscribeAllMovement(proccesingMessage, new GPSLocation(), 0); break;
 					case ProtocolLibrary.Finalize : onFinalize(proccesingMessage); break;
 					case ProtocolLibrary.Reload : onReload(proccesingMessage); break;
 					default:
@@ -552,9 +553,14 @@ public class Satellite extends SuperAgent {
 			exit = evalueDecision(msg);
 			send(ACLMessage.INFORM, msg.getSender(), "IMoved", null, msg.getReplyWith(), msg.getConversationId(), null);				
 			
-			GPSLocation newPosition = droneStatus.getLocation();
+			JSONObject o;
+			try {
+				o = new JSONObject(msg.getContent());
+				sendInformSubscribeAllMovement(msg, currentPosition, o.getInt("decision"));
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
 			
-			sendInformSubscribeAllMovement(msg, currentPosition, newPosition);
 			
 			
 			/**
@@ -585,20 +591,18 @@ public class Satellite extends SuperAgent {
 		try {
 			content = new JSONObject(msg.getContent());
 		} catch (JSONException e1) {
-			throw new NotUnderstoodException("");
+			throw new NotUnderstoodException("Satellite: Error en el content del Subscribe");
 		}
 		
 		try {
 			if(subscriptions.containsKey(content.get("Subject"))){
 				if(subscriptions.get(content.get("Subject")).containsKey(msg.getSender().toString())){
 					throw new RefuseException(ErrorLibrary.AlreadySubscribed);
-				}else if(drones.length != this.maxDrones){//FIXME deberia ser maxDrones para que no de fallos cuando no se esta ejecutando con 6
+				}else if(drones.length != this.maxDrones){
 					throw new RefuseException(ErrorLibrary.MissingAgents);
 				}else{
-					//FIXME
-					System.out.println("Satelite: ACEPTA ");
 					subscriptions.get(content.get("Subject")).put(msg.getSender().toString(), msg.getConversationId());
-					send(ACLMessage.ACCEPT_PROPOSAL, msg.getSender(), "Subcribe", null, "confirmation", msg.getConversationId(), content);	
+					send(ACLMessage.ACCEPT_PROPOSAL, msg.getSender(), ProtocolLibrary.Subscribe, null, "confirmation", msg.getConversationId(), content);	
 				}
 			}
 		} catch (JSONException e1) {
@@ -617,26 +621,25 @@ public class Satellite extends SuperAgent {
 	 * @param newPosition  Posición actualizada con la decisción del drone.
 	 */
 	private void sendInformSubscribeAllMovement(ACLMessage msg, GPSLocation currentPosition,
-												  GPSLocation newPosition){
+												  int decision){
 		JSONObject contentSub = new JSONObject();
 		
 		try {
-			contentSub.put("Subject", "AllMovement");
+			contentSub.put("Subject", SubjectLibrary.AllMovements);
 			contentSub.put("ID-Drone", msg.getSender().toString());
 			int[] posPr = {currentPosition.getPositionX(), currentPosition.getPositionY()};
 			contentSub.put("PreviousPosition", new JSONArray(posPr));
-			int[] posNew = {newPosition.getPositionX(), newPosition.getPositionY()};
-			contentSub.put("CurrentPosition", new JSONArray(posNew));
 			JSONObject ob = new JSONObject(msg.getContent());
-			contentSub.put("Decision", ob.getInt("decision"));
+			contentSub.put("Decision", decision);
 			
 		} catch (JSONException e) {
 			// no sudece nunca
 			e.printStackTrace();
 		}
 		
-		for(String name: this.subscriptions.get("AllMovement").keySet()){
-			send(ACLMessage.INFORM, new AgentID(name), "Subcribe", null, null,  this.subscriptions.get("AllMovement").get(name), contentSub);
+		for(String name: this.subscriptions.get(SubjectLibrary.AllMovements).keySet()){
+			send(ACLMessage.INFORM, new AgentID(name), ProtocolLibrary.Subscribe, null, null,  this.subscriptions.get("AllMovement").get(name), contentSub);
+			System.out.println();
 		}
 	}
 	
@@ -650,7 +653,7 @@ public class Satellite extends SuperAgent {
 		JSONObject contentSub = new JSONObject();
 		
 		try {
-			contentSub.put("Subject", "DroneReachedGoal");
+			contentSub.put("Subject", SubjectLibrary.DroneReachedGoal);
 			contentSub.put("ID-Drone", msg.getSender().toString());
 			
 		} catch (JSONException e) {
@@ -658,8 +661,8 @@ public class Satellite extends SuperAgent {
 			e.printStackTrace();
 		}
 		
-		for(String name: this.subscriptions.get("DroneReachedGoal").keySet()){
-			send(ACLMessage.INFORM, new AgentID(name), "Subcribe", null, null,  this.subscriptions.get("DroneReachedGoal").get(name), contentSub);
+		for(String name: this.subscriptions.get(SubjectLibrary.DroneReachedGoal).keySet()){
+			send(ACLMessage.INFORM, new AgentID(name), ProtocolLibrary.Subscribe, null, null,  this.subscriptions.get("DroneReachedGoal").get(name), contentSub);
 		}
 		
 	}
