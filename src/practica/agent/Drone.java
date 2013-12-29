@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import practica.lib.ErrorLibrary;
+import practica.lib.JSONKeyLibrary;
 import practica.lib.ProtocolLibrary;
 import practica.lib.SubjectLibrary;
 import practica.map.Map;
@@ -23,6 +24,8 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.json.stream.JsonLocation;
 
 import org.jaxen.function.StartsWithFunction;
 import org.json.JSONArray;
@@ -1292,12 +1295,12 @@ public class Drone extends SuperAgent {
      * @param amount cantidad que se le pide al cargador.
      */
     protected void askForBattery (int amount){
-            if (battery > 0 && amount > 0 && amount <= 75){ //Comprobación extra
+            if (battery == 0 && amount > 0 && amount <= 75){ //Comprobación extra
                     JSONObject content = new JSONObject();
                     try {
                             //Construcción del JSON
-                            content.put("Subject", SubjectLibrary.BatteryRequest);
-                            content.put("RequestAmmount", amount);
+                            content.put(JSONKeyLibrary.Subject, SubjectLibrary.BatteryRequest);
+                            content.put(JSONKeyLibrary.RequestAmount, amount);
                             
                             //Envío del mensaje
                             send(ACLMessage.REQUEST, chargerID, ProtocolLibrary.Reload, "default", null, buildConversationId(), content);
@@ -1318,7 +1321,8 @@ public class Drone extends SuperAgent {
                     //Se ha producido una recarga
                     try {
                             JSONObject content = new JSONObject(msg.getContent());
-                            battery += content.getInt("AmountGiven");
+                            battery += content.getInt(JSONKeyLibrary.AmountGiven);
+                            System.out.println("Drone con ID = " + this.getAid() + " - Batería recibida, ahora tengo " + battery);
                             leaveStandBy();
                     } catch (JSONException e) {
                             System.out.println("Error JSON al recibir batería");

@@ -21,6 +21,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import practica.lib.ErrorLibrary;
+import practica.lib.JSONKeyLibrary;
 import practica.lib.ProtocolLibrary;
 import practica.lib.SubjectLibrary;
 import practica.map.Map;
@@ -677,10 +678,10 @@ public class Satellite extends SuperAgent {
 			try {
 				JSONObject content = new JSONObject(msg.getContent());
 				//Busco el status del drone
-				AgentID rechargedDrone = new AgentID (content.getString("DroneID"));
+				AgentID rechargedDrone = new AgentID (content.getString(JSONKeyLibrary.DroneID));
 				DroneStatus rechargedDroneStatus = findStatus(rechargedDrone);
 				//Lo actualizo
-				int rechargedAmmount = content.getInt("AmmountGiven");
+				int rechargedAmmount = content.getInt(JSONKeyLibrary.AmountGiven);
 				rechargedDroneStatus.setBattery(rechargedDroneStatus.getBattery() + rechargedAmmount);
 			} catch (JSONException e) {
 				System.out.println("onReload - Error en JSON");

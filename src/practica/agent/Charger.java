@@ -5,11 +5,14 @@ import java.util.HashMap;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedTransferQueue;
 
+import javax.json.stream.JsonLocation;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import practica.lib.ErrorLibrary;
+import practica.lib.JSONKeyLibrary;
 import practica.lib.ProtocolLibrary;
 import practica.lib.SubjectLibrary;
 import es.upv.dsic.gti_ia.architecture.FIPAException;
@@ -349,39 +352,28 @@ public class Charger extends SuperAgent {
 	private void onReload(ACLMessage msg) throws RefuseException, NotUnderstoodException, JSONException{
 		//Primera comprobación: performativa correcta.
 		if (msg.getPerformativeInt() == ACLMessage.REQUEST){
-			JSONObject content = new JSONObject(msg.getContent());
-			int requestedBattery = content.getInt("RequestAmmount");
-			int givenBattery;
+			JSONObject content = new JSONObject(msg.getContent());			
 			
 			//Segunda comprobación: content vacío
 			if (content.length() == 0)
 				throw new RefuseException(ErrorLibrary.EmptyContent);
 			//Tercera comprobación: content incorrecto
-			if (!content.has("Subject") || !content.has("RequestAmount"))
+			if (!content.has(JSONKeyLibrary.Subject) || !content.has(JSONKeyLibrary.RequestAmount))
 				throw new RefuseException(ErrorLibrary.BadlyStructuredContent);
 			
+			//Si el mensaje está bien estructurado extraigo la cantidad pedida.
+			int requestedBattery = content.getInt(JSONKeyLibrary.RequestAmount);
+			int givenBattery;
 			
 			//Cuarta comprobación : batería pedida fuera de los límites.
 			if (requestedBattery < 0 || requestedBattery > 75)
-				/*JSONObject reason = new JSONObject();
-				reason.put("Error", ErrorLibrary.UnespectedAmountReason);
-				send (ACLMessage.REFUSE, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), reason);
-				 */
 				throw new RefuseException(ErrorLibrary.UnespectedAmount);
 			
 			//Quinta comprobación : No le queda batería al cargador.
 			if (battery <= 0)
-				/*JSONObject reason = new JSONObject();
-				reason.put("Error", ErrorLibrary.NotBatteryAnymoreReason);
-				send (ACLMessage.REFUSE, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), reason);
-			*/
-				throw new RefuseException(ErrorLibrary.NotBatteryAnymore);
+				throw new RefuseException(ErrorLibrary.NotBatteryAnymore);			
 			
-
-			/**
-			 * @TODOauthor Dani
-			 * TODO heurística temporal, hay que implementar la que decidamos.
-			 */
+			//Si pasa todas las comprobaciones le manda la batería que le piden.
 			if (battery > requestedBattery)
 				givenBattery = requestedBattery;
 			else 
@@ -389,11 +381,12 @@ public class Charger extends SuperAgent {
 			battery -= givenBattery; 
 			
 			JSONObject sendContent = new JSONObject();
-			sendContent.put ("AmountGiven", givenBattery);
-			sendContent.put ("Subject", SubjectLibrary.BatteryRequest);
+			sendContent.put (JSONKeyLibrary.AmountGiven, givenBattery);
+			sendContent.put (JSONKeyLibrary.Subject, SubjectLibrary.BatteryRequest);
 			send (ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), sendContent);
+			
 			//Le mando la información al satélite
-			sendContent.put ("DroneID", msg.getSender().toString());
+			sendContent.put (JSONKeyLibrary.DroneID, msg.getSender().toString());
 			send (ACLMessage.INFORM, IDSatellite, msg.getProtocol(), null, null, buildConversationId(), sendContent);
 			
 			/**
