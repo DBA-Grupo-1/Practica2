@@ -385,8 +385,7 @@ public class Satellite extends SuperAgent {
 					case ProtocolLibrary.Registration : onRegister(proccesingMessage); break;
 					case ProtocolLibrary.Information : onInformation (proccesingMessage); break;
 					case ProtocolLibrary.DroneMove : onDroneMoved(proccesingMessage); break;
-					case ProtocolLibrary.Subscribe : onSubscribe(proccesingMessage); 
-					this.sendInformSubscribeAllMovement(proccesingMessage, new GPSLocation(), 0); break;
+					case ProtocolLibrary.Subscribe : onSubscribe(proccesingMessage);break;
 					case ProtocolLibrary.Finalize : onFinalize(proccesingMessage); break;
 					case ProtocolLibrary.Reload : onReload(proccesingMessage); break;
 					default:
@@ -562,7 +561,6 @@ public class Satellite extends SuperAgent {
 			}
 			
 			
-			
 			/**
 			 * @TODOauthor Dani
 			 * Cambiar esta línea por la gestión de la finalización
@@ -636,10 +634,10 @@ public class Satellite extends SuperAgent {
 			// no sudece nunca
 			e.printStackTrace();
 		}
-		
+
 		for(String name: this.subscriptions.get(SubjectLibrary.AllMovements).keySet()){
-			send(ACLMessage.INFORM, new AgentID(name), ProtocolLibrary.Subscribe, null, null,  this.subscriptions.get("AllMovement").get(name), contentSub);
-			System.out.println();
+			send(ACLMessage.INFORM, new AgentID(name), ProtocolLibrary.Subscribe, null, null,  this.subscriptions.get(SubjectLibrary.AllMovements).get(name), contentSub);
+			System.out.println("informado drone"+name);
 		}
 	}
 	
@@ -662,7 +660,8 @@ public class Satellite extends SuperAgent {
 		}
 		
 		for(String name: this.subscriptions.get(SubjectLibrary.DroneReachedGoal).keySet()){
-			send(ACLMessage.INFORM, new AgentID(name), ProtocolLibrary.Subscribe, null, null,  this.subscriptions.get("DroneReachedGoal").get(name), contentSub);
+			send(ACLMessage.INFORM, new AgentID(name), ProtocolLibrary.Subscribe, null, null, 
+					this.subscriptions.get(SubjectLibrary.DroneReachedGoal).get(name), contentSub);
 		}
 		
 	}

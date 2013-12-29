@@ -234,25 +234,25 @@ public class Drone extends SuperAgent {
     
             register();
             
-            subscribe();
+            //subscribe(); Se anula hasta que no se sepa donde se usará
             
             int decision;
             
             do{
-                    //getStatus();
+                    getStatus();
                     
-                    //decision = think();
-            		//sendInformYourMovement(posX, posY, decision);
-                    /*
+                    decision = think();
+            		//sendInformYourMovement(posX, posY, decision); // activar si hay Subs. tipo YourMovements
+                    
                     System.out.println(""+decision);
                     //Por si las moscas
                     if(decision != NO_DEC){
                             sendDecision(decision);
                             updateTrace(decision);
                             postUpdateTrace();
-                    }*/
-            //}while(decision != END_FAIL && decision != END_SUCCESS);
-            }while(true);
+                    }
+            }while(decision != END_FAIL && decision != END_SUCCESS);
+            
     }
     /**
      * Metodo llamado tras la actualizacion de la traza. Ideal para comprobaciones de la traza y del rendimiento del drone.
@@ -1368,12 +1368,12 @@ public class Drone extends SuperAgent {
      * @author Jahiel
      */
     protected void subscribe() {
-            
-            subscribeDroneReachedGoal();
-            //subscribeDroneRecharged();
-            //subscribeAllMovements();
-            //subscribeConflictiveSections();
             /*
+            subscribeDroneReachedGoal();
+            subscribeDroneRecharged();
+            subscribeAllMovements();
+            subscribeConflictiveSections();
+            
             for(int i=0; i<teammates.length; i++)
                     subscribeYourMovements(teammates[i]);
             */
@@ -1388,8 +1388,6 @@ public class Drone extends SuperAgent {
     private void subscribeDroneReachedGoal(){
             JSONObject content = new JSONObject();
             String combersationID;
-            
-            System.out.println("ENTRA: droneReachedGoal");
             
             try {
                     content.put("Subject", SubjectLibrary.DroneReachedGoal);
@@ -1416,8 +1414,6 @@ public class Drone extends SuperAgent {
     private void subscribeDroneRecharged(){
                     JSONObject content = new JSONObject();
                     String combersationID;
-            
-                    System.out.println("ENTRA: subscribeDroneRecharger");
                     
                     try {
                             content.put("Subject", SubjectLibrary.DroneRecharged);
@@ -1448,8 +1444,6 @@ public class Drone extends SuperAgent {
             JSONObject content = new JSONObject();
             String combersationID;
             
-            System.out.println("ENTRA: subscribeYourMovements");
-            
             try {
                     content.put("Subject", SubjectLibrary.YourMovements);
             } catch (JSONException e) {
@@ -1478,8 +1472,6 @@ public class Drone extends SuperAgent {
             JSONObject content = new JSONObject();
             String combersationID;
             
-            System.out.println("ENTRA: allmoevemnts");
-            
             try {
                     content.put("Subject", SubjectLibrary.AllMovements);
             } catch (JSONException e) {
@@ -1506,8 +1498,6 @@ public class Drone extends SuperAgent {
     private void subscribeConflictiveSections(){
             JSONObject content = new JSONObject();
             String combersationID;
-            
-            System.out.println("ENTRA: conflictiveSections");
             
             try {
                     content.put("Subject", SubjectLibrary.ConflictiveSections);
@@ -1621,12 +1611,8 @@ public class Drone extends SuperAgent {
 				e.printStackTrace();
 			}
     
-            System.out.println("ENTRA: Recibidad NUEVA SUBSCR DRONE "+msg.getSender().toString());
-            
             if(subscribers.containsKey(msg.getSender().toString())){
-                System.out.println("REFUSE 1  !!!!!!");
-
-                    throw new RefuseException(ErrorLibrary.AlreadySubscribed);
+                        throw new RefuseException(ErrorLibrary.AlreadySubscribed);
             }else{ /*if(teammates.length != 2){      // Esta comprobación pienso que tambien hay que hacerla al mandar la petición.
             	System.out.println("REFUSE 2  !!!!!!");
             	
@@ -1653,7 +1639,6 @@ public class Drone extends SuperAgent {
             }
         
             for(String name: subscribers.keySet()){
-
                 send(ACLMessage.INFORM, new AgentID(name), ProtocolLibrary.Subscribe, null, null,
                                 this.subscribers.get(name), content);                         // Con el nombre del agente sacamos la ID-combersation
             }
