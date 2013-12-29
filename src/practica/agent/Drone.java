@@ -742,21 +742,17 @@ public class Drone extends SuperAgent {
                     }
                     break;
             case SubjectLibrary.YourMovements:
-                    
-                    if(msg.getInReplyTo()!=null){
-                            if(msg.getInReplyTo().equals("Confirmation") && msg.getPerformativeInt() == ACLMessage.ACCEPT_PROPOSAL)
-                                    queue = answerQueue;
-                            else
-                                    sendError(new NotUnderstoodException("Campo Reply-with inválido"), msg);
-                    }else
-                            queue = requestQueue;
             case SubjectLibrary.DroneRecharged:
             case SubjectLibrary.DroneReachedGoal:
             case SubjectLibrary.AllMovements:
             case SubjectLibrary.ConflictiveSections:
             case SubjectLibrary.BatteryRequest:
-                    
+            
+            	if(msg.getPerformativeInt() == ACLMessage.ACCEPT_PROPOSAL){
+                    queue = answerQueue;
+            	}else
                     queue = requestQueue;
+                    
                     break;        
             default:
                     sendError(new NotUnderstoodException("Subject no encontrado"), msg);
@@ -1408,6 +1404,8 @@ public class Drone extends SuperAgent {
             JSONObject content = new JSONObject();
             String combersationID;
             
+            System.out.println("ENTRA: droneReachedGoal");
+            
             try {
                     content.put("Subject", SubjectLibrary.DroneReachedGoal);
             } catch (JSONException e) {
@@ -1433,6 +1431,8 @@ public class Drone extends SuperAgent {
     private void subscribeDroneRecharged(){
                     JSONObject content = new JSONObject();
                     String combersationID;
+            
+                    System.out.println("ENTRA: subscribeDroneRecharger");
                     
                     try {
                             content.put("Subject", SubjectLibrary.DroneRecharged);
@@ -1463,6 +1463,8 @@ public class Drone extends SuperAgent {
             JSONObject content = new JSONObject();
             String combersationID;
             
+            System.out.println("ENTRA: subscribeYourMovements");
+            
             try {
                     content.put("Subject", SubjectLibrary.YourMovements);
             } catch (JSONException e) {
@@ -1491,6 +1493,8 @@ public class Drone extends SuperAgent {
             JSONObject content = new JSONObject();
             String combersationID;
             
+            System.out.println("ENTRA: allmoevemnts");
+            
             try {
                     content.put("Subject", SubjectLibrary.AllMovements);
             } catch (JSONException e) {
@@ -1517,6 +1521,8 @@ public class Drone extends SuperAgent {
     private void subscribeConflictiveSections(){
             JSONObject content = new JSONObject();
             String combersationID;
+            
+            System.out.println("ENTRA: conflictiveSections");
             
             try {
                     content.put("Subject", SubjectLibrary.ConflictiveSections);
@@ -1551,6 +1557,7 @@ public class Drone extends SuperAgent {
                     throw new RuntimeException("Fallo en la respuesta de subscripcion: error al cojer la respuesta");
             }
             
+            System.out.println("Drone: respuesta ");
             switch(msg.getPerformativeInt()){
             case ACLMessage.ACCEPT_PROPOSAL:
                     break;
@@ -1625,9 +1632,11 @@ public class Drone extends SuperAgent {
     public void newSubscription(ACLMessage msg)throws RefuseException{
             JSONObject content = new JSONObject();
     
+            System.out.println("ENTRA: Recibidad NUEVA SUBSCR DRONE");
+            
             if(subscribers.containsKey(msg.getSender().toString()))
                     throw new RefuseException(ErrorLibrary.AlreadySubscribed);
-            else if(teammates.length != 6)      // Esta comprobación pienso que tambien hay que hacerla al mandar la petición.
+            else if(teammates.length != 2)      // Esta comprobación pienso que tambien hay que hacerla al mandar la petición.
                     throw new RefuseException(ErrorLibrary.MissingAgents);
             else{
                     subscribers.put(msg.getSender().toString(), msg.getConversationId().toString());

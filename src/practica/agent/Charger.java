@@ -89,6 +89,7 @@ public class Charger extends SuperAgent {
 			case SubjectLibrary.Charge:
 			case SubjectLibrary.DetailedCharges:
 			case SubjectLibrary.BatteryRequest:
+			case SubjectLibrary.DroneRecharged:
 				q=requestQueue;
 				break;
 			
@@ -418,9 +419,9 @@ public class Charger extends SuperAgent {
 		} catch (JSONException e1) {
 			throw new NotUnderstoodException("");
 		}
-		
+
 		try {
-			if(content.get("Subject").equals("DroneRecharger")){
+			if(content.get("Subject").equals(SubjectLibrary.DroneRecharged)){
 				if(subscribers.containsKey(msg.getSender().toString()))
 					throw new RefuseException(ErrorLibrary.AlreadySubscribed);
 				else{
