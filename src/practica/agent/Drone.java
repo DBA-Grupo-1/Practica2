@@ -1142,6 +1142,8 @@ public class Drone extends SuperAgent {
             
             return trace.size(); //TODO: a la espera de la clase traza
     }
+    
+   
 
     /**
      * Se comunica con el satelite para recibir su status y actualizarlo. Tambien se notifica a todos los agentes 
@@ -1182,6 +1184,8 @@ public class Drone extends SuperAgent {
      * @author Ismael
      */
     protected void updateStatus(ACLMessage msg) {
+    	
+    	
             JSONObject contenido = null;
             try {
                     contenido = new JSONObject(msg.getContent());
@@ -1190,20 +1194,35 @@ public class Drone extends SuperAgent {
                     Logger.getLogger(Drone.class.getName()).log(Level.SEVERE, null, ex);
             }
             try {
-                    JSONObject aux = new JSONObject();
+                    JSONObject aux, aux2 = new JSONObject();
                     String campo=null;
-                    aux = contenido.getJSONObject("gps");
+                    aux = contenido.getJSONObject("values");
+                    aux2 = aux.getJSONObject("location");
                     //actualizamos el mapa del drone antes de recoger las nuevas posiciones X e Y.
                     droneMap.setValue(posX,posY,Map.VISITADO);
-                    posX = aux.getInt("x");
-                    posY = aux.getInt("y");
-
+                    posX = aux2.getInt("x");
+                    posY = aux2.getInt("y");
+                    
+                    AgentID id =(AgentID) aux2.get("id");
+                    String name = aux2.getString("name");
+                    int Battery = aux2.getInt("battery");
+                    
+                    double distG= askForGoal(id);
+                    
+                    if(distG==0){
+                    	goal=true;
+                    }
+                    else{
+                    	goal = false;
+                    }
+                    
+                    /**
                     aux = contenido.getJSONObject("gonio");
                     angle = (float) aux.getDouble("alpha");
                     //Recoger distancia.
                     distance= (float) aux.getDouble("dist");                                
-                    
-                    //Recogida y comprobación del campo goal.
+                    **/
+                    /*Recogida y comprobación del campo goal.
                     campo= contenido.getString("goal");
                     if(campo.equals("Si")){
                             goal=true;
@@ -1211,16 +1230,18 @@ public class Drone extends SuperAgent {
                     else if(campo.equals("No")){
                             goal=false;
                     }
+                    */
                     // Corregido, alpha estaba en aux y no en contenido
 
                     // surroundings=(int[]) contenido.get("radar"); // No se puede hacer así
                     // Una opción sería usando JSONArray, se tendría que mirar como pasarlo a un array normal tras sacarlo
-                    JSONArray jsArray = contenido.getJSONArray("radar");
+                    //JSONArray jsArray = contenido.getJSONArray("radar");
                     
                     /* TODO: recupera bien lo que tiene al rededor (lo muestro por consola bien) 
                      * Pero parece que si lo pongo no termina en el mapa1 y si no lo pongo sí.
                      */
-                    
+    	 
+                    /*
                     for (int i=0; i < jsArray.length(); i++){
                             surroundings[i] = jsArray.getInt(i);
                     }
@@ -1229,7 +1250,7 @@ public class Drone extends SuperAgent {
                     System.out.println("|"+surroundings[0]+", "+surroundings[1]+", "+surroundings[2]+"|");
                     System.out.println("|"+surroundings[3]+", "+surroundings[4]+", "+surroundings[5]+"|");
                     System.out.println("|"+surroundings[6]+", "+surroundings[7]+", "+surroundings[8]+"|");
-                                    
+                     */               
             } catch (JSONException ex) {
                     System.out.println("numeritos");
                     ex.printStackTrace();

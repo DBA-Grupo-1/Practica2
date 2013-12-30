@@ -707,6 +707,32 @@ public class Satellite extends SuperAgent {
 				}
 		return droneStuses[i];
 	}
+	
+	/**
+	 * @author Ismael
+	 * Convierte un objeto DroneStatus a un JSONObject con lo siguiente:
+	 * content{ id,name, baterry, location{x,y}}
+	 * @param nm
+	 * @return rs
+	 */
+	
+	public JSONObject StatusToJSON(DroneStatus nm){
+		JSONObject rs= new JSONObject();
+		try{
+			rs.put("id",nm.getId());
+			rs.put("name", nm.getName());
+			rs.put("battery", nm.getBattery());
+			JSONObject aux = new JSONObject();
+			GPSLocation aux2 = nm.getLocation();
+			aux.put("x", aux2.getPositionX());
+			aux.put("y", aux2.getPositionY());
+			rs.put("location", aux);
+		}catch(JSONException e){
+			throw new RuntimeException("Fallo en paso String To JSON");
+		}
+		
+			return rs;
+	}
 	/**
 	 * TODO Implementation
 	 * @author Ismael
@@ -728,9 +754,11 @@ public class Satellite extends SuperAgent {
 			    		AgentID id= msg.getSender();
 			    		DroneStatus nm= findStatus(id);
 			    		res.put("Subject","Status");
-			    		res.put("values",nm);
+			    		JSONObject convert = StatusToJSON(nm);
+			    		res.put("values",convert);
 			    		send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);
-			    		//TODO Devuelvo el campo status al completo, hay que modificar el drone en updateStatus para recoger el campo values.
+			    		
+			    		
 			    	}catch(JSONException e){
 			    		throw new RuntimeException("Fallo en la obtencion respuesta mensaje");
 					}
