@@ -852,13 +852,15 @@ public class Drone extends SuperAgent {
                     try{
                             content = new JSONObject(msg.getContent());
                             H= content.getInt("Height");
-                            W= content.getInt("Weight");
+                            W= content.getInt("Width");
                             matriz = new int[H][W];
                             JSONArray data = (JSONArray) content.get("Values");
                     
-                            for(int i=0,z=0;i<H;i++)
-                                    for(int j=0;j<W;j++,z++)
+                            for(int i=0,z=0;i<H;i++){
+                                    for(int j=0;j<W;j++,z++){
                                             matriz[i][j] = data.getInt(z);
+                                    }
+                            }
                             
                     } catch (JSONException e) {
                             // TODO Auto-generated catch block
@@ -918,7 +920,7 @@ public class Drone extends SuperAgent {
             case ACLMessage.INFORM:
                     try{
                             content = new JSONObject(msg.getContent());
-                            id = (AgentID) content.get("ID");
+                            id = new AgentID(content.getString("ID"));
                     } catch (JSONException e) {
                             // TODO Auto-generated catch block
                             e.printStackTrace();
@@ -974,7 +976,7 @@ public class Drone extends SuperAgent {
             case ACLMessage.INFORM:
                     try{
                             content = new JSONObject(msg.getContent());
-                            goal = content.getDouble("GoalDistance");
+                            goal = content.getDouble("Distance");
                     } catch (JSONException e) {
                             // TODO Auto-generated catch block
                             e.printStackTrace();

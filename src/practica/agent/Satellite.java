@@ -701,7 +701,7 @@ public class Satellite extends SuperAgent {
 		boolean find=false;
 				int i=0;
 				for(;i<maxDrones&&!find;i++){
-					if(droneStuses[i].getName()==Name){
+					if(droneStuses[i].getName().equals(Name)){
 						find=true;
 					}
 				}
@@ -800,7 +800,7 @@ public class Satellite extends SuperAgent {
 							throw new RuntimeException("Fallo: Mapa no existente");
 						}
 						for(int i=0;i<mapSeguimiento.getHeigh();i++){
-							for(int j=0;i<mapSeguimiento.getWidth();j++){
+							for(int j=0;j<mapSeguimiento.getWidth();j++){
 								if(mapSeguimiento.getValue(i,j)<-1||mapSeguimiento.getValue(i, j)>5){
 									throw new RuntimeException("Fallo: valor erroneo en mapa");
 								}
@@ -818,7 +818,7 @@ public class Satellite extends SuperAgent {
 					try{
 						
 						res.put("Subject","IdAgent");
-						String names= content.getString("name");
+						String names= content.getString("Name");
 						
 						DroneStatus status =  searchByName(names);
 						if(status==null){
@@ -859,7 +859,7 @@ public class Satellite extends SuperAgent {
 						try{
 							res.put("Subject","GoalDistance");
 							
-							AgentID id= (AgentID)content.get("ID");
+							AgentID id= new AgentID(content.getString("ID"));
 							if(id==null){
 								throw new RuntimeException("Fallo: ID agente no existe");
 							}
@@ -879,7 +879,7 @@ public class Satellite extends SuperAgent {
 				case SubjectLibrary.DroneBattery:
 					try{
 						res.put("Subject","DroneBattery");
-						AgentID id = (AgentID) content.get("AgetnID");
+						AgentID id = new AgentID(content.getString("ID"));
 						if(id==null){
 							throw new RuntimeException("Fallo: ID agente no existe");
 						}
