@@ -49,7 +49,7 @@ public class Launcher {
         try{
             System.out.println("Main: Creando agentes");
         	map = visualizer.getMapToLoad();
-        	satellite = new Satellite(id_satelite, map, droneAmmount, visualizer);
+        	satellite = new Satellite(id_satelite,id_charger, map, droneAmmount, visualizer);
         	charger = new Charger(id_charger, 500*droneAmmount, id_satelite);
         	drone1 = new Drone(new AgentID("Drone1"), map.getWidth(), map.getHeigh(), id_satelite, id_charger);
         	drone2 = new Drone(new AgentID("Drone2"), map.getWidth(), map.getHeigh(), id_satelite, id_charger);

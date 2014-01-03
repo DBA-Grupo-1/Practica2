@@ -237,10 +237,11 @@ public class Drone extends SuperAgent {
             startDispatcher();
     
             register();
+           
             
             //subscribe(); Se anula hasta que no se sepa donde se usará
             
-            int decision;
+           int decision;
             
             do{
                     getStatus();
@@ -257,11 +258,8 @@ public class Drone extends SuperAgent {
                     }
             }while(decision != END_FAIL && decision != END_SUCCESS);
             
-            
-            if(decision == END_SUCCESS||decision==END_FAIL){ //La comprobación es por si acaso, no esta de más.
-            	onFinalize(decision);
-            }
-            
+          
+          
     }
     /**
      * Metodo llamado tras la actualizacion de la traza. Ideal para comprobaciones de la traza y del rendimiento del drone.
@@ -798,37 +796,25 @@ public class Drone extends SuperAgent {
      * @author Ismael
      * @param value valor de decision
      */
-    protected void onFinalize(int value) {
+    protected void onFinalize(ACLMessage msg) {
     		
-    		JSONObject in = new JSONObject();
-    		try{
-    			in.put("Subject", ProtocolLibrary.Finalize);
-    			if(value==END_SUCCESS){
-    				in.put("Content", "END_SUCCESS");
-    			}
-    			else if(value== END_FAIL){
-    				in.put("Content", "END_FAIL");
-    			}
-    			else{
-    				throw new RuntimeException("Valor de finalización erroneo");
-    			}
-    			send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Finalize, "default", null, buildConversationId(), in);
-    		}catch(JSONException e){
-    			e.printStackTrace();
-    		}
-    		
-    		ACLMessage msg = new ACLMessage();
+    		 		
     		
     		try {
 				msg = answerQueue.take();
 				
+				if(!msg.getPerformative().equals(ACLMessage.INFORM)){
+					throw new RuntimeException("Error en la recepcion del tipo de mensaje");
+				}
 				try{
 					JSONObject content = new JSONObject(msg.getContent());
 					String stat = content.getString("content");
+					/*
 					if(stat.equals("wait")){
-						enterStandBy();
+						//enterStandBy(); lo dejo aquí por si acaso.
 					}
-					else if(stat.equals("End")){
+					else*/
+						if(stat.equals("End")){
 						finalize(); 
 					}
 				}catch(JSONException e){
@@ -1915,6 +1901,9 @@ public class Drone extends SuperAgent {
                     case SubjectLibrary.BatteryRequest:
                             onBatteryReceived(msg);
                             break;
+                    case SubjectLibrary.End:
+                    		onFinalize(msg);
+                    	break;
                             
                     default: 
                             sendError(new NotUnderstoodException("Subject no encontrado"), msg);

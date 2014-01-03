@@ -936,20 +936,23 @@ public class Satellite extends SuperAgent {
 			else{
 				
 				finalize++;
+				/* Lo dejo por si acaso a mi me parece correcto pero si dices que el drone se pone solico en standby no es necesario (pa Dani)
 				if(finalize!=maxDrones){
 					res.put("Subject",ProtocolLibrary.Finalize);
 					res.put("Content", "wait");
 					send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Finalize,"default",null,buildConversationId(), res);
 				}
-				else if(finalize==maxDrones){
+				else
+					*/
+					if(finalize==maxDrones){
 					//System.out.println("Finalizando");
 					
-					res.put("Subject", SubjectLibrary.End);
-					res.put("Content","End" );
-					for(int i=0;i<maxDrones;i++){
-						send(ACLMessage.INFORM,droneStuses[i].getId(),ProtocolLibrary.Finalize,"default",null,buildConversationId(), res);
-					}
-					send(ACLMessage.INFORM,cargador,ProtocolLibrary.Finalize,"default",null,buildConversationId(), res);
+						res.put("Subject", SubjectLibrary.End);
+						res.put("Content","End" );
+						for(int i=0;i<maxDrones;i++){
+							send(ACLMessage.INFORM,droneStuses[i].getId(),ProtocolLibrary.Finalize,"default",null,buildConversationId(), res);
+						}
+						send(ACLMessage.INFORM,cargador,ProtocolLibrary.Finalize,"default",null,buildConversationId(), res);
 				}					
 				
 			}
