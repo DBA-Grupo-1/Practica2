@@ -39,5 +39,8 @@ public class SubjectLibrary {
 	// Recarga
 	public static final String BatteryRequest = "BatteryRequest";
 	
+	//Finalizar
+	public static final String End = "End";
+	
 	// Ayuda ...
 }

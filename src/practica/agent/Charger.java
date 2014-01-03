@@ -101,7 +101,9 @@ public class Charger extends SuperAgent {
 			case SubjectLibrary.DroneBattery: //No sé qué mas cosas podría pedir el Cargador.
 				q=answerQueue;
 				break;
-			
+			case SubjectLibrary.End:
+				finalize(); //hago la llamada a finalize puesto que el ejecute es un while(true) si fuera una variable la pondria a false;
+				break;
 			default:
 			try {
 				throw new NotUnderstoodException("Subject no encontrado.");

@@ -229,6 +229,7 @@ public class Drone extends SuperAgent {
     /**
      * Ejecucion principal del agente.
      * @author Alberto
+     * @author Ismael
      * @see es.upv.dsic.gti_ia.core.BaseAgent#execute()
      */
     @Override
@@ -255,6 +256,11 @@ public class Drone extends SuperAgent {
                             postUpdateTrace();
                     }
             }while(decision != END_FAIL && decision != END_SUCCESS);
+            
+            
+            if(decision == END_SUCCESS||decision==END_FAIL){ //La comprobación es por si acaso, no esta de más.
+            	onFinalize(decision);
+            }
             
     }
     /**
@@ -429,6 +435,7 @@ public class Drone extends SuperAgent {
      * @return Decision tomada. Debe ser END_FAIL o NO_DEC
      */
     private int checkEndCondition(List<Pair> listaMovimientos, Object object) {
+    		
             return NO_DEC;
     }
 
@@ -512,16 +519,22 @@ public class Drone extends SuperAgent {
     /**
      * Comportamiento critico del drone. Es el primero en ejecutarse al recorrer los comportamientos.
      * @author Dani
+     * @author Ismael
      * @param listaMovimientos Lista de movimientos a analizar
      * @param args Argumentos adicionales
      * @return Decision tomada
      */
     protected int criticalBehaviour(List<Pair> listaMovimientos, Object[] args) {
             //Si no le queda batería el drone la pide y se queda en standby.
+    	int amount=75;
             if (battery == 0){
-                    askForBattery(75);
+                    askForBattery(amount);
                     enterStandBy();
-                    return RETHINK;
+                    //Tras pedir bateria se comprueba cual es el valor obtenido.
+                    if(amount!=END_FAIL)
+                    	return END_FAIL;
+                    else
+                    	return RETHINK;
             }
             else 
                     return NO_DEC;
@@ -776,8 +789,57 @@ public class Drone extends SuperAgent {
             }
     }
     
-    
-    
+    /************************************************************************************************************************************
+     ******** Protocolo de finalización 
+     * @throws JSONException *************************************************************************************************
+     ************************************************************************************************************************************/
+    /* función que llama al finalizador del satélite.
+     * Si la respuesta es wait espera, si es otra finaliza.
+     * @author Ismael
+     * @param value valor de decision
+     */
+    protected void onFinalize(int value) {
+    		
+    		JSONObject in = new JSONObject();
+    		try{
+    			in.put("Subject", ProtocolLibrary.Finalize);
+    			if(value==END_SUCCESS){
+    				in.put("Content", "END_SUCCESS");
+    			}
+    			else if(value== END_FAIL){
+    				in.put("Content", "END_FAIL");
+    			}
+    			else{
+    				throw new RuntimeException("Valor de finalización erroneo");
+    			}
+    			send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Finalize, "default", null, buildConversationId(), in);
+    		}catch(JSONException e){
+    			e.printStackTrace();
+    		}
+    		
+    		ACLMessage msg = new ACLMessage();
+    		
+    		try {
+				msg = answerQueue.take();
+				
+				try{
+					JSONObject content = new JSONObject(msg.getContent());
+					String stat = content.getString("content");
+					if(stat.equals("wait")){
+						enterStandBy();
+					}
+					else if(stat.equals("End")){
+						finalize(); 
+					}
+				}catch(JSONException e){
+					e.printStackTrace();
+				}
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    		
+    }
     
     
     
@@ -1315,6 +1377,7 @@ public class Drone extends SuperAgent {
     /**
      * Pide batería al cargador.
      * @author Dani.
+     * @author Ismael
      * @param amount cantidad que se le pide al cargador.
      */
     protected void askForBattery (int amount){
@@ -1329,6 +1392,11 @@ public class Drone extends SuperAgent {
                             send(ACLMessage.REQUEST, chargerID, ProtocolLibrary.Reload, "default", null, buildConversationId(), content);
                     } catch (JSONException e){
                             e.printStackTrace();
+                            //Se recoge la RefuseExcetion y se envia el END_FAIL
+                            if(e.equals(ErrorLibrary.NotBatteryAnymore)){
+                            	//sendDecision(END_FAIL);
+                            	amount= END_FAIL;
+                            }
                     }
             }
     }

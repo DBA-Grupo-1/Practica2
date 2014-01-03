@@ -46,22 +46,26 @@ public class Satellite extends SuperAgent {
 	private boolean usingVisualizer;				//Variable para controlar si se está usando el visualizador.
 	private boolean exit;							//Variable para controlar la terminación de la ejecución del satélite.
 	private static List<Integer> posXIniciales;
+	private int finalize;
 	private HashMap<String, HashMap<String, String>> subscriptions;  // <tipoSubcripcion, < IDAgent, ID-combersation>>
-	
+	private AgentID cargador;			//Añadida variable para que el satelite se comunique con el cargador
 	
 	/**
 	 * Constructor
 	 * @author Jahiel
 	 * @author Dani
 	 * FIXME otros autores añadiros.
+	 * @author Ismael (añadida variable charger)
 	 * @param sat ID del satélite.
+	 * @param charger ID del cargador.
 	 * @param mapa mapa que se usará.
 	 * @param maxDrones número máximo de drones que aceptará el satélite.
 	 * @throws Exception
 	 */
-	public Satellite(AgentID sat, Map map, int maxDrones) throws Exception{
+	public Satellite(AgentID sat,AgentID charger, Map map, int maxDrones) throws Exception{
 		//Inicialización de atributos.
 		super(sat);
+		cargador=charger;
 		exit = false;
 		mapOriginal = new SharedMap(map);
 		mapSeguimiento = new SharedMap(map);
@@ -75,7 +79,7 @@ public class Satellite extends SuperAgent {
 		subscriptions.put("DroneReachedGoal", new HashMap<String, String>());
 		subscriptions.put("AllMovements", new HashMap<String, String>());
 		subscriptions.put("ConflictiveSections", new HashMap<String, String>());
-		
+		finalize=0;
 		
 		//Calcular la posición del objetivo.
 		//Se suman todas las posiciones que contienen un objetivo y se halla la media.
@@ -102,14 +106,16 @@ public class Satellite extends SuperAgent {
 	/**
 	 * Constructor con un visualizador
 	 * @author Dani
+	 * @author Ismael (añadida variable charger al constructor)
 	 * @param sat 			ID del satélite.
+	 * @param charger		ID del cargador.
 	 * @param mapa 			mapa que se usará.
 	 * @param maxDrones 	número máximo de drones que aceptará el satélite.
 	 * @param v 			visualizador.
 	 * @throws Exception
 	 */
-	public Satellite(AgentID sat, Map mapa, int maxDrones, Visualizer v) throws Exception{
-		this (sat, mapa, maxDrones);		
+	public Satellite(AgentID sat,AgentID charger, Map mapa, int maxDrones, Visualizer v) throws Exception{
+		this (sat,charger, mapa, maxDrones);		
 		visualizer = v;
 		usingVisualizer = true;
 	}
@@ -746,7 +752,9 @@ public class Satellite extends SuperAgent {
 		
 		JSONObject res = new JSONObject();
 		
-		
+		if(msg.getPerformative().equals(ACLMessage.QUERY_REF)){
+			throw new RuntimeException("Error de perfomativa");
+		}
 		try{
 			switch(subject){
 			    case SubjectLibrary.Status:
@@ -920,14 +928,41 @@ public class Satellite extends SuperAgent {
 	 * @param msg
 	 */
 	public void onFinalize (ACLMessage msg){
-		
-		
+		try{
+			JSONObject res = new JSONObject();
+			if(!msg.getPerformative().equals(ACLMessage.REQUEST)){
+				throw new RuntimeException("Performativa erronea al finalizar");
+			}
+			else{
+				
+				finalize++;
+				if(finalize!=maxDrones){
+					res.put("Subject",ProtocolLibrary.Finalize);
+					res.put("Content", "wait");
+					send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Finalize,"default",null,buildConversationId(), res);
+				}
+				else if(finalize==maxDrones){
+					//System.out.println("Finalizando");
+					
+					res.put("Subject", SubjectLibrary.End);
+					res.put("Content","End" );
+					for(int i=0;i<maxDrones;i++){
+						send(ACLMessage.INFORM,droneStuses[i].getId(),ProtocolLibrary.Finalize,"default",null,buildConversationId(), res);
+					}
+					send(ACLMessage.INFORM,cargador,ProtocolLibrary.Finalize,"default",null,buildConversationId(), res);
+				}					
+				
+			}
 		/**
 		 * Realizar esta llamada solo cuando un drone finalize porque a llegado a la meta
 		 * 
 		 * @author Jahiel
 		 */
 		
-		sendInformSubscribeFinalize(msg);
+			sendInformSubscribeFinalize(msg);
+			}catch(JSONException e){
+				e.printStackTrace();
+			}
+		
 	}
 }
