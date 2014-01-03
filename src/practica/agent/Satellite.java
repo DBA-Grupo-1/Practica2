@@ -925,6 +925,8 @@ public class Satellite extends SuperAgent {
 	 * TODO Implementación
 	 * 
 	 * @author Jahiel Me pongo para que el que haga este mensaje me informe cuando este para poner la linea en su sitio
+	 * @author Ismael 
+	 * Protocolo de finalizacion
 	 * @param msg
 	 */
 	public void onFinalize (ACLMessage msg){

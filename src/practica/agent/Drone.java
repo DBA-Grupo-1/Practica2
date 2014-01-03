@@ -1844,6 +1844,7 @@ public class Drone extends SuperAgent {
      * @author Jahiel
      * @author Dani
      * @author Jonay
+     * @author Ismael
      * @param msg Mensaje a analizar
      * @return True si el dispatcher debe continuar su ejecucion. False en caso contrario.
      * @throws JSONException 
@@ -1902,6 +1903,7 @@ public class Drone extends SuperAgent {
                             onBatteryReceived(msg);
                             break;
                     case SubjectLibrary.End:
+                    	//Recogida del mensaje.
                     		onFinalize(msg);
                     	break;
                             
