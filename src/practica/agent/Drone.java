@@ -72,7 +72,7 @@ public class Drone extends SuperAgent {
         protected int posX;
         protected int posY;
         protected float angle;
-        protected float distance;
+        protected double distance;
         protected int[] surroundings;
         protected Map droneMap;
         protected float distanceMin;
@@ -258,7 +258,7 @@ public class Drone extends SuperAgent {
                             postUpdateTrace();
                     }
             }while(decision != END_FAIL && decision != END_SUCCESS);
-            
+           
           
           
     }
@@ -876,7 +876,7 @@ public class Drone extends SuperAgent {
      * @param msg
      * @return int[][]
      */
-    protected int[][] askForMapReceive(ACLMessage msg){
+    protected void askForMapReceive(ACLMessage msg,Map m){
     	JSONObject content;
     	int H,W,matriz[][] = null;
             try {
@@ -914,7 +914,12 @@ public class Drone extends SuperAgent {
                     
                             for(int i=0,z=0;i<H;i++){
                                     for(int j=0;j<W;j++,z++){
-                                            matriz[i][j] = data.getInt(z);
+                                            try {
+												m.setValue(i, j, data.getInt(z));
+											} catch (Exception e) {
+												// TODO Auto-generated catch block
+												e.printStackTrace();
+											}
                                     }
                             }
                             
@@ -927,7 +932,7 @@ public class Drone extends SuperAgent {
                     throw new RuntimeException("Fallo en cojer respuesta del satelite");
             }
             
-            return matriz;
+           
     }
     
     /**
@@ -1301,13 +1306,7 @@ public class Drone extends SuperAgent {
                     int Battery = aux2.getInt("battery");
                     
                     askForGoal(id);
-                    double distG=
-                    if(distG==0){
-                    	goal=true;
-                    }
-                    else{
-                    	goal = false;
-                    }
+                   
                     
                     /**
                     aux = contenido.getJSONObject("gonio");
@@ -1947,16 +1946,19 @@ public class Drone extends SuperAgent {
                             onBatteryReceived(msg);
                             break;
                     case SubjectLibrary.DroneBattery:
-                    	askForMyBatterySatelliteReceive(msg);
+                    	battery=askForMyBatterySatelliteReceive(msg);
                     	break;
                     case SubjectLibrary.GoalDistance:
-                    	askForGoalReceive(msg);
+                    		distance=askForGoalReceive(msg);
                     	break;
                     case SubjectLibrary.MapGlobal:
-                    	askForMapReceive(msg);
+                    	askForMapReceive(msg,droneMap);
                     	break;
                     case SubjectLibrary.Position:
-                    	askPositionReceive(msg);
+                    	int [] posi = new int[2];
+                    	posi=askPositionReceive(msg);
+                    	posX=posi[0];
+                    	posY=posi[1];
                     	break;
                     case SubjectLibrary.End:
                     	//Recogida del mensaje.
