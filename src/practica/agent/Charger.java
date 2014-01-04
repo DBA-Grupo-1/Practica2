@@ -144,6 +144,8 @@ public class Charger extends SuperAgent {
 			if(msg != null){
 				switch (msg.getProtocol()){
 				
+				
+				
 				case ProtocolLibrary.Reload:
 					try {
 						onReload(msg);
@@ -280,11 +282,11 @@ public class Charger extends SuperAgent {
 	 * Solicita al satelite el mapa original
 	 * @return matriz con el mapa original
 	 */
-	protected int[][] askForMap(){
+	protected void askForMap(){
 		JSONObject ask = new JSONObject();
-		ACLMessage msg= new ACLMessage();
-		JSONObject content;
-		int H,W,matriz[][] = null;
+		
+		
+		
 		
 		try{
 			ask.put("Subject", "MapOriginal");
@@ -293,6 +295,10 @@ public class Charger extends SuperAgent {
 		} catch (JSONException e){
 			e.printStackTrace();
 		}
+	}
+	protected int[][] askForMapReceive(ACLMessage msg){
+		JSONObject content;
+		int H,W,matriz[][] = null;
 		try {
 			msg = answerQueue.take();
 		} catch (InterruptedException e) {
