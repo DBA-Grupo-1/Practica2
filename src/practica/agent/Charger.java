@@ -375,8 +375,13 @@ public class Charger extends SuperAgent {
 			int requestedBattery = content.getInt(JSONKeyLibrary.RequestAmount);
 			int givenBattery;
 			
-			//Cuarta comprobación : batería pedida fuera de los límites.
-			if (requestedBattery < 0 || requestedBattery > 75)
+			/**
+			 * @deprecated
+			 *	//Cuarta comprobación : batería pedida fuera de los límites.
+			 *	if (requestedBattery < 0 || requestedBattery > 75)
+			 *		throw new RefuseException(ErrorLibrary.UnespectedAmount);
+			*/
+			if (requestedBattery < 0 || requestedBattery > 1)
 				throw new RefuseException(ErrorLibrary.UnespectedAmount);
 			
 			//Quinta comprobación : No le queda batería al cargador.
@@ -384,10 +389,14 @@ public class Charger extends SuperAgent {
 				throw new RefuseException(ErrorLibrary.NotBatteryAnymore);			
 			
 			//Si pasa todas las comprobaciones le manda la batería que le piden.
-			if (battery > requestedBattery)
-				givenBattery = requestedBattery;
-			else 
-				givenBattery = battery;
+			/**
+			 * @deprecated
+			 * 	if (battery > requestedBattery)
+			 * 		givenBattery = requestedBattery;
+			 *	else 
+			 *		givenBattery = battery;
+			 */
+			givenBattery = requestedBattery;	
 			battery -= givenBattery; 
 			
 			JSONObject sendContent = new JSONObject();
