@@ -9,6 +9,7 @@ import es.upv.dsic.gti_ia.core.AgentID;
  * Esta clase modela una casilla para un mapa compartido
  * 
  * @author jonay
+ * @author Daniel
  */
 public class SharedSquare {
 	private ArrayList<AgentID> visitingAgents;
@@ -104,5 +105,17 @@ public class SharedSquare {
 	 */
 	public boolean hasBadChoices(){
 		return !badChoices.isEmpty();
+	}
+	
+	
+	/**
+	 * Devuelve la ID del último agente que visitó la casilla.
+	 * @author Daniel
+	 * @return ID del agente
+	 */
+	public AgentID getLastVisited (){
+		if (visitingAgents.size() == 0)
+			return null;
+		else return (visitingAgents.get(visitingAgents.size() - 1));
 	}
 }

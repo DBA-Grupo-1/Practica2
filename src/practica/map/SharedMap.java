@@ -10,6 +10,7 @@ import es.upv.dsic.gti_ia.core.AgentID;
  * así como marcar casillas con malas decisiones.
  * 
  * @author jonay
+ * @author Daniel
  */
 public class SharedMap extends Map{
 	private SharedSquare sharedSquares[][];
@@ -85,11 +86,12 @@ public class SharedMap extends Map{
 	 * 			de los límites del mapa
 	 * 
 	 * @author jonay
+	 * @author Dani
 	 */
 	public void setValue(int x, int y, int value, AgentID id) throws Exception{
 		super.setValue(x, y, value);
 		if(value == VISITADO){
-			sharedSquares[y][x].addVisitingAgent(id);
+			sharedSquares[x][y].addVisitingAgent(id);
 		}
 	}
 	
@@ -106,6 +108,17 @@ public class SharedMap extends Map{
 			throw new Exception("Excepción en SharedMap.setValue - Debe indicarse el ID del agente");
 		}
 		super.setValue(x, y, value);
+	}
+	
+	/**
+	 * Getter de un SharedSquare concreto.
+	 * @author Daniel
+	 * @param x coordenada X del SharedSquare
+	 * @param y coordenada Y del SharedSquare
+	 * @return SharedSquare en la posición [x][y]
+	 */
+	public SharedSquare getSharedSquare (int x, int y){
+		return (sharedSquares[x][y]);
 	}
 
 	/**

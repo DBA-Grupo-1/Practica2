@@ -1,5 +1,6 @@
 package practica.util;
 
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -10,13 +11,24 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 
+import es.upv.dsic.gti_ia.core.AgentID;
+import practica.Launcher;
+import practica.TestDani;
 import practica.map.Map;
+import practica.map.SharedMap;
+import practica.map.SharedSquare;
 
+/**
+ * 
+ * @author Daniel
+ * @author Jonay
+ */
 public abstract class ImgMapConverter {
 	
 	/**
 	 * Convierte un objeto del tipo BufferedImage a uno del tipo Map traduciendo los valores RGB a los distintos tipos
 	 * de posibles valores.
+	 * @author Daniel
 	 * @param bf BufferedImage a convertir.
 	 * @return Objeto del tipo Map correspondiente a traducir los valores de bf a su correspondiente.
 	 */
@@ -42,8 +54,6 @@ public abstract class ImgMapConverter {
 				}
 				
 				try {
-					/*if (value != map.LIBRE)
-						System.out.println(value);*/
 					map.setValue(i, j, value);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -52,9 +62,11 @@ public abstract class ImgMapConverter {
 		return map;	
 	}
 	
+	
 	/**
 	 * Convierte un objeto del tipo Image a uno del tipo BufferedImage, heredando algunas de sus propiedades importantes 
 	 * (ancho, alto, valores RGB de cada píxel...)
+	 * @author Daniel
 	 * @param image Imagen a convertir.
 	 * @return Objeto del tipo BufferedImage para poder trabajar con él.
 	 */
@@ -73,6 +85,7 @@ public abstract class ImgMapConverter {
 	
 	/**
 	 * Convierte el mapa de datos a un bÃºffer de imagen
+	 * @author Jonay
 	 * @param map El mapa de datos a convertir
 	 * @return Devuelve un BufferedImage con los datos del mapa ya traducidos e introducidos 
 	 */
@@ -102,6 +115,7 @@ public abstract class ImgMapConverter {
 		
 	/**
 	 * Convierte una imagen con el formato de las imágenes de prácticas a un mapa.
+	 * @author Daniel
 	 * @param path Localización de la imagen.
 	 * @return Objeto del tipo Map correspondiente a traducir cada píxel de la imagen a un valor determinado.
 	 */
@@ -118,6 +132,7 @@ public abstract class ImgMapConverter {
 	
 	/**
 	 * Crea una imagen a partir de un mapa de datos
+	 * @author Jonay
 	 * @param path Ruta en la que se guardarÃ¡ la imagen
 	 * @param map Mapa de datos del que se obtendrÃ¡ la imagen
 	 */
@@ -133,8 +148,56 @@ public abstract class ImgMapConverter {
 		}
 	}
 	
+	public static BufferedImage sharedMapToBufferedImage (SharedMap map){
+		int valueRGB; // Para guardar valores "traducidos" a RGB
+		int value; // Para leer los valores del mapa
+		int [] droneColors = {Color.RED.getRGB(), Color.BLUE.getRGB(), Color.MAGENTA.getRGB(), Color.YELLOW.getRGB(), Color.GREEN.getRGB(), Color.ORANGE.getRGB()}; //Colores para los drones 
+		BufferedImage bf = new BufferedImage(map.getWidth(), map.getHeigh(), BufferedImage.TYPE_INT_ARGB);
+		AgentID [] droneIDs = TestDani.getDroneIDs(); //IDs de los drones
+		
+		// Creo los colores de la imagen según los valores del mapa
+		for (int i = 0; i < map.getHeigh(); i++)
+			for (int j = 0; j < map.getWidth(); j++){
+				value = map.getValue(i, j);
+				switch (value){
+					case Map.LIBRE: valueRGB = -1; break;
+					case Map.OBSTACULO : valueRGB = -16777216; break;
+					case Map.OBJETIVO : valueRGB = -1237980; break;
+					case Map.VISITADO : 
+						SharedSquare square = map.getSharedSquare(i, j);
+						//Miro el último agente que visitó la casilla y pinto la casilla de su color.
+						AgentID id = square.getLastVisited();
+						valueRGB = -25631; //Valor por defecto.
+						
+						for (int k = 0; k < droneIDs.length; k++){
+							if (id == droneIDs[k]){
+								valueRGB = droneColors[k];
+							}
+						}						
+						break; 
+					default : valueRGB = -1; break; //Por si acaso.
+				}
+				
+				bf.setRGB(i, j, valueRGB);
+			}
+		return bf;	
+		
+	}
+	
+	public static void sharedMapToImg (String path, SharedMap map){
+		BufferedImage bf = sharedMapToBufferedImage(map);
+		
+		// Crea el archivo de la imagen
+		try {
+			   ImageIO.write(bf, "png", new File(path));
+		} catch (IOException e) {
+			   System.out.println("Error de escritura");
+		}
+	}
+	
 	/**
 	 * Crea una imagen escalada a partir de un mapa de datos
+	 * @author Daniel
 	 * @param map Mapa de datos del que se obtendrá la imagen.
 	 * @param width Ancho de la imagen
 	 * @param height Alto de la imagen
