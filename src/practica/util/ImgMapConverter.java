@@ -133,8 +133,8 @@ public abstract class ImgMapConverter {
 	/**
 	 * Crea una imagen a partir de un mapa de datos
 	 * @author Jonay
-	 * @param path Ruta en la que se guardarÃ¡ la imagen
-	 * @param map Mapa de datos del que se obtendrÃ¡ la imagen
+	 * @param path Ruta en la que se guardará la imagen
+	 * @param map Mapa de datos del que se obtendrá la imagen
 	 */
 	public static void mapToImg (String path, Map map){		
 		// Genera el bÃºffer de la imagen con los datos del mapa
@@ -184,6 +184,12 @@ public abstract class ImgMapConverter {
 		
 	}
 	
+	/**
+	 * Crea una imagen a partir de un mapa compartido.
+	 * @author Daniel
+	 * @param path Ruta en la que se guardará la imagen.
+	 * @param map Mapa de datos del que se obtendrá la imagen.
+	 */
 	public static void sharedMapToImg (String path, SharedMap map){
 		BufferedImage bf = sharedMapToBufferedImage(map);
 		
