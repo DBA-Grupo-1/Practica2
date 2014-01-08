@@ -11,12 +11,11 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 
-import es.upv.dsic.gti_ia.core.AgentID;
 import practica.Launcher;
-import practica.TestDani;
 import practica.map.Map;
 import practica.map.SharedMap;
 import practica.map.SharedSquare;
+import es.upv.dsic.gti_ia.core.AgentID;
 
 /**
  * 
