@@ -153,7 +153,7 @@ public abstract class ImgMapConverter {
 		int value; // Para leer los valores del mapa
 		int [] droneColors = {Color.RED.getRGB(), Color.BLUE.getRGB(), Color.MAGENTA.getRGB(), Color.YELLOW.getRGB(), Color.GREEN.getRGB(), Color.ORANGE.getRGB()}; //Colores para los drones 
 		BufferedImage bf = new BufferedImage(map.getWidth(), map.getHeigh(), BufferedImage.TYPE_INT_ARGB);
-		AgentID [] droneIDs = TestDani.getDroneIDs(); //IDs de los drones
+		AgentID [] droneIDs = Launcher.getDroneIDs(); //IDs de los drones
 		
 		// Creo los colores de la imagen según los valores del mapa
 		for (int i = 0; i < map.getHeigh(); i++)
