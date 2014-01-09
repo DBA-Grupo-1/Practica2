@@ -15,8 +15,7 @@ import practica.lib.ErrorLibrary;
  *
  */
 public class Log extends JTextPane{
-	//TODO 
-	public static JTextPane label;
+	private static JTextPane label;
 	private String log;
 	private String body;
 	private String htmlStart;

@@ -21,14 +21,14 @@ private static AgentID[] droneIDs = new AgentID[6];
 
 	public static void main (String args []) throws Exception{
 		/*map = new SharedMap(ImgMapConverter.imgToMap("src/maps/MeetingPoint2.png"));
-		ImgMapConverter.mapToImg("src/maps/pruebaoriginal.png", map);
-		droneIDs[0] = new AgentID("Drone1");
-		droneIDs[1] = new AgentID("Drone2");
-		droneIDs[2] = new AgentID("Drone2");
-		droneIDs[3] = new AgentID("Drone2");
-		droneIDs[4] = new AgentID("Drone2");
-		droneIDs[5] = new AgentID("Drone2");
-		System.out.println(droneIDs[0].name);
+		ImgMapConverter.mapToImg("src/maps/pruebaoriginal.png", map);*/
+		droneIDs[0] = new AgentID("Alberto");
+		droneIDs[1] = new AgentID("Andrés");
+		droneIDs[2] = new AgentID("Daniel");
+		droneIDs[3] = new AgentID("Ismael");
+		droneIDs[4] = new AgentID("Jahiel");
+		droneIDs[5] = new AgentID("Jonay");/*
+		System.out.println(droneIDs[0].name)
 		
 		for (int k = 0; k < 6; k++)
 			for (int i = 0; i < 100; i++)
@@ -48,7 +48,7 @@ private static AgentID[] droneIDs = new AgentID[6];
 		Visualizer v = new Visualizer(t);	
 	}
 	
-	public static AgentID[] getDroneIDs(){
+	public AgentID[] getDroneIDs(){
 		return droneIDs;
 	}
 
