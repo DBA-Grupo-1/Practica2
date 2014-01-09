@@ -212,4 +212,17 @@ public abstract class ImgMapConverter {
 		BufferedImage bf = mapToBufferedImage(map);		
 		return bf.getScaledInstance(width, height, Image.SCALE_SMOOTH);
 	}
+
+	/**
+	 * Crea una imagen escalada a partir de un mapa de datos compartido
+	 * @author Daniel
+	 * @param map Mapa de datos del que se obtendrá la imagen.
+	 * @param width Ancho de la imagen
+	 * @param height Alto de la imagen
+	 * @return Imagen correspondiente al mapa.
+	 */
+	public static Image sharedMapToScalatedImg(SharedMap map, int width, int height) {
+		BufferedImage bf = sharedMapToBufferedImage(map);		
+		return bf.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+	}
 }
