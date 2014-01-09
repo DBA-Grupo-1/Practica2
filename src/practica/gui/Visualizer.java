@@ -160,7 +160,6 @@ public class Visualizer extends JFrame {
 				satelliteLogPanel.setLayout(new BoxLayout(satelliteLogPanel, BoxLayout.X_AXIS));
 				{
 					satelliteScrollPane = new JScrollPane(satelliteLog);
-					satelliteScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 					satelliteScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 					satelliteLogPanel.add(satelliteScrollPane);
 				}
@@ -182,14 +181,14 @@ public class Visualizer extends JFrame {
 			{
 				drone1LogPanel = new JPanel();
 				tabbedPane.addTab("Drone1", null, drone1LogPanel, null);
-				drone1LogPanel.setLayout(new BorderLayout(0, 0));
 				{
 					drone1Log = new Log();
 					//drone1LogPanel.add(drone1Log);
 				}
+				drone1LogPanel.setLayout(new BoxLayout(drone1LogPanel, BoxLayout.X_AXIS));
 				{
 					drone1ScrollPane = new JScrollPane(drone1Log);
-					drone1LogPanel.add(drone1ScrollPane, BorderLayout.NORTH);
+					drone1LogPanel.add(drone1ScrollPane);
 				}
 			}
 			{
