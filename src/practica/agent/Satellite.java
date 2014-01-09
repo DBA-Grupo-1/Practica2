@@ -20,6 +20,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import practica.gui.Visualizer;
 import practica.lib.ErrorLibrary;
 import practica.lib.JSONKeyLibrary;
 import practica.lib.ProtocolLibrary;
@@ -29,7 +30,6 @@ import practica.map.SharedMap;
 import practica.util.GPSLocation;
 import practica.util.ImgMapConverter;
 import practica.util.MessageQueue;
-import practica.util.Visualizer;
 import practica.util.DroneStatus;
 
 public class Satellite extends SuperAgent {
