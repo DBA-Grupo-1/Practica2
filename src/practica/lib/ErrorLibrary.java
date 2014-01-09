@@ -28,4 +28,5 @@ public class ErrorLibrary {
 	public static final String TraceEndLowerThanStart = "\"End\" argument is lower than \"Start\" argument.";
 	public static final String TraceNotAValidMode = "You entered an unvalid mode.";
 	public static final String TraceLocationNotFound = "Couldn't find location.";
+	public static final String LogInvalidFirstArgument = "You didn't specify if the message was received or sended.";
 }
