@@ -432,7 +432,7 @@ public class Satellite extends SuperAgent {
 	 * Getter del mapa de seguimiento.
 	 * @return el mapa de seguimiento.
 	 */
-	public Map getMapSeguimiento() {
+	public SharedMap getMapSeguimiento() {
 		return mapSeguimiento;
 	}
 	
