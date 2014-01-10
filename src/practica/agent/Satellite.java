@@ -694,7 +694,7 @@ public class Satellite extends SuperAgent {
 				e.printStackTrace();
 			}
 		}
-		else throw new RuntimeException("onReload - Performativa no inform.");
+		else throw new RuntimeException("onReload - Perforbehavior = mode;mativa no inform.");
 	}
 	/**
 	 * @author Ismael

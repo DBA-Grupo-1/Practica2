@@ -63,7 +63,16 @@ import com.google.gson.Gson;
  *
  */
 public class Drone extends SuperAgent {
-		private static final int WAIT_OUT = 0;  //Estados del drone
+		private static final int SLEEPING = 0,   //Estados del drone
+								 GO_TO_POINT_TRACE = 1,
+								 EXPLORE_MAP = 2,
+								 FOLLOW_TRACE = 3,
+								 FORCE_EXPLORATION = 4,
+								 LAGGING = 5,
+								 UNDO_TRACE = 6,
+								 FINISH_GOAL = 7;
+								// END = 6;
+		
 		private static final int SCOUT = 0, SCOUT_IMPROVER = 1, FOLLOWER = 2, FREE = 3; //Comportamientos del drone
 		
         private final int ESTADOREQUEST = 0, ESTADOINFORM = 1;
@@ -82,6 +91,8 @@ public class Drone extends SuperAgent {
         protected float distanceMin;
         protected int counterStop;
         protected int battery;
+        protected double posiOX, posiOY;
+        
         /** Decision de mover al norte */
         public static final int NORTE = 3;
         /** Decision de mover al oeste */
@@ -113,7 +124,8 @@ public class Drone extends SuperAgent {
         protected BlockingQueue<ACLMessage> requestQueue;
         protected Thread dispatcher;
         private AgentID[] teammates;
-        private Trace trace;
+        private Trace trace, optimalTrace;
+      //  private ConflictiveBox conflictiveBox;
         
         private HashMap<String, String> idsCombersationSubscribe;   // {nombreSubscripcion, id-combersation}
         private HashMap<String, String> subscribers;                                // {ID_Agente, id-combersation}
@@ -144,6 +156,7 @@ public class Drone extends SuperAgent {
                 counterStop = 0;
                 battery=75;
                 trace = new Trace();
+                posiOX = posiOY = 0;
                 
                 standBy = 0;
                 answerQueue = new LinkedBlockingQueue<ACLMessage>();
@@ -152,7 +165,7 @@ public class Drone extends SuperAgent {
                 idsCombersationSubscribe = new HashMap<String, String>();
                 subscribers = new HashMap<String, String>();
                 
-                state = WAIT_OUT;
+                state = SLEEPING;
         }
         
         
@@ -251,7 +264,8 @@ public class Drone extends SuperAgent {
            
             
             do{
-                    getStatus();
+            		if(behavior != FOLLOWER)
+            			getStatus();
                     
                     decision = think();
             		//sendInformYourMovement(posX, posY, decision); // activar si hay Subs. tipo YourMovements
@@ -268,6 +282,7 @@ public class Drone extends SuperAgent {
           
           
     }
+    
     /**
      * Metodo llamado tras la actualizacion de la traza. Ideal para comprobaciones de la traza y del rendimiento del drone.
      */
@@ -376,10 +391,13 @@ public class Drone extends SuperAgent {
                             e.printStackTrace();
                     }
                     
-                    sendRequestOutput();
-
-                    preBehavioursSetUp();
-                    tempDecision = checkBehaviours();
+                    if(state == SLEEPING){	
+                    	//sendRequestOutput();
+                    	tempDecision = RETHINK;
+            }		else{
+                    	//preBehavioursSetUp();
+                    	tempDecision = checkBehaviours();
+                    }
             }while(tempDecision == RETHINK);
             
             return tempDecision;
@@ -393,28 +411,74 @@ public class Drone extends SuperAgent {
      *   
      * @author Jahiel
      */
-    public void sendRequestOutput(){
+   /* public void sendRequestOutput(){
     	int mode = -1;
     	AgentID drone_selected = new AgentID();
     	
     	//Ismael llamar o mandar la peticion de salida al satelite. Y espera a recibir mensaje (actualizar mode)
-    	
     	if(drone_selected.equals(this.getAid())){
     		behavior = mode;
-    		
+    		switch(state){
+    		case WAIT_OUT:
+    			if(behavior == SCOUT){
+    				state = EXPLORED_ROAD;
+    			}else if(behavior == FOLLOWER || behavior == SCOUT_IMPROVER){
+    				state = GO_TO_START_TRACE;
+    			}else 
+    				throw new RuntimeException("Comportamiento incongruente para el estado : "+state);
+    			break;
+    		case LAGGING:
+    			if(behavior == FOLLOWER || behavior == SCOUT_IMPROVER){
+    				state = BACK;
+    			}else if(behavior == FREE)
+    				state = LOST;
+    			break;
+    		}
+    	}else{
+    		this.standBy = 1;
     	}
     	
-    }
-    
+    }*/
+   
     /**
      * Realiza cualquier tipo de actualizacion del estado del drone antes de comprobar los comportamientos. Si la comprobacion 
      * de los comportamientos se ejecuta de nuevo debido a un RETHINK esta funcion se evalua de nuevo.
+     * 
+     *  posiOX= (posX + (Math.cos(angle) * distance));
+    	     	   posiOY= (posY + (Math.sin(angle)*distance));
      */
-    protected void preBehavioursSetUp() {
-            switch(state){
-            
-            }
+   /* protected void preBehavioursSetUp() {  
+    	
+    		switch(state){
+    		case EXPLORED_ROAD:
+    			if(conflictBox){
+    				
+    			}
+    			break;
+    		case GO_TO_START_TRACE:
+    			posiOX = optimalTrace.getLocation(0).getPositionX();
+    			posiOY = optimalTrace.getLocation(0).getPositionY();
+    			
+    			if(posX == posiOX && posiOY == posiOY)
+    				state = EXPLORED_ROAD;
+    			
+    			break;
+    		case FOLLOW_TRACE:
+    			
+    			break;
+    		case LAGGING:
+    			if(behavior == FOLLOWER || behavior == SCOUT_IMPROVER){
+    				state = FOLLOW_TRACE;
+    			}else if(behavior == FREE)
+    				state = LOST;
+    			break;
+    		case ROAD_FORCE:
+    			break;
+    		default: break;
+    		}
+           
     }
+    */
     /**
      * Recorre todos los comportamientos del drone. Si un comportamiento devuelve una decision (!= NO_DEC) la devuelve como resultado.
      * En caso contrario comprueba el siguiente comportamiento.
@@ -662,11 +726,8 @@ public class Drone extends SuperAgent {
             ArrayList<Pair> mispares=new ArrayList<Pair>();
             boolean[] basicond;
 
-            double posiOX=0,posiOY=0;
-            float calculoDist=0;
-            
-            posiOX= (posX + (Math.cos(angle) * distance));
-            posiOY= (posY + (Math.sin(angle)*distance));
+          
+            float calculoDist=0;         
 
             basicond = freeSquaresConditions();
             
@@ -1302,8 +1363,7 @@ public class Drone extends SuperAgent {
             }
             
             updateStatus(msg);
-            
-            
+           
     }
 
     /**
