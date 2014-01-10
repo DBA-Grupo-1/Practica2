@@ -63,12 +63,16 @@ import com.google.gson.Gson;
  *
  */
 public class Drone extends SuperAgent {
+		private static final int WAIT_OUT = 0;  //Estados del drone
+		private static final int SCOUT = 0, SCOUT_IMPROVER = 1, FOLLOWER = 2, FREE = 3; //Comportamientos del drone
+		
         private final int ESTADOREQUEST = 0, ESTADOINFORM = 1;
         private final int LIMIT_MOVEMENTS;
         private boolean exit;
         protected boolean goal;
         private int decision;
-        private int estado;
+        private int state;
+        private int behavior;
         protected int posX;
         protected int posY;
         protected float angle;
@@ -147,6 +151,8 @@ public class Drone extends SuperAgent {
                 
                 idsCombersationSubscribe = new HashMap<String, String>();
                 subscribers = new HashMap<String, String>();
+                
+                state = WAIT_OUT;
         }
         
         
@@ -369,6 +375,8 @@ public class Drone extends SuperAgent {
                     } catch (InterruptedException e) {
                             e.printStackTrace();
                     }
+                    
+                    sendRequestOutput();
 
                     preBehavioursSetUp();
                     tempDecision = checkBehaviours();
@@ -378,11 +386,34 @@ public class Drone extends SuperAgent {
     }
     
     /**
+     * Se realiza el tratamiento de la petición de salida:
+     * - Si no soy el drone seleccionado no hacer nada y bloquearte.
+     * - Si soy el seleccionado: cojer el MODO y en funcion del modo que me haya asignado el satelite comportarme de una forma u otra:
+     *   TODO MODOS
+     *   
+     * @author Jahiel
+     */
+    public void sendRequestOutput(){
+    	int mode = -1;
+    	AgentID drone_selected = new AgentID();
+    	
+    	//Ismael llamar o mandar la peticion de salida al satelite. Y espera a recibir mensaje (actualizar mode)
+    	
+    	if(drone_selected.equals(this.getAid())){
+    		behavior = mode;
+    		
+    	}
+    	
+    }
+    
+    /**
      * Realiza cualquier tipo de actualizacion del estado del drone antes de comprobar los comportamientos. Si la comprobacion 
      * de los comportamientos se ejecuta de nuevo debido a un RETHINK esta funcion se evalua de nuevo.
      */
     protected void preBehavioursSetUp() {
+            switch(state){
             
+            }
     }
     /**
      * Recorre todos los comportamientos del drone. Si un comportamiento devuelve una decision (!= NO_DEC) la devuelve como resultado.
