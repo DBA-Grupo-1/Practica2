@@ -2497,7 +2497,7 @@ public class Drone extends SuperAgent {
 
 
 
-/********************************************************************************/
+/******************************************************************************/
 /* Métodos usados para testear la pedida y respuesta de información del drone. 
  * TODO: Borrar
 */
