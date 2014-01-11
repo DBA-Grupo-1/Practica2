@@ -957,8 +957,8 @@ public class Satellite extends SuperAgent {
 	private int askBattery(){
 		JSONObject requestContent = new JSONObject();
 		ACLMessage answer=null;
-		int resultado = -1;
-		
+		int resultado = -1; 
+	
 		try {
 			requestContent.put("Subject", SubjectLibrary.ChargerBattery);
 		} catch (JSONException e) {
