@@ -918,9 +918,9 @@ public class Drone extends SuperAgent {
      * @author Ismael
      * @param value valor de decision
      */
-    protected void onFinalize(ACLMessage msg) {
+    protected void onFinalize() {
     		
-    		 		
+    	ACLMessage msg=null;	
     		
     		try {
 				msg = answerQueue.take();
@@ -2295,25 +2295,7 @@ public class Drone extends SuperAgent {
                     case SubjectLibrary.BatteryRequest:
                             onBatteryReceived(msg);
                             break;
-                    case SubjectLibrary.DroneBattery:
-                    	battery=askForMyBatterySatelliteReceive(msg);
-                    	break;
-                    case SubjectLibrary.GoalDistance:
-                    		distance=askForGoalReceive(msg);
-                    	break;
-                    case SubjectLibrary.MapGlobal:
-                    	askForMapReceive(msg,droneMap);
-                    	break;
-                    case SubjectLibrary.Position:
-                    	int [] posi = new int[2];
-                    	posi=askPositionReceive(msg);
-                    	posX=posi[0];
-                    	posY=posi[1];
-                    	break;
-                    case SubjectLibrary.End:
-                    	//Recogida del mensaje.
-                    		onFinalize(msg);
-                    	break;
+                    
                             
                     default: 
                             sendError(new NotUnderstoodException("Subject no encontrado"), msg);
