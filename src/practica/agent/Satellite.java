@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Random;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import edu.emory.mathcs.backport.java.util.concurrent.PriorityBlockingQueue;
@@ -41,7 +42,7 @@ public class Satellite extends SuperAgent {
 	private DroneStatus [] droneStuses;				//Array que contiene los estados de los drones.
 	private int maxDrones;							//Número máximo de drones que acepta el satélite.
 	private int connectedDrones;					//Número de drones conectados.
-	private LinkedBlockingQueue messageQueue;		//Cola de mensajes
+	private LinkedBlockingQueue<ACLMessage> requestQueue, answerQueue;		//Cola de mensajes
 	private Visualizer visualizer;					//Visualizador.
 	private boolean usingVisualizer;				//Variable para controlar si se está usando el visualizador.
 	private boolean exit;							//Variable para controlar la terminación de la ejecución del satélite.
@@ -74,7 +75,8 @@ public class Satellite extends SuperAgent {
 		this.maxDrones = maxDrones;
 		connectedDrones = 0;	
 		//TODO cambiar a PriorityBlockingQueue.
-		messageQueue = new LinkedBlockingQueue();
+		requestQueue = new LinkedBlockingQueue<ACLMessage>();
+		answerQueue = new LinkedBlockingQueue<ACLMessage>();
 		subscriptions =new HashMap<String, HashMap<String, String>>();
 		subscriptions.put("DroneReachedGoal", new HashMap<String, String>());
 		subscriptions.put("AllMovements", new HashMap<String, String>());
@@ -126,9 +128,34 @@ public class Satellite extends SuperAgent {
 	 * @param msg mensaje recibido.
 	 */
 	public void onMessage (ACLMessage msg){	
+		JSONObject content;
+		String subject = null;
+		BlockingQueue<ACLMessage> q = null;
+		
+		try{
+			content = new JSONObject(msg.getContent());
+			subject = content.getString("Subject");
+		}
+		catch (JSONException e){
+			e.printStackTrace();
+		}
+		
+		switch(subject)
+		{
+			case SubjectLibrary.ChargerBattery:
+			case SubjectLibrary.Charge:
+			case SubjectLibrary.DetailedCharges:
+				q = answerQueue;
+				break;
+			
+			default:
+				q = requestQueue;
+		}
+		
 		try {
 			System.out.println(msg.getPerformative() + " " + msg.getContent());
-			messageQueue.put(msg);
+			
+			q.put(msg);
 			System.out.println("mensaje recibido!");	
 		} catch (InterruptedException e) {
 			e.printStackTrace();
@@ -377,9 +404,9 @@ public class Satellite extends SuperAgent {
 		
 		while (!exit) {
 			//Si la cola de mensajes no está vacía, saca un elemento y lo procesa.
-			if (!messageQueue.isEmpty()){				
+			if (!requestQueue.isEmpty()){				
 				try {
-					proccesingMessage = (ACLMessage) messageQueue.take();
+					proccesingMessage = (ACLMessage) requestQueue.take();
 				} catch (InterruptedException e) {
 					System.out.println("¡Cola vacía!");
 					e.printStackTrace();
@@ -919,8 +946,48 @@ public class Satellite extends SuperAgent {
 		
 	}
 	
-	//TODO Implementation
+	/**
+     * Pregunta al cargador la cantidad de bateria que le queda.
+     * @author Alberto
+     * @return Bateria total restante.
+     */
+	private int askBattery(){
+		JSONObject requestContent = new JSONObject();
+		ACLMessage answer=null;
+		int resultado = -1;
+		
+		try {
+			requestContent.put("Subject", SubjectLibrary.ChargerBattery);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		
+		send(ACLMessage.QUERY_REF, cargador, ProtocolLibrary.Information, "Get-RemainingBattery", null, buildConversationId(), requestContent);
+		
+		try {
+			answer = answerQueue.take();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	
+		
+		if(answer.getPerformativeInt() == ACLMessage.INFORM){
+			try {
+				resultado = new JSONObject(answer.getContent()).getInt("ChargerBattery");
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+			
+		}else{
+			try {
+				throw new RuntimeException(new JSONObject(answer.getContent()).getString("error"));
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return resultado;
+	}
 	/**
 	 * TODO Implementación
 	 * 

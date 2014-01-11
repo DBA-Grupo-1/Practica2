@@ -944,6 +944,49 @@ public class Drone extends SuperAgent {
      ************************************************************************************************************************************/
     
     /**
+     * Pregunta al cargador la cantidad de bateria que le queda.
+     * @author Alberto
+     * @return Bateria total restante.
+     */
+	private int askBattery(){
+		JSONObject requestContent = new JSONObject();
+		ACLMessage answer=null;
+		int resultado = -1;
+		
+		try {
+			requestContent.put("Subject", SubjectLibrary.ChargerBattery);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		
+		send(ACLMessage.QUERY_REF, chargerID, ProtocolLibrary.Information, "Get-RemainingBattery", null, buildConversationId(), requestContent);
+		
+		try {
+			answer = answerQueue.take();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	
+		
+		if(answer.getPerformativeInt() == ACLMessage.INFORM){
+			try {
+				resultado = new JSONObject(answer.getContent()).getInt("ChargerBattery");
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+			
+		}else{
+			try {
+				throw new RuntimeException(new JSONObject(answer.getContent()).getString("error"));
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		return resultado;
+	}
+    
+    /**
      * Pide mapa común.
      * @author Ismael.
      * 
