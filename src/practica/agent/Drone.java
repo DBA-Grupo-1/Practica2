@@ -1135,25 +1135,7 @@ public class Drone extends SuperAgent {
 		return resultado;
 	}
     
-    /**
-     * Pide mapa común.
-     * @author Ismael.
-     * 
-     */
-    protected void askForMap(){
-            JSONObject ask = new JSONObject();
-            ACLMessage msg= new ACLMessage();
-            
-            
-            
-            try{
-                    ask.put("Subject", "MapSeguimiento");
-                    
-                    send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
-            } catch (JSONException e){
-                    e.printStackTrace();
-            }
-    }
+    
     /**
      * Pide mapa común.
      * @author Ismael.

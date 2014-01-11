@@ -8,7 +8,7 @@ import java.util.concurrent.LinkedTransferQueue;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
+import practica.map.Map;
 import practica.gui.Log;
 import practica.lib.ErrorLibrary;
 import practica.lib.JSONKeyLibrary;
