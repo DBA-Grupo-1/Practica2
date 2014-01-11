@@ -32,18 +32,11 @@ public class TestGson {
 		Gson gson = new Gson (); //Crear Gson
 		String json = gson.toJson(t1); //Crear String Json (serializar)
 		System.out.println(json);	
-		try {
-			JSONArray ja = new JSONArray(json); //Crear objeto JSONArray a partir de la cadena		
-			Trace t2 = gson.fromJson(ja.toString(), Trace.class); //Crar traza a partir de Json (deserializar)
-			//Sacar todo por pantalla para comprobar que todo ha ido bien.
-			System.out.println(t2.size());
-			System.out.println(t2.toString(Trace.POSITION_ONLY));
-		} catch (JSONException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		
-		
+		//JSONArray ja = new JSONArray(json); //Crear objeto JSONArray a partir de la cadena		
+		Trace t2 = gson.fromJson(json, Trace.class); //Crar traza a partir de Json (deserializar)
+		//Sacar todo por pantalla para comprobar que todo ha ido bien.
+		System.out.println(t2.size());
+		System.out.println(t2.toString(Trace.POSITION_ONLY));
 		
 	}
 

@@ -1,11 +1,18 @@
 package practica.agent;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import practica.lib.ErrorLibrary;
 import practica.lib.JSONKeyLibrary;
@@ -15,28 +22,15 @@ import practica.map.Map;
 import practica.trace.Trace;
 import practica.util.ConflictiveBox;
 import practica.util.Pair;
+
+import com.google.gson.Gson;
+
 import es.upv.dsic.gti_ia.architecture.FIPAException;
 import es.upv.dsic.gti_ia.architecture.FailureException;
 import es.upv.dsic.gti_ia.architecture.NotUnderstoodException;
 import es.upv.dsic.gti_ia.architecture.RefuseException;
-import es.upv.dsic.gti_ia.core.AgentID;
-import es.upv.dsic.gti_ia.core.SingleAgent;
 import es.upv.dsic.gti_ia.core.ACLMessage;
-
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import javax.json.stream.JsonLocation;
-
-import org.jaxen.function.StartsWithFunction;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
+import es.upv.dsic.gti_ia.core.AgentID;
 
 /**
  * Funcionamiento del marco de trabajo drone.
@@ -855,7 +849,7 @@ public class Drone extends SuperAgent {
             case SubjectLibrary.Register:
                     queue = answerQueue;
                     break;
-            /*case SubjectLibrary.BatteryLeft:
+            case SubjectLibrary.BatteryLeft:
             case SubjectLibrary.Trace:
             case SubjectLibrary.Steps:
                     if(msg.getPerformativeInt() == ACLMessage.QUERY_REF){
@@ -864,7 +858,6 @@ public class Drone extends SuperAgent {
                             queue = answerQueue;
                     }
                     break;
-                    */
             case SubjectLibrary.YourMovements:
             case SubjectLibrary.DroneRecharged:
             case SubjectLibrary.DroneReachedGoal:
@@ -971,14 +964,13 @@ public class Drone extends SuperAgent {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
-	
+		
 		if(answer.getPerformativeInt() == ACLMessage.INFORM){
 			try {
 				bateriaRestante = new JSONObject(answer.getContent()).getInt("EnergyLeft");
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
-			
 		}else{
 			try {
 				throw new RuntimeException(new JSONObject(answer.getContent()).getString("error"));
@@ -1017,9 +1009,9 @@ public class Drone extends SuperAgent {
 		if(answer.getPerformativeInt() == ACLMessage.INFORM){
 			try {
 				String trazaJSON = new JSONObject(answer.getContent()).getString("trace");
-				Gson as = new Gson();
-				Type tipoTraza = new TypeToken<Trace>(){}.getType();
-				trazaDelDrone = as.fromJson(trazaJSON, tipoTraza);
+				Gson gson = new Gson();
+//				Type tipoTraza = new TypeToken<Trace>(){}.getType();
+				trazaDelDrone = gson.fromJson(trazaJSON, Trace.class);
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
@@ -2281,10 +2273,13 @@ public class Drone extends SuperAgent {
                             break;
                     }
             }catch(FIPAException fe){
+            		System.err.println("Error FIPA");
                     sendError(fe, msg);
             }catch(IllegalArgumentException e){
+            		System.err.println("Error de argumento");
                     res = treatMessageError(msg, e);
             }catch(RuntimeException e){
+            		System.err.println("Error en ejecución");
                     res = treatRuntimeError(msg, e);
             }
             
@@ -2500,6 +2495,21 @@ public class Drone extends SuperAgent {
             super.finalize();
     }
 
-    
 
+
+/********************************************************************************/
+/* Métodos usados para testear la pedida y respuesta de información del drone. 
+ * TODO: Borrar
+*/
+	public void testPedirInformacion(AgentID agentID) {
+		System.out.println("Batería recibida en" + this.getAid().name+" del " +agentID.name+": "+ askForDroneBattery(agentID));
+		System.out.println("El número de pasos que ha dado ha sido: "+askForDroneSteps(agentID));
+		Trace t = askForDroneTrace(agentID);
+		System.out.println("Su traza: "+t.toString(t.DECISION_AND_POSITION));
+	}
+	
+	public void setTrace(Trace t){
+		this.trace = t;
+	}
+/**************************************************************************/
 }
