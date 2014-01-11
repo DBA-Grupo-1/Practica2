@@ -3,21 +3,31 @@ package practica.agent;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import practica.gui.Log;
 import es.upv.dsic.gti_ia.architecture.FIPAException;
 import es.upv.dsic.gti_ia.core.ACLMessage;
 import es.upv.dsic.gti_ia.core.AgentID;
 import es.upv.dsic.gti_ia.core.SingleAgent;
 
+/**
+ * Clase para agrupar todas las funcionalidades comunes a nuestros agentes
+ * @author Daniel
+ *
+ */
 public class SuperAgent extends SingleAgent {
-		
-	
-	private int conversationCounter ;
+	private int conversationCounter;
+	private Log log;
 
+	/**
+	 * Constructor
+	 * @param aid ID del agente.
+	 * @throws Exception si no se pudo asignar la ID.
+	 */
 	public SuperAgent(AgentID aid) throws Exception {
 		super(aid);
 		conversationCounter = 0;
-	}
-	
+		log = null;
+	}	
 	
 	/**
 	 * Manda un mensaje.
@@ -32,21 +42,20 @@ public class SuperAgent extends SingleAgent {
 	 * @param datas				content del mensaje.
 	 */
 	protected void send(int typeMessage, AgentID id, String protocol, String replyWith, String inReplyTo, String conversationId, JSONObject datas) {
-
 		ACLMessage msg = new ACLMessage(typeMessage);
 		msg.setSender(this.getAid());
 		msg.addReceiver(id);
 		
-		if(replyWith!=null && !replyWith.isEmpty())
+		if(replyWith != null && !replyWith.isEmpty())
 			msg.setReplyWith(replyWith);
 		
-		if(inReplyTo!=null && !inReplyTo.isEmpty())
+		if(inReplyTo != null && !inReplyTo.isEmpty())
 			msg.setInReplyTo(inReplyTo);
 		
-		if(conversationId!=null && !conversationId.isEmpty())
+		if(conversationId != null && !conversationId.isEmpty())
 			msg.setConversationId(conversationId);
 		
-		if(protocol!=null && !protocol.isEmpty())
+		if(protocol != null && !protocol.isEmpty())
 			msg.setProtocol(protocol);
 		
 		if (datas != null)
@@ -56,12 +65,12 @@ public class SuperAgent extends SingleAgent {
 		
 		this.send(msg);
 	}	
-
 	
 	/**
+	 * Manda un mensaje de error en base a una excepción y a un mensaje
 	 * @author Alberto
-	 * @param fe
-	 * @param msgOrig
+	 * @param fe excepción a tratar
+	 * @param msgOrig mensaje que originó la excepción.
 	 */
 	protected void sendError(FIPAException fe, ACLMessage msgOrig) {
 		ACLMessage msgError = fe.getACLMessage();
@@ -83,11 +92,8 @@ public class SuperAgent extends SingleAgent {
 		this.send(msgError);
 	}
 	
-
-	
 	/**
 	 * Construye un nuevo campo conversationID a partir del id del agente y el contador de conversacion
-	 * 
 	 * @author Alberto
 	 * @return Conversation id formado segun el patron acordado
 	 */
@@ -99,6 +105,41 @@ public class SuperAgent extends SingleAgent {
 		}
 		return res;
 	}
-
-
+	
+	/**
+	 * Asigna un log para mostrarlo por pantalla.
+	 * @author Daniel
+	 * @param log log a asignar.
+	 */
+	public void setLog(Log log){
+		this.log = log;
+	}
+	
+	/**
+	 * Encapsulación del método addMessage del log para controlar que no sea nulo, para poder realizar una ejecución sin la interfaz.
+	 * @param type RECEIVED si el mensaje se ha recibido, SENDED si se ha enviado.
+	 * @param name nombre del receptor o remitente del mensaje.
+	 * @param protocol protocolo del mensaje.
+	 * @param subject campo subject del mensaje.
+	 * @param content campo content del mensaje, sin subject.
+	 */
+	protected void addMessageToLog (int type, String name, String protocol, String subject, String content){
+		if (log != null)
+			log.addMessage(type, name, protocol, subject, content);
+	}
+	
+	/**
+	 * Encapsulación del método addMessage del log para controlar que no sea nulo, para poder realizar una ejecución sin la interfaz.
+	 * @param type RECEIVED si el mensaje se ha recibido, SENDED si se ha enviado.
+	 * @param aid ID del agente receptor o remitente del mensaje.
+	 * @param protocol protocolo del mensaje.
+	 * @param subject campo subject del mensaje.
+	 * @param content campo content del mensaje, sin subject.
+	 */
+	protected void addMessageToLog (int type, AgentID aid, String protocol, String subject, String content){
+		if (log != null){
+			String name = aid.name;
+			log.addMessage(type, name, protocol, subject, content);
+		}
+	}
 }
