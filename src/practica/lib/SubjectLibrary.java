@@ -25,7 +25,8 @@ public class SubjectLibrary {
 	public static final String Position = "Position";
 	public static final String GoalDistance = "GoalDistance";
 	public static final String DroneBattery = "DroneBattery";
-	
+	public static final String Values="Values";
+	public static final String Name="Name";
 	public static final String ChargerBattery = "ChargerBattery";
 	public static final String Charge = "Charge";
 	public static final String DetailedCharges = "DetailedCharges";

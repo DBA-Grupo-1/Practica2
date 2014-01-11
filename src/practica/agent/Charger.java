@@ -299,35 +299,36 @@ public class Charger extends SuperAgent {
 	 */
 	protected void askForMap(){
 		JSONObject ask = new JSONObject();
-
-
-
-
+		
+		
+		
+		
 		try{
 			ask.put("Subject", "MapOriginal");
-
+			
 			send(ACLMessage.QUERY_REF, IDSatellite, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
 		} catch (JSONException e){
 			e.printStackTrace();
 		}
 	}
-	protected int[][] askForMapReceive(ACLMessage msg){
+	protected void askForMapReceive(Map m){
 		JSONObject content;
-		int H,W,matriz[][] = null;
+		int H,W;
+		ACLMessage msg=null;
 		try {
 			msg = answerQueue.take();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 			throw new RuntimeException();
 		}
-
+		
 		switch(msg.getPerformativeInt()){
-
+		
 		case ACLMessage.NOT_UNDERSTOOD:
-
-			throw new RuntimeException("Fallo: no entendimiento de mensaje");
-
-
+			
+				throw new RuntimeException("Fallo: no entendimiento de mensaje");
+			
+			
 		case ACLMessage.REFUSE:
 			try {
 				content = new JSONObject(msg.getContent());
@@ -338,21 +339,26 @@ public class Charger extends SuperAgent {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-
+		
 		case ACLMessage.INFORM:
 			try{
 				content = new JSONObject(msg.getContent());
 				H= content.getInt("Height");
 				W= content.getInt("Width");
-				matriz = new int[H][W];
+				
 				JSONArray data = (JSONArray) content.get("Values");
-
+			
 				for(int i=0,z=0;i<H;i++){
-					for(int j=0;j<W;j++,z++){
-						matriz[i][j] = data.getInt(z);
-					}
-				}
-
+                    for(int j=0;j<W;j++,z++){
+                            try {
+								m.setValue(i, j, data.getInt(z));
+							} catch (Exception e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+                    }
+            }
+				
 			} catch (JSONException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -361,8 +367,8 @@ public class Charger extends SuperAgent {
 		default: 
 			throw new RuntimeException("Fallo en cojer respuesta del satelite");
 		}
-
-		return matriz;
+		
+		
 	}
 
 	/**

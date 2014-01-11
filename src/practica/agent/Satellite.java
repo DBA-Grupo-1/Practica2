@@ -733,15 +733,17 @@ public class Satellite extends SuperAgent {
 	 * @return DroneStatus
 	 */
 	public DroneStatus searchByName(String Name){
-		
+		DroneStatus aux= droneStuses[0];
 		boolean find=false;
 				int i=0;
 				for(;i<maxDrones&&!find;i++){
 					if(droneStuses[i].getName().equals(Name)){
 						find=true;
+						aux=droneStuses[i];
 					}
 				}
-		return droneStuses[i];
+				
+		return aux;
 	}
 	
 	/**
@@ -781,19 +783,21 @@ public class Satellite extends SuperAgent {
 		String subject = content.getString("Subject");
 		
 		JSONObject res = new JSONObject();
-		
+		/**
 		if(msg.getPerformative().equals(ACLMessage.QUERY_REF)){
 			throw new RuntimeException("Error de perfomativa");
 		}
+		**/
+		System.out.println("HOLAAA");
 		try{
 			switch(subject){
 			    case SubjectLibrary.Status:
 			    	try{
 			    		AgentID id= msg.getSender();
 			    		DroneStatus nm= findStatus(id);
-			    		res.put("Subject","Status");
+			    		res.put(JSONKeyLibrary.Subject,SubjectLibrary.Status);
 			    		JSONObject convert = StatusToJSON(nm);
-			    		res.put("values",convert);
+			    		res.put(SubjectLibrary.Values,convert);
 			    		send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);
 			    		
 			    		
@@ -830,7 +834,7 @@ public class Satellite extends SuperAgent {
 					break;
 				case SubjectLibrary.MapGlobal:
 					try{
-						res.put("Subject", "MapSiguimiento");
+						res.put("Subject", "MapGlobal");
 						res.put("Height", mapSeguimiento.getHeigh());
 						res.put("Width",mapSeguimiento.getWidth());
 						JSONArray aux = new JSONArray();
@@ -853,6 +857,7 @@ public class Satellite extends SuperAgent {
 					
 					break;
 				case SubjectLibrary.IdAgent:
+					System.out.println("Satelite recibe mensaje ");
 					try{
 						
 						res.put("Subject","IdAgent");
@@ -863,6 +868,7 @@ public class Satellite extends SuperAgent {
 							throw new RuntimeException("Fallo: Status agente no existe");
 						}
 						else{
+							System.out.println("SATELITE MUESTRA MENSAAAJEEEE " +status.getId());
 							res.put("name",status.getName());
 							res.put("ID",status.getId());
 							
@@ -875,19 +881,20 @@ public class Satellite extends SuperAgent {
 					break;
 				case SubjectLibrary.Position:
 					try{
-						
-						res.put("Subject","Position");
+						System.out.println("ESTOY EN POSITION");
+						res.put(JSONKeyLibrary.Subject,SubjectLibrary.Position);
 						JSONObject aux = new JSONObject();
 						AgentID id = msg.getSender();
-						if(id==null){
+						if(id==null){//buscar en el satelite 
 							throw new RuntimeException("Fallo: ID agente no existe");
 						}
 						DroneStatus status = findStatus(id);
 						GPSLocation n= status.getLocation();
-						aux.put("x",n.getPositionX());
-						aux.put("y", n.getPositionY());
-						res.put("Position", aux);
-						send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);
+						aux.put("x",status.getLocation().getPositionX());
+						aux.put("y", status.getLocation().getPositionY());
+						res.put("Posi", aux);
+						System.out.println("Envio informacion");
+						send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,null,null,buildConversationId(), res);
 					}catch(JSONException e){
 						throw new RuntimeException("Fallo en la obtencion respuesta mensaje");
 					}
@@ -915,12 +922,13 @@ public class Satellite extends SuperAgent {
 						
 					break;
 				case SubjectLibrary.DroneBattery:
+					
+					
 					try{
 						res.put("Subject","DroneBattery");
-						AgentID id = new AgentID(content.getString("ID"));
-						if(id==null){
-							throw new RuntimeException("Fallo: ID agente no existe");
-						}
+						AgentID id =new AgentID(content.getString("AgentID"
+								+ ""));
+						System.out.println(id);
 						DroneStatus status = findStatus(id);
 						int bat=status.getBattery();
 						if(bat<0||bat>75){

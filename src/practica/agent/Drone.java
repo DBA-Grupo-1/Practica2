@@ -1155,14 +1155,31 @@ public class Drone extends SuperAgent {
             }
     }
     /**
+     * Pide mapa común.
+     * @author Ismael.
+     * 
+     */
+    protected void askForMap(){
+            JSONObject ask = new JSONObject();
+                       
+            try{
+                    ask.put("Subject", "MapGlobal");
+                    
+                    send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information, null, null, buildConversationId(), ask);
+            } catch (JSONException e){
+                    e.printStackTrace();
+            }
+    }
+    /**
      * @author Ismael
      * Recive mapa común.
      * @param msg
      * @return int[][]
      */
-    protected void askForMapReceive(ACLMessage msg,Map m){
+    protected void askForMapReceive(Map m){
     	JSONObject content;
     	int H,W,matriz[][] = null;
+    	ACLMessage msg = null;
             try {
                     msg = answerQueue.take();
             } catch (InterruptedException e) {
@@ -1229,8 +1246,8 @@ public class Drone extends SuperAgent {
             JSONObject ask = new JSONObject();
            
             try{
-                    ask.put("Subject", "AgentID");
-                    ask.put("Name", name);
+                    ask.put(JSONKeyLibrary.Subject, SubjectLibrary.IdAgent);
+                    ask.put(SubjectLibrary.Name, name);
                     send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
             } catch (JSONException e){
                     e.printStackTrace();
@@ -1242,9 +1259,11 @@ public class Drone extends SuperAgent {
      * @param msg
      * @return AgentID
      */
-     protected AgentID askForIDReceive(ACLMessage msg){ 
+     protected AgentID askForIDReceive(){ 
+    	 System.out.println("MECAGO EN MI PUTA VIDAAAAAA");
     	 JSONObject content= null;
          AgentID id=null;
+         ACLMessage msg=null;
             try {
                     msg = answerQueue.take();
             } catch (InterruptedException e) {
@@ -1282,9 +1301,9 @@ public class Drone extends SuperAgent {
             default: 
                     throw new RuntimeException("Fallo en cojer respuesta del satelite");
             }
+            System.out.println("Estoy en el receptor " + id);
             return id;
     }
-     
     /**
      * Pide distancia de un drone especifico
      * @author Ismael
@@ -1309,9 +1328,10 @@ public class Drone extends SuperAgent {
      * @param msg
      * @return
      */
-     protected double askForGoalReceive(ACLMessage msg){
+     protected double askForGoalReceive(){
     	 	JSONObject content;
     	 	double Ggoal=0;
+    	 	ACLMessage msg=null;
             try {
                     msg = answerQueue.take();
             } catch (InterruptedException e) {
@@ -1361,8 +1381,8 @@ public class Drone extends SuperAgent {
             
            
             try{
-                    ask.put("Subject", "Position");
-                    send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
+                    ask.put(JSONKeyLibrary.Subject, SubjectLibrary.Position);
+                    send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information,null, null, buildConversationId(), ask);
             } catch (JSONException e){
                     e.printStackTrace();
             }
@@ -1373,15 +1393,17 @@ public class Drone extends SuperAgent {
      * @param msg
      * @return int[2]
      */
-    protected int[] askPositionReceive(ACLMessage msg){
+    protected int[] askPositionReceive(){
     		JSONObject content;
     		int pos[] =new int[2];
+            ACLMessage msg=null;
+            System.out.println("llego al receive");
             try {
-                    msg = answerQueue.take();
-            } catch (InterruptedException e) {
-                    e.printStackTrace();
-                    throw new RuntimeException();
-            }
+				msg=answerQueue.take();
+			} catch (InterruptedException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
             
             switch(msg.getPerformativeInt()){
             
@@ -1403,9 +1425,10 @@ public class Drone extends SuperAgent {
             
             case ACLMessage.INFORM:
                     try{
+                    		
                             content = new JSONObject(msg.getContent());
                             JSONObject aux = new JSONObject();
-                            aux = content.getJSONObject("Position");
+                            aux = content.getJSONObject("Posi");
                             pos[0]= aux.getInt("x");
                             pos[1]= aux.getInt("y");
                     } catch (JSONException e) {
@@ -1431,7 +1454,7 @@ public class Drone extends SuperAgent {
                     ask.put("Subject", "DroneBattery");
                     ask.put("AgentID", id);
                     //Envio mensaje
-                    send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
+                    send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information, null, null, buildConversationId(), ask);
             } catch (JSONException e){
                     e.printStackTrace();
             }
@@ -1442,9 +1465,10 @@ public class Drone extends SuperAgent {
      * @param msg
      * @return int
      */
-    protected int askForMyBatterySatelliteReceive(ACLMessage msg){
+    protected int askForMyBatterySatelliteReceive(){
     	JSONObject content;
     	int bat=0;
+    	ACLMessage msg=null;
             try {
                     msg = answerQueue.take();
             } catch (InterruptedException e) {
