@@ -832,59 +832,82 @@ public class Drone extends SuperAgent {
      */
     @Override
     public void onMessage(ACLMessage msg){
-            JSONObject content;
-            String subject = null;
-            
-            try {
-                    content = new JSONObject(msg.getContent());
-                    subject = content.getString("Subject");
-            } catch (JSONException e1) {
-                    e1.printStackTrace();
-            }
-            BlockingQueue<ACLMessage> queue = null;
-            
-            switch(subject){
-            //case SubjectLibrary.Status:
-            //case SubjectLibrary.IMoved:
-            case SubjectLibrary.Register:
-                    queue = answerQueue;
-                    break;
-            case SubjectLibrary.BatteryLeft:
-            case SubjectLibrary.Trace:
-            case SubjectLibrary.Steps:
-                    if(msg.getPerformativeInt() == ACLMessage.QUERY_REF){
-                            queue = requestQueue;
-                    }else{
-                            queue = answerQueue;
-                    }
-                    break;
-            case SubjectLibrary.YourMovements:
-            case SubjectLibrary.DroneRecharged:
-            case SubjectLibrary.DroneReachedGoal:
-            case SubjectLibrary.AllMovements:
-            case SubjectLibrary.ConflictiveSections:
-            case SubjectLibrary.BatteryRequest:
-            
-            	if(msg.getPerformativeInt() == ACLMessage.ACCEPT_PROPOSAL){
-                    queue = answerQueue;
-            	}else
-                    queue = requestQueue;
-                    
-                    break;        
-            default:
-            		System.out.println("Drone: "+subject);
-                    sendError(new NotUnderstoodException("Subject no encontrado"), msg);
-                    break;
-            }
-            
-            if(queue != null){
-                    try {
-                            queue.put(msg);
-                    } catch (InterruptedException e) {
-                            e.printStackTrace();
-                    }
-            }
-    }
+        JSONObject content;
+        String subject = null;
+        
+        try {
+                content = new JSONObject(msg.getContent());
+                subject = content.getString("Subject");
+        } catch (JSONException e1) {
+                e1.printStackTrace();
+        }
+        BlockingQueue<ACLMessage> queue = null;
+        System.out.println("RECIBO DRONE: "+subject);
+        switch(subject){
+        case SubjectLibrary.Status:
+        	queue=answerQueue;
+        	break;
+        //case SubjectLibrary.IMoved:
+        case SubjectLibrary.End:
+        	queue=answerQueue;
+        	break;
+        case SubjectLibrary.MapGlobal:
+        	queue=answerQueue;
+        	break;
+        case SubjectLibrary.DroneBattery:
+        	queue = answerQueue;
+        	break;
+        case SubjectLibrary.IdAgent:
+        	queue = answerQueue;
+        	break;
+        case SubjectLibrary.Position:
+        	
+        	queue = answerQueue;
+        	            	
+        	break;
+        case SubjectLibrary.GoalDistance:
+        	queue = answerQueue;
+        	break;
+        case SubjectLibrary.Register:
+                queue = answerQueue;
+                break;
+        /*case SubjectLibrary.BatteryLeft:
+        case SubjectLibrary.Trace:
+        case SubjectLibrary.Steps:
+                if(msg.getPerformativeInt() == ACLMessage.QUERY_REF){
+                        queue = requestQueue;
+                }else{
+                        queue = answerQueue;
+                }
+                break;
+                */
+        case SubjectLibrary.YourMovements:
+        case SubjectLibrary.DroneRecharged:
+        case SubjectLibrary.DroneReachedGoal:
+        case SubjectLibrary.AllMovements:
+        case SubjectLibrary.ConflictiveSections:
+        case SubjectLibrary.BatteryRequest:
+        
+        	if(msg.getPerformativeInt() == ACLMessage.ACCEPT_PROPOSAL){
+                queue = answerQueue;
+        	}else
+                queue = requestQueue;
+                
+                break;        
+        default:
+        		System.out.println("Drone: "+subject);
+                sendError(new NotUnderstoodException("Subject no encontrado"), msg);
+                break;
+        }
+        
+        if(queue != null){
+                try {
+                        queue.put(msg);
+                } catch (InterruptedException e) {
+                        e.printStackTrace();
+                }
+        }
+}
     
     /************************************************************************************************************************************
      ******** Protocolo de finalización 
