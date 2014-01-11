@@ -3,7 +3,7 @@ package practica.lib;
 /**
  * Biblioteca de Strings con las keys que usamos en los objetos JSON.
  * @author Daniel
- *
+ * @author Jahiel
  */
 public class JSONKeyLibrary {
 
@@ -22,4 +22,7 @@ public class JSONKeyLibrary {
 	//Recharge
 	public static final String RequestAmount = "Requested battery amount";
 	public static final String AmountGiven = "Given battery amount";
+	
+	//MOVE DRONE
+	public static final String Decision = "Decision";
 }

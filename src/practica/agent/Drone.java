@@ -12,8 +12,10 @@ import practica.lib.ProtocolLibrary;
 import practica.lib.SubjectLibrary;
 import practica.map.Map;
 import practica.trace.Trace;
+import practica.util.ConflictiveBox;
 import practica.util.Pair;
 import es.upv.dsic.gti_ia.architecture.FIPAException;
+import es.upv.dsic.gti_ia.architecture.FailureException;
 import es.upv.dsic.gti_ia.architecture.NotUnderstoodException;
 import es.upv.dsic.gti_ia.architecture.RefuseException;
 import es.upv.dsic.gti_ia.core.AgentID;
@@ -92,6 +94,7 @@ public class Drone extends SuperAgent {
         protected int counterStop;
         protected int battery;
         protected double posiOX, posiOY;
+        protected int currentPositionTracking;
         
         /** Decision de mover al norte */
         public static final int NORTE = 3;
@@ -125,7 +128,7 @@ public class Drone extends SuperAgent {
         protected Thread dispatcher;
         private AgentID[] teammates;
         private Trace trace, optimalTrace;
-      //  private ConflictiveBox conflictiveBox;
+        private ConflictiveBox conflictiveBox;
         
         private HashMap<String, String> idsCombersationSubscribe;   // {nombreSubscripcion, id-combersation}
         private HashMap<String, String> subscribers;                                // {ID_Agente, id-combersation}
@@ -157,6 +160,7 @@ public class Drone extends SuperAgent {
                 battery=75;
                 trace = new Trace();
                 posiOX = posiOY = 0;
+                goal = false;
                 
                 standBy = 0;
                 answerQueue = new LinkedBlockingQueue<ACLMessage>();
@@ -166,6 +170,8 @@ public class Drone extends SuperAgent {
                 subscribers = new HashMap<String, String>();
                 
                 state = SLEEPING;
+                optimalTrace = null;
+                currentPositionTracking = 0;
         }
         
         
@@ -264,9 +270,7 @@ public class Drone extends SuperAgent {
            
             
             do{
-            		if(behavior != FOLLOWER)
-            			getStatus();
-                    
+            		
                     decision = think();
             		//sendInformYourMovement(posX, posY, decision); // activar si hay Subs. tipo YourMovements
                     
@@ -376,6 +380,7 @@ public class Drone extends SuperAgent {
      *    preBehavioursSetUp
      *    checkBehaviours
      *  until !RETHINK
+     *  @author jahiel
      * @return Decision tomada.
      */
     protected int think(){
@@ -392,10 +397,15 @@ public class Drone extends SuperAgent {
                     }
                     
                     if(state == SLEEPING){	
-                    	//sendRequestOutput();
+                    	sendRequestOutput();
                     	tempDecision = RETHINK;
-            }		else{
-                    	//preBehavioursSetUp();
+                    }else{
+                    	if(behavior != FOLLOWER)
+                			getStatus();
+                    	else
+                    		updateStatus(null);
+                        
+                    	preBehavioursSetUp();
                     	tempDecision = checkBehaviours();
                     }
             }while(tempDecision == RETHINK);
@@ -409,9 +419,18 @@ public class Drone extends SuperAgent {
      * - Si soy el seleccionado: cojer el MODO y en funcion del modo que me haya asignado el satelite comportarme de una forma u otra:
      *   TODO MODOS
      *   
+     *   SLEEPING = 0,   //Estados del drone
+								 GO_TO_POINT_TRACE = 1,
+								 EXPLORE_MAP = 2,
+								 FOLLOW_TRACE = 3,
+								 FORCE_EXPLORATION = 4,
+								 LAGGING = 5,
+								 UNDO_TRACE = 6,
+								 FINISH_GOAL = 7;
+     *   
      * @author Jahiel
      */
-   /* public void sendRequestOutput(){
+   public void sendRequestOutput(){
     	int mode = -1;
     	AgentID drone_selected = new AgentID();
     	
@@ -419,26 +438,26 @@ public class Drone extends SuperAgent {
     	if(drone_selected.equals(this.getAid())){
     		behavior = mode;
     		switch(state){
-    		case WAIT_OUT:
+    		case SLEEPING:
     			if(behavior == SCOUT){
-    				state = EXPLORED_ROAD;
+    				state = EXPLORE_MAP;
     			}else if(behavior == FOLLOWER || behavior == SCOUT_IMPROVER){
-    				state = GO_TO_START_TRACE;
+    				state = GO_TO_POINT_TRACE;
     			}else 
     				throw new RuntimeException("Comportamiento incongruente para el estado : "+state);
     			break;
     		case LAGGING:
-    			if(behavior == FOLLOWER || behavior == SCOUT_IMPROVER){
-    				state = BACK;
+    			if(behavior == FOLLOWER){
+    				state = UNDO_TRACE;
     			}else if(behavior == FREE)
-    				state = LOST;
+    				state = EXPLORE_MAP;
     			break;
     		}
     	}else{
     		this.standBy = 1;
     	}
     	
-    }*/
+    }
    
     /**
      * Realiza cualquier tipo de actualizacion del estado del drone antes de comprobar los comportamientos. Si la comprobacion 
@@ -447,38 +466,33 @@ public class Drone extends SuperAgent {
      *  posiOX= (posX + (Math.cos(angle) * distance));
     	     	   posiOY= (posY + (Math.sin(angle)*distance));
      */
-   /* protected void preBehavioursSetUp() {  
+   protected void preBehavioursSetUp() {  
     	
     		switch(state){
-    		case EXPLORED_ROAD:
-    			if(conflictBox){
-    				
-    			}
-    			break;
-    		case GO_TO_START_TRACE:
+    		case GO_TO_POINT_TRACE:
     			posiOX = optimalTrace.getLocation(0).getPositionX();
     			posiOY = optimalTrace.getLocation(0).getPositionY();
     			
     			if(posX == posiOX && posiOY == posiOY)
-    				state = EXPLORED_ROAD;
+    				state = FOLLOW_TRACE;
     			
     			break;
     		case FOLLOW_TRACE:
     			
     			break;
-    		case LAGGING:
+    		/*case LAGGING:
     			if(behavior == FOLLOWER || behavior == SCOUT_IMPROVER){
     				state = FOLLOW_TRACE;
     			}else if(behavior == FREE)
     				state = LOST;
     			break;
     		case ROAD_FORCE:
-    			break;
+    			break;*/
     		default: break;
     		}
            
     }
-    */
+    
     /**
      * Recorre todos los comportamientos del drone. Si un comportamiento devuelve una decision (!= NO_DEC) la devuelve como resultado.
      * En caso contrario comprueba el siguiente comportamiento.
@@ -1135,6 +1149,7 @@ public class Drone extends SuperAgent {
             }
             return id;
     }
+     
     /**
      * Pide distancia de un drone especifico
      * @author Ismael
@@ -1414,10 +1429,11 @@ public class Drone extends SuperAgent {
      * @param msg Mensaje recibido del satelite
      * 
      * @author Ismael
+     * @author Jahiel
      */
     protected void updateStatus(ACLMessage msg) {
     	
-    	
+    	if(msg != null){
             JSONObject contenido = null;
             try {
                     contenido = new JSONObject(msg.getContent());
@@ -1438,8 +1454,6 @@ public class Drone extends SuperAgent {
                     AgentID id =(AgentID) aux2.get("id");
                     String name = aux2.getString("name");
                     int Battery = aux2.getInt("battery");
-                    
-                    askForGoal(id);
                    
                     
                     /**
@@ -1484,6 +1498,26 @@ public class Drone extends SuperAgent {
             } catch (Exception e) {
                     e.printStackTrace();
             }
+            
+    	}else{
+            String campo=null;
+
+            //actualizamos el mapa del drone antes de recoger las nuevas posiciones X e Y.
+            try {
+				droneMap.setValue(posX,posY,Map.VISITADO);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+            posX = optimalTrace.getLocation(currentPositionTracking).getPositionX();
+            posY = optimalTrace.getLocation(currentPositionTracking).getPositionY();
+            /*
+            AgentID id =(AgentID) aux2.get("id");
+            String name = aux2.getString("name");
+            int Battery = aux2.getInt("battery");
+            */
+    	}
+    	askForGoal(this.getAid());
     }
     
     /*********Funciones auxiliares *****************************************************************************************************************/
@@ -1626,8 +1660,9 @@ public class Drone extends SuperAgent {
      * @author Jahiel
      */
     protected void subscribe() {
-            /*
+            
             subscribeDroneReachedGoal();
+            /*
             subscribeDroneRecharged();
             subscribeAllMovements();
             subscribeConflictiveSections();
@@ -1917,13 +1952,40 @@ public class Drone extends SuperAgent {
 
     /**
      * Metodo llamado por el dispatcher para tratar el informe de que otro drone a llegado a la meta.
+     * 
+     * @author jahiel
      * @param msg Mensaje original
      * @throws IllegalArgumentException En caso de error en el mensaje original (performativa equivocada, content erroneo...).
      * @throws RuntimeException En caso de error en el procesamiento del mensaje (comportamiento del drone ante el mensaje).
      */
     protected void onDroneReachedGoalInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException {
-            // TODO Auto-generated method stub
-    	System.out.println("Informado de REACHEDGOAL");
+    	JSONObject content = null;
+    	AgentID id = null;
+    	
+    	try {
+			content = new JSONObject(msg.getContent());
+		} catch (JSONException e) {
+			throw new NotUnderstoodException(ErrorLibrary.NotUnderstood);
+		}
+         
+        try {
+			id = new AgentID(content.getString(JSONKeyLibrary.Decision));
+		} catch (JSONException e) {
+			throw new FailureException(ErrorLibrary.FailureInformationAccess);
+		}
+        /*
+        Pedir traza
+                */ 
+        
+        Trace trace = new Trace();
+        if(optimalTrace == null)
+        	optimalTrace = trace;
+        else{
+        	if(optimalTrace.size() > trace.size())
+        		optimalTrace = trace;
+        }
+        
+        // Despertar al drone
     }
     
     protected void onYourMovementsInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException{

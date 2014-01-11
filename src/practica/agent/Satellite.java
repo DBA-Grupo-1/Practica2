@@ -584,12 +584,15 @@ public class Satellite extends SuperAgent {
 			GPSLocation currentPosition = droneStatus.getLocation();
 			
 			exit = evalueDecision(msg);
-			send(ACLMessage.INFORM, msg.getSender(), "IMoved", null, msg.getReplyWith(), msg.getConversationId(), null);				
+			send(ACLMessage.INFORM, msg.getSender(), ProtocolLibrary.DroneMove, null, msg.getReplyWith(), msg.getConversationId(), null);				
 			
 			JSONObject o;
 			try {
 				o = new JSONObject(msg.getContent());
-				sendInformSubscribeAllMovement(msg, currentPosition, o.getInt("decision"));
+				if(o.getInt(JSONKeyLibrary.Decision) == Drone.END_SUCCESS){
+					sendInformSubscribeFinalize(msg);
+				}else
+					sendInformSubscribeAllMovement(msg, currentPosition, o.getInt(JSONKeyLibrary.Decision));
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
@@ -685,8 +688,8 @@ public class Satellite extends SuperAgent {
 		JSONObject contentSub = new JSONObject();
 		
 		try {
-			contentSub.put("Subject", SubjectLibrary.DroneReachedGoal);
-			contentSub.put("ID-Drone", msg.getSender().toString());
+			contentSub.put(JSONKeyLibrary.Subject, SubjectLibrary.DroneReachedGoal);
+			contentSub.put(JSONKeyLibrary.DroneID, msg.getSender().toString());
 			
 		} catch (JSONException e) {
 			// no sudece nunca
@@ -999,11 +1002,12 @@ public class Satellite extends SuperAgent {
 	public void onFinalize (ACLMessage msg){
 		try{
 			JSONObject res = new JSONObject();
+
 			if(!msg.getPerformative().equals(ACLMessage.REQUEST)){
 				throw new RuntimeException("Performativa erronea al finalizar");
 			}
 			else{
-				
+			
 				finalize++;
 				/* Lo dejo por si acaso a mi me parece correcto pero si dices que el drone se pone solico en standby no es necesario (pa Dani)
 				if(finalize!=maxDrones){
