@@ -1,5 +1,6 @@
 package practica.agent;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -35,6 +36,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 /**
  * Funcionamiento del marco de trabajo drone.
@@ -942,21 +944,139 @@ public class Drone extends SuperAgent {
     
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     /************************************************************************************************************************************
      ******** Protocolos de Informacion *************************************************************************************************
      ************************************************************************************************************************************/
    
+    /**
+     * Pregunta a un drone por la batería que le queda
+     * @author Jonay
+     * @return Batería restante del drone
+     */
+    private int askForDroneBattery(AgentID DroneID){
+    	int bateriaRestante = -1;   	
+    	JSONObject requestContent = new JSONObject();
+		ACLMessage answer=null;
+		
+		try {
+			requestContent.put("Subject", SubjectLibrary.BatteryLeft);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		
+		send(ACLMessage.QUERY_REF, DroneID, ProtocolLibrary.Information, "default", null, buildConversationId(), requestContent);
+		
+		try {
+			answer = answerQueue.take();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	
+		if(answer.getPerformativeInt() == ACLMessage.INFORM){
+			try {
+				bateriaRestante = new JSONObject(answer.getContent()).getInt("EnergyLeft");
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+			
+		}else{
+			try {
+				throw new RuntimeException(new JSONObject(answer.getContent()).getString("error"));
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		
+    	return bateriaRestante;
+    }
+    
+    /**
+     * Pregunta a un drone por su traza
+     * @author Jonay
+     * @return la traza del drone
+     */
+    private Trace askForDroneTrace(AgentID DroneID){
+    	Trace trazaDelDrone = null;	
+    	JSONObject requestContent = new JSONObject();
+		ACLMessage answer=null;
+		
+		try {
+			requestContent.put("Subject", SubjectLibrary.Trace);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		
+		send(ACLMessage.QUERY_REF, DroneID, ProtocolLibrary.Information, "default", null, buildConversationId(), requestContent);
+		
+		try {
+			answer = answerQueue.take();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	
+		if(answer.getPerformativeInt() == ACLMessage.INFORM){
+			try {
+				String trazaJSON = new JSONObject(answer.getContent()).getString("trace");
+				Gson as = new Gson();
+				Type tipoTraza = new TypeToken<Trace>(){}.getType();
+				trazaDelDrone = as.fromJson(trazaJSON, tipoTraza);
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+			
+		}else{
+			try {
+				throw new RuntimeException(new JSONObject(answer.getContent()).getString("error"));
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		
+    	return trazaDelDrone;
+    }
+    
+    /**
+     * Pregunta a un drone por el número de pasos que ha dado
+     * @author Jonay
+     * @return El número de pasos
+     */
+    private int askForDroneSteps(AgentID DroneID){
+    	int pasos = -1;
+    	JSONObject requestContent = new JSONObject();
+		ACLMessage answer=null;
+		
+		try {
+			requestContent.put("Subject", SubjectLibrary.Steps);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		
+		send(ACLMessage.QUERY_REF, DroneID, ProtocolLibrary.Information, "default", null, buildConversationId(), requestContent);
+		
+		try {
+			answer = answerQueue.take();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	
+		if(answer.getPerformativeInt() == ACLMessage.INFORM){
+			try {
+				pasos = new JSONObject(answer.getContent()).getInt("steps");
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+			
+		}else{
+			try {
+				throw new RuntimeException(new JSONObject(answer.getContent()).getString("error"));
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+    	
+    	return pasos;
+    }
+    
     /**
      * Pregunta al cargador la cantidad de bateria que le queda.
      * @author Alberto
@@ -1388,7 +1508,7 @@ public class Drone extends SuperAgent {
     protected int onStepsQueried(ACLMessage msg) throws FIPAException{
             basicErrorsComprobation(msg, ACLMessage.QUERY_REF);
             
-            return trace.size(); //TODO: a la espera de la clase traza
+            return trace.size(); 
     }
     
    
@@ -1554,16 +1674,11 @@ public class Drone extends SuperAgent {
      * @return el array JSONArray
      * @throws JSONException 
      */
-    private JSONArray traceToJSONArray(Trace trc) throws JSONException {
+    private String traceToStringJSON(Trace trc) throws JSONException {
 			Gson gson = new Gson();
-            JSONArray trace = new JSONArray(gson.toJson(trc));
+            String trace = gson.toJson(trc);
             return trace;
     }
-    
-    
-    
-    
-    
     
     
     /************************************************************************************************************************************
@@ -2109,7 +2224,7 @@ public class Drone extends SuperAgent {
                             break;
                     case SubjectLibrary.Trace:
                             Trace trc = onTraceQueried(msg);
-                            JSONArray traceJSON = traceToJSONArray(trc);
+                            String traceJSON = traceToStringJSON(trc);
                             resp.put("Subject", SubjectLibrary.Trace);
                             resp.put("trace", traceJSON);
                             send(ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), resp);
