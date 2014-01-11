@@ -71,6 +71,7 @@ public class Visualizer extends JFrame {
 	private JScrollPane drone5ScrollPane;
 	private JScrollPane drone6ScrollPane;
 	private String [] droneNames;
+	private Log [] logs;
 	
 	/**
 	 * Setter de satelite.
@@ -88,6 +89,14 @@ public class Visualizer extends JFrame {
 	 */
 	public Map getMapToLoad(){
 		return mapToLoad;
+	}
+	
+	/**
+	 * Getter del array con los logs.
+	 * @return array con los logs.
+	 */
+	public Log[] getLogs(){
+		return logs;
 	}
 	
 	/**
@@ -109,7 +118,24 @@ public class Visualizer extends JFrame {
 		launcher = l;
 		setBounds(100, 100, 800, 600);
 		setTabNames();
+		buildLogArray();
 		setVisible(true);	
+	}
+	
+	/**
+	 * Construye un array con los logs para que el Launcher lo pueda consultar y pasárselo a los agentes.
+	 * @author Daniel
+	 */
+	private void buildLogArray(){
+		logs = new Log [8];
+		logs[0] = satelliteLog;
+		logs[1] = chargerLog;
+		logs[2] = drone1Log;
+		logs[3] = drone2Log;
+		logs[4] = drone3Log;
+		logs[5] = drone4Log;
+		logs[6] = drone5Log;
+		logs[7] = drone6Log;
 	}
 	
 	/**

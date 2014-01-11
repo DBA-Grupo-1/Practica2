@@ -64,6 +64,7 @@ public class Launcher {
         	map = visualizer.getMapToLoad();
         	satellite = new Satellite(id_satelite,id_charger, map, droneAmount, visualizer);
         	charger = new Charger(id_charger, 500*droneAmount, id_satelite);
+        	charger.setLog(visualizer.getLogs()[1]);
         	drone1 = new Drone(new AgentID("Drone1"), map.getWidth(), map.getHeigh(), id_satelite, id_charger);
         	droneIDs[0] = drone1.getAid();
         	drone2 = new Drone(new AgentID("Drone2"), map.getWidth(), map.getHeigh(), id_satelite, id_charger);
