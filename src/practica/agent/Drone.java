@@ -1738,7 +1738,7 @@ public class Drone extends SuperAgent {
      */
     protected void updateStatus() {
     	ACLMessage msg=null;
-    		
+    		//hola
     		try {
 				msg=answerQueue.take();
 			} catch (InterruptedException e1) {
