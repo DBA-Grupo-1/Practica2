@@ -71,7 +71,7 @@ public class Drone extends SuperAgent {
 								 FINISH_GOAL = 7;
 								// END = 6;
 		
-		private static final int SCOUT = 0, SCOUT_IMPROVER = 1, FOLLOWER = 2, FREE = 3; //Comportamientos del drone
+		public static final int SCOUT = 0, SCOUT_IMPROVER = 1, FOLLOWER = 2, FREE = 3; //Comportamientos del drone
 		
         private final int ESTADOREQUEST = 0, ESTADOINFORM = 1;
         private final int LIMIT_MOVEMENTS;
@@ -432,6 +432,38 @@ public class Drone extends SuperAgent {
     	//Ismael llamar o mandar la peticion de salida al satelite. Y espera a recibir mensaje (actualizar mode)
     	if(drone_selected.equals(this.getAid())){
     		behavior = mode;
+    	}else{
+    		this.enterStandBy();
+    	}
+    	
+    }
+   
+   /**
+    * Se devuelve la de la traza óptima desde la que partirán los drones para seguir la traza. Esta posición es el comienzo de cuando el drone
+    * inicia la bajada por primera vez. En caso de no existir tal punto (el goal se encuantra en un punto (x, 0) de devuelve el punto final de la traza.
+    * @Jahiel 
+    * @return Punto de partida.
+    */
+   	public int getInitialPosition(){
+   		int i, size = optimalTrace.size(); 
+   		
+   		for(i=0; i<size; ++i){
+   			if(optimalTrace.getLocation(i).getPositionY()>0)
+   				return i-1;
+   		}
+   		
+   		return i-1; 
+   	}
+   
+    /**
+     * Realiza cualquier tipo de actualizacion del estado del drone antes de comprobar los comportamientos. Si la comprobacion 
+     * de los comportamientos se ejecuta de nuevo debido a un RETHINK esta funcion se evalua de nuevo.
+     * 
+     *  posiOX= (posX + (Math.cos(angle) * distance));
+    	     	   posiOY= (posY + (Math.sin(angle)*distance));
+     */
+   protected void preBehavioursSetUp() {  
+    	
     		switch(state){
     		case SLEEPING:
     			if(behavior == SCOUT){
@@ -447,27 +479,12 @@ public class Drone extends SuperAgent {
     			}else if(behavior == FREE)
     				state = EXPLORE_MAP;
     			break;
-    		}
-    	}else{
-    		this.enterStandBy();
-    	}
-    	
-    }
-   
-    /**
-     * Realiza cualquier tipo de actualizacion del estado del drone antes de comprobar los comportamientos. Si la comprobacion 
-     * de los comportamientos se ejecuta de nuevo debido a un RETHINK esta funcion se evalua de nuevo.
-     * 
-     *  posiOX= (posX + (Math.cos(angle) * distance));
-    	     	   posiOY= (posY + (Math.sin(angle)*distance));
-     */
-   protected void preBehavioursSetUp() {  
-    	
-    		switch(state){
     		case GO_TO_POINT_TRACE:
-    			posiOX = optimalTrace.getLocation(0).getPositionX();
-    			posiOY = optimalTrace.getLocation(0).getPositionY();
+    			int indexPosInic = getInitialPosition();
     			
+    			posiOX = optimalTrace.getLocation(indexPosInic).getPositionX();
+        		posiOY = optimalTrace.getLocation(indexPosInic).getPositionY();
+        		
     			if(posX == posiOX && posY == posiOY)
     				state = FOLLOW_TRACE;
     			
@@ -554,10 +571,7 @@ public class Drone extends SuperAgent {
      */
     protected int firstBehaviour(List<Pair> listaMovimientos, Object[] args) {
     	
-    	if(state == this.FOLLOWER){
-    		return optimalTrace.get(currentPositionTracking).getMove();
-    	}else
-            return NO_DEC;
+    	   return NO_DEC;
     }
 
     /**
@@ -569,61 +583,12 @@ public class Drone extends SuperAgent {
      * @return Decision tomada
      */
     protected int secondBehaviour(List<Pair> listaMovimientos, Object[] args) {
-            if(dodging){
-                    //Buscamos el mejor movimiento en la lista y comprobamos si es posible
-                    boolean betterIsPosible = false;
-                    for(int i=0; i<4; i++)
-                            if(listaMovimientos.get(i).getSecond() == betterMoveBeforeDodging)
-                                    betterIsPosible = listaMovimientos.get(i).getThird(); 
 
-                    //Si es posible lo realizamos y salimos del modo esquivando
-                    if(dodging && betterIsPosible){
-                            dodging=false;
-                            System.out.println("Saliendo dodging: " + betterMoveBeforeDodging);
-                            return betterMoveBeforeDodging;
-                    }
-
-
-                    //Comprobamos si estamos esquivando y podemos hacer un movimiento que nos deje cerca de un obstaculo
-
-                    //Al lado de un obstaculo (en un movimiento)
-                    if(dodging)
-                            for(Pair pair: listaMovimientos){
-                                    int move = pair.getSecond();
-                                    if(pair.getThird() && (getCorner(move, (move+1)%4) == Map.OBSTACULO || getCorner(move, (move+3)%4) == Map.OBSTACULO))
-                                            return move;
-                            }
-
-                    //Al lado de un obstaculo (en dos movimientos)
-                    if(dodging){
-                            int [] validMovs=getValidMovements();
-                            for(Pair pair: listaMovimientos){
-                                    int move = pair.getSecond();
-                                    if(pair.getThird() && (validMovs[(move+1)%4] == Map.OBSTACULO || validMovs[(move+3)%4] == Map.OBSTACULO))
-                                            return move;
-                            }
-                    }
-
-                    return NO_DEC;
-            }else{
-                    //Comprobamos si no podemos hacer el mejor movimiento debido a un obstaculo
-                    //En ese caso pasamos al modo esquivar
-                    int [] validMov=getValidMovements();
-                    if(!listaMovimientos.get(0).getThird() && validMov[listaMovimientos.get(0).getSecond()]==Map.OBSTACULO && !dodging){
-                            dodging=true;
-                            /**
-                            @author Jahiel
-                            */
-                            if(listaMovimientos.get(0).getSecond() == movingBlock){
-                            	state = EXPLORE_MAP;
-                            }
-                            
-                            betterMoveBeforeDodging=listaMovimientos.get(0).getSecond();
-                            System.out.println("Entrando dodging: "+betterMoveBeforeDodging);
-                    }
-                    
-                    return NO_DEC;
-            }
+    	if(state == this.FOLLOWER){
+    		return optimalTrace.get(currentPositionTracking).getMove();
+    	}else
+            return NO_DEC;
+           
     }
     
     /**
@@ -633,7 +598,61 @@ public class Drone extends SuperAgent {
      * @return Decision tomada
      */
     protected int thirdBehaviour(List<Pair> listaMovimientos, Object[] args) {
-            return NO_DEC;
+    	 if(dodging){
+             //Buscamos el mejor movimiento en la lista y comprobamos si es posible
+             boolean betterIsPosible = false;
+             for(int i=0; i<4; i++)
+                     if(listaMovimientos.get(i).getSecond() == betterMoveBeforeDodging)
+                             betterIsPosible = listaMovimientos.get(i).getThird(); 
+
+             //Si es posible lo realizamos y salimos del modo esquivando
+             if(dodging && betterIsPosible){
+                     dodging=false;
+                     System.out.println("Saliendo dodging: " + betterMoveBeforeDodging);
+                     return betterMoveBeforeDodging;
+             }
+
+
+             //Comprobamos si estamos esquivando y podemos hacer un movimiento que nos deje cerca de un obstaculo
+
+             //Al lado de un obstaculo (en un movimiento)
+             if(dodging)
+                     for(Pair pair: listaMovimientos){
+                             int move = pair.getSecond();
+                             if(pair.getThird() && (getCorner(move, (move+1)%4) == Map.OBSTACULO || getCorner(move, (move+3)%4) == Map.OBSTACULO))
+                                     return move;
+                     }
+
+             //Al lado de un obstaculo (en dos movimientos)
+             if(dodging){
+                     int [] validMovs=getValidMovements();
+                     for(Pair pair: listaMovimientos){
+                             int move = pair.getSecond();
+                             if(pair.getThird() && (validMovs[(move+1)%4] == Map.OBSTACULO || validMovs[(move+3)%4] == Map.OBSTACULO))
+                                     return move;
+                     }
+             }
+
+             return NO_DEC;
+    	 }else{
+             //Comprobamos si no podemos hacer el mejor movimiento debido a un obstaculo
+             //En ese caso pasamos al modo esquivar
+             int [] validMov=getValidMovements();
+             if(!listaMovimientos.get(0).getThird() && validMov[listaMovimientos.get(0).getSecond()]==Map.OBSTACULO && !dodging){
+                     dodging=true;
+                     /**
+                     @author Jahiel
+                     */
+                     if(listaMovimientos.get(0).getSecond() == movingBlock){
+                     	state = EXPLORE_MAP;
+                     }
+                     
+                     betterMoveBeforeDodging=listaMovimientos.get(0).getSecond();
+                     System.out.println("Entrando dodging: "+betterMoveBeforeDodging);
+             }
+             
+             return NO_DEC;
+    	 }
     }
     
     /**
