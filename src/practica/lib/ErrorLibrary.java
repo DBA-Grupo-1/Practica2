@@ -23,7 +23,8 @@ public class ErrorLibrary {
 	public static final String IWontReachGoal = "Agent is not going to reach the goal.";
 	public static final String MissingAgents = "There are agents not connected to platform";
 	public static final String NotUnderstood = "The message has not been understood.";
-	
+	public static final String AnErrorChosing="An error ocurred while choosing";
+	public static final String InvalidCandidates="There are no valid candidates";
 	//Excepciones
 	public static final String TraceEndLowerThanStart = "\"End\" argument is lower than \"Start\" argument.";
 	public static final String TraceNotAValidMode = "You entered an unvalid mode.";

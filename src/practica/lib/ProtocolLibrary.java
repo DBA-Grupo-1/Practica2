@@ -13,4 +13,5 @@ public class ProtocolLibrary {
 	public static final String DroneMove = "DroneMove";
 	public static final String Finalize = "Finalize";
 	public static final String Notification = "Notification";
+	public static final String Scout = "Scout";
 }

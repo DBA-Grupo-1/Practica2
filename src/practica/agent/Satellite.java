@@ -50,7 +50,7 @@ public class Satellite extends SuperAgent {
 	private int finalize;
 	private HashMap<String, HashMap<String, String>> subscriptions;  // <tipoSubcripcion, < IDAgent, ID-combersation>>
 	private AgentID cargador;			//Añadida variable para que el satelite se comunique con el cargador
-	
+	private int countDronesStar;
 	/**
 	 * Constructor
 	 * @author Jahiel
@@ -66,6 +66,7 @@ public class Satellite extends SuperAgent {
 	public Satellite(AgentID sat,AgentID charger, Map map, int maxDrones) throws Exception{
 		//Inicialización de atributos.
 		super(sat);
+		countDronesStar=0;
 		cargador=charger;
 		exit = false;
 		mapOriginal = new SharedMap(map);
@@ -422,6 +423,7 @@ public class Satellite extends SuperAgent {
 					case ProtocolLibrary.Subscribe : onSubscribe(proccesingMessage);break;
 					case ProtocolLibrary.Finalize : onFinalize(proccesingMessage); break;
 					case ProtocolLibrary.Reload : onReload(proccesingMessage); break;
+					case ProtocolLibrary.Scout: onStart(proccesingMessage); break;
 					default:
 						throw new NotUnderstoodException("");
 					}		
@@ -771,6 +773,140 @@ public class Satellite extends SuperAgent {
 		
 			return rs;
 	}
+	
+	/**
+	 * @author Ismael
+	 * @param msg
+	 * @throws JSONException 
+	 */
+	public void onStart(ACLMessage msg) throws FIPAException{
+		
+		
+		try {
+		JSONObject content = new JSONObject(msg.getContent());
+		JSONObject res = new JSONObject();
+		ArrayList<AgentID> listOfDrones = new ArrayList<AgentID>();
+		
+		
+		
+			String subject = content.getString(JSONKeyLibrary.Subject);
+			/*
+			if (content.length() == 0){
+                throw new RefuseException(ErrorLibrary.EmptyContent);
+			}
+			if (!content.has("Subject") ){
+                throw new RefuseException(ErrorLibrary.BadlyStructuredContent);
+			}
+			if(!search(msg.getSender())){
+				throw new RefuseException(ErrorLibrary.FailureAgentID);
+			}
+			*/
+			
+		switch(subject){
+		
+		case SubjectLibrary.Start:
+			System.out.println("ENtro en Start");
+			countDronesStar++;
+			if(countDronesStar==maxDrones){
+				System.out.println("drones");
+				getDronesNoGoal(listOfDrones); //Este metodo devuelve un array con los drones que no han llegado a meta
+				AgentID id=null;
+				System.out.println("id");
+				id= getIdSelectedDrone(listOfDrones); //Este método selecciona un drone de entre los candidatos.
+				/*
+				if(id==null){
+					throw new RefuseException(ErrorLibrary.InvalidCandidates);
+				}
+				*/
+				res.put(JSONKeyLibrary.Subject, SubjectLibrary.Start);
+				res.put(JSONKeyLibrary.Selected,id);
+				System.out.println("Modo");
+				int Mode=selectMode();//Este método selecciona el modo en el que saldrá el drone
+				if(Mode<0){
+					throw new RefuseException(ErrorLibrary.AnErrorChosing);
+				}
+				res.put("Mode", Mode);
+				
+				for(int i=0;i<listOfDrones.size();i++){
+					send(ACLMessage.INFORM,listOfDrones.get(i),ProtocolLibrary.Scout,"default",null,buildConversationId(), res);
+				}
+			}
+			break;
+		case SubjectLibrary.Straggler:
+						
+				getDronesNoGoal(listOfDrones);
+				listOfDrones.remove(msg.getSender());
+				res.put(JSONKeyLibrary.Subject, SubjectLibrary.Straggler);
+				System.out.println("Envio el primero");
+				send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Scout,"default",null,buildConversationId(), res);
+				
+				res.remove(JSONKeyLibrary.Subject);
+				res.put(JSONKeyLibrary.Subject, SubjectLibrary.StragglerNotification);
+				res.put(JSONKeyLibrary.struggler, msg.getSender());
+				System.out.println("Envio el resto");
+				for(int i=0;i<listOfDrones.size();i++){
+					send(ACLMessage.INFORM,listOfDrones.get(i),ProtocolLibrary.Scout,"default",null,buildConversationId(), res);
+				}
+			break;
+			
+			default:
+				
+                    throw new NotUnderstoodException(ErrorLibrary.NotUnderstood);
+				
+		}
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			RefuseException error = new RefuseException(ErrorLibrary.FailureCommunication);
+		}
+	}
+	
+	/*
+	 * @author Ismael
+	 * Comprueba si el agente existe entre los que hay
+	 * @param sender
+	 */
+	private boolean search(AgentID sender) {
+		// TODO Auto-generated method stub
+		boolean find=false;
+		for(int i=0;i<maxDrones&&!find;i++){
+			if(drones[i].equals(sender)){
+				find=true;
+			}
+		}
+		return find;
+	}
+
+	/*
+	 * @author Ismael
+	 * método para seleccionar el modo adecuado de salida
+	 */
+	private int selectMode() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+	/*
+	 * @author Ismael
+	 * método para seleccionar un drone de entre los posibles a dar salida
+	 * @param listOfDrones
+	 */
+	private AgentID getIdSelectedDrone(ArrayList<AgentID> listOfDrones) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	/*
+	 * @author Ismael
+	 * método para obtener los drones que no han llegado a meta.
+	 * @param listOfDrones
+	 */
+	private void getDronesNoGoal(ArrayList<AgentID> listOfDrones) {
+		// TODO Auto-generated method stub
+		for(int i=0;i<maxDrones;i++){
+			listOfDrones.add(drones[i]);
+		}
+		
+	}
+
 	/**
 	 * TODO Implementation
 	 * @author Ismael
@@ -788,7 +924,7 @@ public class Satellite extends SuperAgent {
 			throw new RuntimeException("Error de perfomativa");
 		}
 		**/
-		System.out.println("HOLAAA");
+		
 		try{
 			switch(subject){
 			    case SubjectLibrary.Status:

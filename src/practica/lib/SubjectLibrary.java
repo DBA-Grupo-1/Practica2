@@ -13,6 +13,11 @@ public class SubjectLibrary {
 	public static final String AllMovements = "AllMovements"; 
 	public static final String ConflictiveSections = "ConflictiveSections";
 	
+	// Inicio
+	public static final String Start = "Start";
+	
+	public static final String Straggler= "Straggler";
+	public static final String StragglerNotification="StragglerNotification";
 	// Información
 	public static final String BatteryLeft = "BatteryLeft";
 	public static final String Trace = "Trace";

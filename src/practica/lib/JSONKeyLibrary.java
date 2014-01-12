@@ -28,4 +28,8 @@ public class JSONKeyLibrary {
 	
 	//INFORMACION
 	public static final String ConflictiveBox = "Conflictive box";
+	
+	//Scout
+	public static final String struggler="struggler";
+	public static final String Selected="Selected";
 }

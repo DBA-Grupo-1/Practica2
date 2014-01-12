@@ -279,7 +279,8 @@ public class Drone extends SuperAgent {
                             postUpdateTrace();
                     }
             }while(decision != END_FAIL && decision != END_SUCCESS);
-           
+          
+            
           
           
     }
@@ -351,10 +352,110 @@ public class Drone extends SuperAgent {
     }
     
     
-    
-    
-    
-    
+    /************************************************************************************************************************************
+     ******** Comunicación Explorador ********************************************************************************************
+     ************************************************************************************************************************************/   
+  
+   public void iStraggler(){
+	   JSONObject ask = new JSONObject();
+	   try{
+		   ask.put(JSONKeyLibrary.Subject, SubjectLibrary.Straggler);
+		   send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Scout, "default", null, buildConversationId(), ask);
+	   }catch(JSONException e){
+		   e.printStackTrace();
+	   }
+   }
+   public String iStragglerReceive(){
+	   String receive=null;
+	   	ACLMessage msg=null;
+	   
+	   try {
+			msg= answerQueue.take();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	   
+	   switch(msg.getPerformativeInt()){
+	   case ACLMessage.INFORM:
+		   try{
+		   JSONObject content= new JSONObject(msg.getContent());
+		  receive = content.getString(JSONKeyLibrary.Subject);		   
+		   
+		   }catch(JSONException e){
+			   e.printStackTrace();
+		   }
+		   break;
+	   case ACLMessage.FAILURE:
+		   
+		   break;
+	   }
+	   return receive;
+   }
+   public void heStragglerReceive(String who,String what){
+	 	ACLMessage msg=null;
+		   
+		   try {
+				msg= answerQueue.take();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		   
+		   switch(msg.getPerformativeInt()){
+		   case ACLMessage.INFORM:
+			   try{
+			   JSONObject content= new JSONObject(msg.getContent());
+			  what = content.getString(JSONKeyLibrary.Subject);		   
+			   who = content.getString(SubjectLibrary.StragglerNotification);
+			   }catch(JSONException e){
+				   e.printStackTrace();
+			   }
+			   break;
+		   case ACLMessage.FAILURE:
+			   
+			   break;
+		   }
+   }
+   
+   public void askOut(){
+	   JSONObject ask = new JSONObject();
+	   try{
+		   ask.put(JSONKeyLibrary.Subject, SubjectLibrary.Start);
+		   send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Scout, "default", null, buildConversationId(), ask);
+	   }catch(JSONException e){
+		   e.printStackTrace();
+	   }
+   }
+
+   public void askOutReceive(AgentID resId, int Mod){
+	   ACLMessage msg=null;
+	   
+	   try {
+			msg= answerQueue.take();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	   
+	   switch(msg.getPerformativeInt()){
+	   case ACLMessage.INFORM:
+		   try{
+		   JSONObject content= new JSONObject(msg.getContent());
+		   //AgentID id = new AgentID(content.getString(JSONKeyLibrary.Selected));
+		   int Mode = content.getInt("Mode");
+		   resId=null;
+		   Mod=Mode;
+		   }catch(JSONException e){
+			   e.printStackTrace();
+		   }
+		   break;
+	   case ACLMessage.FAILURE:
+		   
+		   break;
+		   
+		   default:
+			   
+			   break;
+	   }
+   }
     
     
     
@@ -430,6 +531,7 @@ public class Drone extends SuperAgent {
     	AgentID drone_selected = new AgentID();
     	
     	//Ismael llamar o mandar la peticion de salida al satelite. Y espera a recibir mensaje (actualizar mode)
+    	askOut();
     	if(drone_selected.equals(this.getAid())){
     		behavior = mode;
     		switch(state){
@@ -860,6 +962,16 @@ public class Drone extends SuperAgent {
         BlockingQueue<ACLMessage> queue = null;
         System.out.println("RECIBO DRONE: "+subject);
         switch(subject){
+        
+        case SubjectLibrary.StragglerNotification:
+        	queue=answerQueue;
+        	break;
+        case SubjectLibrary.Start:
+        	queue=answerQueue;
+        	break;
+        case SubjectLibrary.Straggler:
+        	queue=answerQueue;
+        	break;
         case SubjectLibrary.Status:
         	queue=answerQueue;
         	break;
