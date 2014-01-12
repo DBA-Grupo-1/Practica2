@@ -21,6 +21,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.google.gson.Gson;
+
 import practica.gui.Visualizer;
 import practica.lib.ErrorLibrary;
 import practica.lib.JSONKeyLibrary;
@@ -28,6 +30,7 @@ import practica.lib.ProtocolLibrary;
 import practica.lib.SubjectLibrary;
 import practica.map.Map;
 import practica.map.SharedMap;
+import practica.trace.Trace;
 import practica.util.GPSLocation;
 import practica.util.ImgMapConverter;
 import practica.util.MessageQueue;
@@ -48,6 +51,7 @@ public class Satellite extends SuperAgent {
 	private boolean exit;							//Variable para controlar la terminación de la ejecución del satélite.
 	private static List<Integer> posXIniciales;
 	private int finalize;
+	private int n_requestStart;
 	private HashMap<String, HashMap<String, String>> subscriptions;  // <tipoSubcripcion, < IDAgent, ID-combersation>>
 	private AgentID cargador;			//Añadida variable para que el satelite se comunique con el cargador
 	private int countDronesStar;
@@ -83,6 +87,7 @@ public class Satellite extends SuperAgent {
 		subscriptions.put("AllMovements", new HashMap<String, String>());
 		subscriptions.put("ConflictiveSections", new HashMap<String, String>());
 		finalize=0;
+		n_requestStart = 0;
 		
 		//Calcular la posición del objetivo.
 		//Se suman todas las posiciones que contienen un objetivo y se halla la media.
@@ -501,6 +506,106 @@ public class Satellite extends SuperAgent {
 			
 			this.sendError(error, msg);
 			throw new RuntimeException(ErrorLibrary.FailureCommunication + " (Satelite)");
+		}
+	}
+	
+	/**
+	 * Se devuelve la de la traza óptima desde la que partirán los drones para seguir la traza. Esta posición es el comienzo de cuando el drone
+	    * inicia la bajada por primera vez. En caso de no existir tal punto (el goal se encuantra en un punto (x, 0) de devuelve el punto final de la traza.
+	    * @Jahiel 
+	    * @return Punto de partida.
+	    */
+	  public int getInitialPosition(Trace t){
+	   	int i, size = t.size(); 
+	   		
+	   	for(i=0; i<size; ++i){
+	   		if(t.getLocation(i).getPositionY()>0)
+	   			return i-1;
+	   	}
+	   		
+	   	return i-1; 
+	  }
+	      	
+	/**
+	 * Rutina de tratamiento para la petición de salida por parte de los drones.
+	 * @author Jahiel
+	 * @param msg
+	 */
+	public void onStartDrone(ACLMessage msg) throws FIPAException{
+		Trace optimalTrace =  null;
+		Trace traceAux;
+		ArrayList<DroneStatus> dronesWithoutLeaving = new ArrayList<DroneStatus>();
+		int batteryInCharger = 0;
+		
+		n_requestStart++;
+		
+		if(n_requestStart == drones.length){
+			
+			// Se calcula que drones han acabado y se coje la traza optima (la mas corta). Se coje solo el tamaño de la traza
+			// desde el punto de partida hasta el final.
+			
+			for(int i=0; i<droneStuses.length; i++){
+				if(droneStuses[i].isGoalReached()){
+					traceAux = askForDroneTrace(droneStuses[i].getId());
+					if(optimalTrace == null)
+						optimalTrace = traceAux; 
+					if(traceAux.size() < optimalTrace.size())
+						optimalTrace = traceAux;
+				}else
+					dronesWithoutLeaving.add(droneStuses[i]);
+			}
+			
+			GPSLocation start = new GPSLocation(optimalTrace.getLocation(0).getPositionX(), optimalTrace.getLocation(0).getPositionY());
+			int sizeTrace = optimalTrace.getSubtrace(start).size() * dronesWithoutLeaving.size(); // el tamaño de esta traza se multiplica por el numero
+																								  // de drones que deben recorrerla.
+			
+			// Se calcula cuanto gastan los drones de bateria en ir hacia el punto de partida de la traza optima
+			
+			int positionInic = getInitialPosition(optimalTrace);
+			GPSLocation end = new GPSLocation(optimalTrace.getLocation(positionInic).getPositionX(), optimalTrace.getLocation(positionInic).getPositionY());
+			
+			for(DroneStatus status: droneStuses){
+				sizeTrace += optimalTrace.getSubtrace(status.getLocation(), end).size();
+			}
+			
+			// Se pide la bateria restante que le queda al cargador
+			
+			JSONObject content =  new JSONObject();
+			try {
+				content.put(JSONKeyLibrary.Subject, SubjectLibrary.ChargerBattery);
+			} catch (JSONException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			send(ACLMessage.INFORM, msg.getSender(), ProtocolLibrary.Information, null, null, buildConversationId(), content);
+			
+			try {
+				ACLMessage answer = answerQueue.take();
+			} catch (InterruptedException e) {
+				new RefuseException(ErrorLibrary.FailureCommunication);
+			}
+			
+			if(!msg.getPerformative().equals(ACLMessage.INFORM)){
+				throw new RuntimeException("Error en la recepcion del tipo de mensaje");
+			}
+			
+			try {
+				JSONObject contentRes = new JSONObject(msg.getContent());
+				
+				batteryInCharger = contentRes.getInt(SubjectLibrary.ChargerBattery);
+			} catch (JSONException e) {
+				new RefuseException(ErrorLibrary.FailureCommunication);
+			}
+			
+			// Se comprueba si pueden llegar todos los drones.
+			int batteryInDrones = dronesWithoutLeaving.size() * 75; // Se calcula cuanto bateria tienen los drones que quedan por salir
+			int behavior;
+			
+			if( (sizeTrace - batteryInDrones) <= batteryInCharger){
+				behavior = Drone.FOLLOWER;
+			}
+			
+			//TODO
 		}
 	}
 	
@@ -1135,6 +1240,52 @@ public class Satellite extends SuperAgent {
 		
 		return resultado;
 	}
+	
+	/**
+     * Pregunta a un drone por su traza
+     * @author Jonay
+     * @return la traza del drone
+     */
+    private Trace askForDroneTrace(AgentID DroneID){
+    	Trace trazaDelDrone = null;	
+    	JSONObject requestContent = new JSONObject();
+		ACLMessage answer=null;
+		
+		try {
+			requestContent.put("Subject", SubjectLibrary.Trace);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		
+		send(ACLMessage.QUERY_REF, DroneID, ProtocolLibrary.Information, "default", null, buildConversationId(), requestContent);
+		
+		try {
+			answer = answerQueue.take();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	
+		if(answer.getPerformativeInt() == ACLMessage.INFORM){
+			try {
+				String trazaJSON = new JSONObject(answer.getContent()).getString("trace");
+				Gson gson = new Gson();
+//				Type tipoTraza = new TypeToken<Trace>(){}.getType();
+				trazaDelDrone = gson.fromJson(trazaJSON, Trace.class);
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+			
+		}else{
+			try {
+				throw new RuntimeException(new JSONObject(answer.getContent()).getString("error"));
+			} catch (JSONException e) {
+				e.printStackTrace();
+			}
+		}
+		
+    	return trazaDelDrone;
+    }
+    
 	/**
 	 * TODO Implementación
 	 * 
