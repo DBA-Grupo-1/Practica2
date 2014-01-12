@@ -91,6 +91,7 @@ public class Drone extends SuperAgent {
         protected int battery;
         protected double posiOX, posiOY;
         protected int currentPositionTracking;
+        protected int movingBlock;  // movimiento a bloquear para el modo explorar otras decisiones.
         
         /** Decision de mover al norte */
         public static final int NORTE = 3;
@@ -167,7 +168,7 @@ public class Drone extends SuperAgent {
                 
                 state = SLEEPING;
                 optimalTrace = null;
-                currentPositionTracking = 0;
+                currentPositionTracking = -1;
         }
         
         
@@ -382,9 +383,10 @@ public class Drone extends SuperAgent {
     protected int think(){
             int tempDecision;
             
-            if(goal)
+            if(goal){
+            		state = FINISH_GOAL;
                     return END_SUCCESS;
-
+            } 
             do{
                     try {
                             waitIfStandBy();
@@ -396,10 +398,7 @@ public class Drone extends SuperAgent {
                     	sendRequestOutput();
                     	tempDecision = RETHINK;
                     }else{
-                    	if(behavior != FOLLOWER)
-                			getStatus();
-                    	else
-                    		updateStatus(null);
+                    	getStatus();
                         
                     	preBehavioursSetUp();
                     	tempDecision = checkBehaviours();
@@ -450,7 +449,7 @@ public class Drone extends SuperAgent {
     			break;
     		}
     	}else{
-    		this.standBy = 1;
+    		this.enterStandBy();
     	}
     	
     }
@@ -469,11 +468,15 @@ public class Drone extends SuperAgent {
     			posiOX = optimalTrace.getLocation(0).getPositionX();
     			posiOY = optimalTrace.getLocation(0).getPositionY();
     			
-    			if(posX == posiOX && posiOY == posiOY)
+    			if(posX == posiOX && posY == posiOY)
     				state = FOLLOW_TRACE;
     			
     			break;
     		case FOLLOW_TRACE:
+    			
+    			currentPositionTracking++;
+    			break;
+    		case FORCE_EXPLORATION:
     			
     			break;
     		/*case LAGGING:
@@ -550,11 +553,17 @@ public class Drone extends SuperAgent {
      * @return Decision tomada
      */
     protected int firstBehaviour(List<Pair> listaMovimientos, Object[] args) {
+    	
+    	if(state == this.FOLLOWER){
+    		return optimalTrace.get(currentPositionTracking).getMove();
+    	}else
             return NO_DEC;
     }
 
     /**
      * Segundo comportamiento intermedio del drone. Es el tercero en ejecutarse al recorrer los comportamientos.
+     * @author Alberto
+     * @author Jahiel
      * @param listaMovimientos Lista de movimientos a analizar
      * @param args Argumentos adicionales
      * @return Decision tomada
@@ -602,10 +611,17 @@ public class Drone extends SuperAgent {
                     int [] validMov=getValidMovements();
                     if(!listaMovimientos.get(0).getThird() && validMov[listaMovimientos.get(0).getSecond()]==Map.OBSTACULO && !dodging){
                             dodging=true;
+                            /**
+                            @author Jahiel
+                            */
+                            if(listaMovimientos.get(0).getSecond() == movingBlock){
+                            	state = EXPLORE_MAP;
+                            }
+                            
                             betterMoveBeforeDodging=listaMovimientos.get(0).getSecond();
                             System.out.println("Entrando dodging: "+betterMoveBeforeDodging);
                     }
-
+                    
                     return NO_DEC;
             }
     }
@@ -1574,7 +1590,6 @@ public class Drone extends SuperAgent {
      */
     protected void updateStatus(ACLMessage msg) {
     	
-    	if(msg != null){
             JSONObject contenido = null;
             try {
                     contenido = new JSONObject(msg.getContent());
@@ -1596,6 +1611,10 @@ public class Drone extends SuperAgent {
                     String name = aux2.getString("name");
                     int Battery = aux2.getInt("battery");
                    
+                    if(contenido.has(JSONKeyLibrary.ConflictiveBox)){
+                    	// TODO crear objeto casilla conflictiva. Y comprobar si cambiar a estado ForzarExploracion
+                    }
+                    askForGoal(this.getAid());
                     
                     /**
                     aux = contenido.getJSONObject("gonio");
@@ -1640,25 +1659,6 @@ public class Drone extends SuperAgent {
                     e.printStackTrace();
             }
             
-    	}else{
-            String campo=null;
-
-            //actualizamos el mapa del drone antes de recoger las nuevas posiciones X e Y.
-            try {
-				droneMap.setValue(posX,posY,Map.VISITADO);
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-            posX = optimalTrace.getLocation(currentPositionTracking).getPositionX();
-            posY = optimalTrace.getLocation(currentPositionTracking).getPositionY();
-            /*
-            AgentID id =(AgentID) aux2.get("id");
-            String name = aux2.getString("name");
-            int Battery = aux2.getInt("battery");
-            */
-    	}
-    	askForGoal(this.getAid());
     }
     
     /*********Funciones auxiliares *****************************************************************************************************************/
@@ -2108,12 +2108,11 @@ public class Drone extends SuperAgent {
 			id = new AgentID(content.getString(JSONKeyLibrary.Decision));
 		} catch (JSONException e) {
 			throw new FailureException(ErrorLibrary.FailureInformationAccess);
-		}
-        /*
-        Pedir traza
-                */ 
+		}      
         
-        Trace trace = new Trace();
+        Trace trace =  askForDroneTrace(id); // pregunto la traza del drone que ha finalizado para ver si es mejor que la optima 
+        									 // hasta el momento.
+        
         if(optimalTrace == null)
         	optimalTrace = trace;
         else{
@@ -2121,7 +2120,7 @@ public class Drone extends SuperAgent {
         		optimalTrace = trace;
         }
         
-        // Despertar al drone
+        this.leaveStandBy(); //Despertamos al drone
     }
     
     protected void onYourMovementsInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException{
@@ -2470,11 +2469,12 @@ public class Drone extends SuperAgent {
     
     /**
      * Método para obtener un array con los valores combinados de surroundings y el mapa
+     * @author Jahiel
      * @return Un array con lo que hay en las posiciones de alrededor. Los valores posibles son LIBRE, OBSTACULO y VISITADO
      */
     private int[] getValidSquares() {
             int movimientosLibres[] = new int[9];
-
+            
             for(int i=0; i<3; i++)
                     for(int j=0; j<3; j++)
                             if(surroundings[i+j*3]==Map.LIBRE || surroundings[i+j*3]==Map.OBJETIVO){
@@ -2483,11 +2483,47 @@ public class Drone extends SuperAgent {
                                     movimientosLibres[i+j*3]=surroundings[i+j*3];
                             }
             
+            if(state == FORCE_EXPLORATION ){
+            	for(int i=0; i<movimientosLibres.length; i++){
+            		if(movimientosLibres[i] == Map.VISITADO)
+            			movimientosLibres[i] = Map.LIBRE; 
+            	}
+            	movimientosLibres = blockMovement(movimientosLibres, movingBlock);
+            }
+            
             return movimientosLibres;
     }
 
-    
-
+    /**
+     * Se comprueba cual es el movimiento a bloquear y dicha casilla se pone como Visitada para forzar al drone a no dirigirse
+     * hacia esa casilla.
+     * @author Jahiel
+     */
+    public int[] blockMovement(int mov[], int movement){
+    	int index;
+    	
+    	switch(movement){
+    	case NORTE:
+    		index = 1;
+    		break;
+    	case OESTE:
+    		index = 3;
+    		break;
+    	case ESTE:
+    		index = 5;
+    		break;
+    	case SUR:
+    		index = 7;
+    		break;
+    	default:
+    		index = -1;
+    		break;
+    	}
+    	
+    	mov[index] = Map.VISITADO;
+    	
+    	return mov;
+    }
     /**
      * Getter del mapa, usado para el visualizador.
      * @return el mapa del drone.

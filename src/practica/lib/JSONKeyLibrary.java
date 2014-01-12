@@ -25,4 +25,7 @@ public class JSONKeyLibrary {
 	
 	//MOVE DRONE
 	public static final String Decision = "Decision";
+	
+	//INFORMACION
+	public static final String ConflictiveBox = "Conflictive box";
 }
