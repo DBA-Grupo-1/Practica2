@@ -881,6 +881,7 @@ public class Satellite extends SuperAgent {
 	
 	/**
 	 * @author Ismael
+	 * metodos de inicio y straggler
 	 * @param msg
 	 * @throws JSONException 
 	 */
@@ -1036,9 +1037,10 @@ public class Satellite extends SuperAgent {
 			    	try{
 			    		AgentID id= msg.getSender();
 			    		DroneStatus nm= findStatus(id);
+			    		
 			    		res.put(JSONKeyLibrary.Subject,SubjectLibrary.Status);
-			    		JSONObject convert = StatusToJSON(nm);
-			    		res.put(SubjectLibrary.Values,convert);
+			    		//JSONObject convert = StatusToJSON(nm);
+			    		res.put(SubjectLibrary.Values,createJSONStatus(nm));
 			    		send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,"default",null,buildConversationId(), res);
 			    		
 			    		

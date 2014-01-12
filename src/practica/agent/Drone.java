@@ -265,7 +265,7 @@ public class Drone extends SuperAgent {
             //subscribe(); Se anula hasta que no se sepa donde se usará
             
            
-            
+           
             do{
             		
                     decision = think();
@@ -280,6 +280,8 @@ public class Drone extends SuperAgent {
                     }
             }while(decision != END_FAIL && decision != END_SUCCESS);
           
+            
+           
             
           
           
@@ -355,7 +357,10 @@ public class Drone extends SuperAgent {
     /************************************************************************************************************************************
      ******** Comunicación Explorador ********************************************************************************************
      ************************************************************************************************************************************/   
-  
+  /*
+   * @author Ismael
+   * comunica que esta STRAGGLER
+   */
    public void iStraggler(){
 	   JSONObject ask = new JSONObject();
 	   try{
@@ -365,6 +370,11 @@ public class Drone extends SuperAgent {
 		   e.printStackTrace();
 	   }
    }
+   /**
+    * @author Ismael
+    * recepcion del STRAGGLER de quien envió el mensage.
+    * @return String
+    */
    public String iStragglerReceive(){
 	   String receive=null;
 	   	ACLMessage msg=null;
@@ -391,6 +401,12 @@ public class Drone extends SuperAgent {
 	   }
 	   return receive;
    }
+   /**
+    * @author Ismael 
+    * rececpcion de compañeros al mensaje STRAGGLER
+    * @param who
+    * @param what
+    */
    public void heStragglerReceive(String who,String what){
 	 	ACLMessage msg=null;
 		   
@@ -981,7 +997,8 @@ public class Drone extends SuperAgent {
         BlockingQueue<ACLMessage> queue = null;
         System.out.println("RECIBO DRONE: "+subject);
         switch(subject){
-        
+       
+        	
         case SubjectLibrary.StragglerNotification:
         	queue=answerQueue;
         	break;
@@ -1701,14 +1718,14 @@ public class Drone extends SuperAgent {
             }
             
             send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), contenido);
-            
+           /** 
             try {
                     msg = answerQueue.take();
             } catch (InterruptedException e) {
                     e.printStackTrace();
             }
+           **/ 
             
-            updateStatus(msg);
            
     }
 
@@ -1719,8 +1736,15 @@ public class Drone extends SuperAgent {
      * @author Ismael
      * @author Jahiel
      */
-    protected void updateStatus(ACLMessage msg) {
-    	
+    protected void updateStatus() {
+    	ACLMessage msg=null;
+    		
+    		try {
+				msg=answerQueue.take();
+			} catch (InterruptedException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
             JSONObject contenido = null;
             try {
                     contenido = new JSONObject(msg.getContent());
@@ -1729,23 +1753,35 @@ public class Drone extends SuperAgent {
                     Logger.getLogger(Drone.class.getName()).log(Level.SEVERE, null, ex);
             }
             try {
-                    JSONObject aux, aux2 = new JSONObject();
+                    JSONObject aux, aux2,aux3 = new JSONObject();
+                    
                     String campo=null;
-                    aux = contenido.getJSONObject("values");
-                    aux2 = aux.getJSONObject("location");
+                    aux = contenido.getJSONObject(SubjectLibrary.Values);
+                    aux2 = aux.getJSONObject("gps");
+                    aux3 = aux.getJSONObject("gonio");
                     //actualizamos el mapa del drone antes de recoger las nuevas posiciones X e Y.
                     droneMap.setValue(posX,posY,Map.VISITADO);
                     posX = aux2.getInt("x");
                     posY = aux2.getInt("y");
-                    
-                    AgentID id =(AgentID) aux2.get("id");
-                    String name = aux2.getString("name");
-                    int Battery = aux2.getInt("battery");
-                   
+                    distance = aux3.getDouble("dist");
+                    angle= (float) aux3.getDouble("alpha");
+                    battery= aux.getInt("battery");
+                    String valor = aux.getString("goal");
+                    if(valor.equals("No")){
+                    	goal=false;
+                    }
+                    else if (valor.equals("Si")){
+                    	goal=true;
+                    }
+                    JSONArray jsArray = new JSONArray();
+                    jsArray= aux.getJSONArray("radar");
+                    for(int i=0;i<9;i++){
+                    	surroundings[i]=jsArray.getInt(i);
+                    }
                     if(contenido.has(JSONKeyLibrary.ConflictiveBox)){
                     	// TODO crear objeto casilla conflictiva. Y comprobar si cambiar a estado ForzarExploracion
                     }
-                    askForGoal(this.getAid());
+                    
                     
                     /**
                     aux = contenido.getJSONObject("gonio");
