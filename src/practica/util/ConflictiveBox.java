@@ -1,5 +1,7 @@
 package practica.util;
 
+import es.upv.dsic.gti_ia.core.AgentID;
+
 /**
  * Clase que modela las casillas conflictivas, es decir, las que pudieran tener varias resoluciones,
  * y su contenido.
@@ -11,6 +13,20 @@ public class ConflictiveBox {
 	private GPSLocation posFinal;
 	private int length;
 	private int decision;
+	private AgentID droneID;
+	
+	/**
+	 * Constructor con el ID del drone responsable de la casilla
+	 * @param id el ID del drone
+	 */
+	public ConflictiveBox(AgentID id){
+		dangerous = false;
+		posInicial = null;
+		posFinal = null;
+		length = 0;
+		decision = -1;
+		droneID = id;
+	}
 	
 	/**
 	 * Constructor que inicializa las variables
@@ -22,6 +38,7 @@ public class ConflictiveBox {
 		posFinal = null;
 		length = 0;
 		decision = -1;
+		droneID = null;
 	}
 	
 	/**
@@ -112,6 +129,24 @@ public class ConflictiveBox {
 	 */
 	public void setDecision(int decision) {
 		this.decision = decision;
+	}
+
+	/**
+	 * Devuelve el id del drone responsable de esta casilla conflictiva
+	 * @author Jonay
+	 * @return el ID del drone
+	 */
+	public AgentID getDroneID() {
+		return droneID;
+	}
+
+	/**
+	 * Setter del id del drone responsable de la casilla conflictiva
+	 * @author Jonay
+	 * @param droneID el ID del drone
+	 */
+	public void setDroneID(AgentID droneID) {
+		this.droneID = droneID;
 	}
 
 }
