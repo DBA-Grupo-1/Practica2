@@ -1080,6 +1080,7 @@ public class Satellite extends SuperAgent {
 		return find;
 	}
 
+	
 	/*
 	 * @author Ismael
 	 * método para seleccionar el modo adecuado de salida
