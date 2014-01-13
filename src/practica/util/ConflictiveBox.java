@@ -1,5 +1,7 @@
 package practica.util;
 
+import es.upv.dsic.gti_ia.core.AgentID;
+
 /**
  * Clase que modela las casillas conflictivas, es decir, las que pudieran tener varias resoluciones,
  * y su contenido.
@@ -11,6 +13,7 @@ public class ConflictiveBox {
 	private GPSLocation posFinal;
 	private int length;
 	private int decision;
+	AgentID id;
 	
 	/**
 	 * Constructor que inicializa las variables
@@ -22,6 +25,7 @@ public class ConflictiveBox {
 		posFinal = null;
 		length = 0;
 		decision = -1;
+		id = null;
 	}
 	
 	/**
@@ -112,6 +116,27 @@ public class ConflictiveBox {
 	 */
 	public void setDecision(int decision) {
 		this.decision = decision;
+	}
+	
+	/**
+	 * Devuelve el identificador del agente que ha puesto esta casilla conflictiva
+	 * @return El identificador del agente
+	 * 
+	 * @author jonay
+	 */
+	public AgentID getId(){
+		return id;
+	}
+	
+	/**
+	 * Permite asignar un identificador de agente para guardarlo como creador del
+	 * aviso de esta casilla conflictiva
+	 * @param id El identificador del agente
+	 * 
+	 * @author jonay
+	 */
+	public void setId(AgentID id){
+		this.id = id;
 	}
 
 }
