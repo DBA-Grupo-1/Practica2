@@ -2,7 +2,6 @@ package practica.map;
 
 import java.util.ArrayList;
 
-import practica.trace.BadChoice;
 import practica.util.ConflictiveBox;
 import es.upv.dsic.gti_ia.core.AgentID;
 
@@ -14,7 +13,6 @@ import es.upv.dsic.gti_ia.core.AgentID;
  */
 public class SharedSquare {
 	private ArrayList<AgentID> visitingAgents;
-	private ArrayList<BadChoice> badChoices;
 	private ArrayList<ConflictiveBox> conflictiveBoxes;
 	
 	/**
@@ -24,7 +22,7 @@ public class SharedSquare {
 	 */
 	public SharedSquare(){
 		visitingAgents = new ArrayList<AgentID>();
-		badChoices = new ArrayList<BadChoice>();
+		conflictiveBoxes = new ArrayList<ConflictiveBox>();
 	}
 	
 	/**
@@ -36,12 +34,12 @@ public class SharedSquare {
 	public SharedSquare(SharedSquare ss){
 		this();
 		ArrayList<AgentID> auxAid = ss.getVisitingAgents();
-		ArrayList<BadChoice> auxBC = ss.getBadChoices();
+		ArrayList<ConflictiveBox> auxCB = ss.getConflictiveBoxes();
 		for(AgentID aid : auxAid){
 			this.visitingAgents.add(aid);
 		}
-		for(BadChoice bc : auxBC){
-			this.badChoices.add(bc);
+		for(ConflictiveBox bc : auxCB){
+			this.conflictiveBoxes.add(bc);
 		}
 	}
 	
@@ -63,52 +61,7 @@ public class SharedSquare {
 	 */
 	public void addVisitingAgent(AgentID id){
 		visitingAgents.add(id);
-	}
-	
-	/**
-	 * Devuelve un array con las malas decisiones anotadas en esta casilla
-	 * @return Array con los BadChoice
-	 * 
-	 * @author jonay
-	 */
-	public ArrayList<BadChoice> getBadChoices(){
-		return badChoices;
-	}
-	
-	/**
-	 * Añade una mala decisión a esta casilla
-	 * @param bc La mala decisión
-	 * 
-	 * @author jonay
-	 */
-	public void addBadChoice(BadChoice bc){
-		badChoices.add(bc);
-	}
-	
-	/**
-	 * Elimina las malas decisiones que pudiera haber anotado el agente indicado en esta casilla
-	 * @param id El identificador del agente
-	 * 
-	 * @author jonay
-	 */
-	public void removeBadChoice(AgentID id){
-		for(BadChoice bc : badChoices){
-			if(bc.getId().equals(id)){
-				badChoices.remove(bc);
-			}
-		}
-	}
-	
-	/**
-	 * Devuelve si hay alguna mala decisión anotada en la casilla
-	 * @return true si hay alguna mala decisión, false si no
-	 * 
-	 * @author jonay
-	 */
-	public boolean hasBadChoices(){
-		return !badChoices.isEmpty();
-	}
-	
+	}	
 	
 	/**
 	 * Devuelve la ID del último agente que visitó la casilla.

@@ -20,7 +20,6 @@ import practica.lib.JSONKeyLibrary;
 import practica.lib.ProtocolLibrary;
 import practica.lib.SubjectLibrary;
 import practica.map.Map;
-import practica.trace.BadChoice;
 import practica.trace.Trace;
 import practica.util.ConflictiveBox;
 import practica.util.GPSLocation;
