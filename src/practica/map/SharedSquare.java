@@ -129,4 +129,13 @@ public class SharedSquare {
 	public void addConflictiveBox(ConflictiveBox cb) {
 		conflictiveBoxes.add(cb);
 	}
+	
+	/**
+	 * Comprueba si la casilla es conflictiva.
+	 * @author Daniel
+	 * @return true si es conflictiva, false si no lo es.
+	 */
+	public boolean isConflictive (){
+		return !conflictiveBoxes.isEmpty();
+	}
 }

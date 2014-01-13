@@ -131,13 +131,13 @@ public class Satellite extends SuperAgent {
 	
 	/**
 	 * Hebra de recepción de mensajes
-	 * @author Dani
+	 * @author Daniel
 	 * @param msg mensaje recibido.
 	 */
 	public void onMessage (ACLMessage msg){	
 		JSONObject content;
 		String subject = null;
-		BlockingQueue<ACLMessage> q = null;
+		BlockingQueue<ACLMessage> queue = null;
 		
 		try{
 			content = new JSONObject(msg.getContent());
@@ -152,17 +152,17 @@ public class Satellite extends SuperAgent {
 			case SubjectLibrary.ChargerBattery:
 			case SubjectLibrary.Charge:
 			case SubjectLibrary.DetailedCharges:
-				q = answerQueue;
+				queue = answerQueue;
 				break;
 			
 			default:
-				q = requestQueue;
+				queue = requestQueue;
 		}
 		
 		try {
 			System.out.println(msg.getPerformative() + " " + msg.getContent());
 			
-			q.put(msg);
+			queue.put(msg);
 			System.out.println("mensaje recibido!");	
 		} catch (InterruptedException e) {
 			e.printStackTrace();
@@ -279,8 +279,9 @@ public class Satellite extends SuperAgent {
 	 * Creamos el objeto JSON status:
 	 * Status: {“connected”:”YES”, “ready”:”YES”, “gps”:{“x”:10,”y”:5},
 	 * “goal”:”No”, “gonio”:{“alpha”:0, “dist”:4.0}, “battery”:100,
-	 * “radar”:[0,0,0,0,0,0,0,1,1]}
+	 * “radar”:[0,0,0,0,0,0,0,1,1], "isConflictive":"True/False", "}
 	 * @author Jahiel
+	 * @author Daniel
 	 * @return Objeto JSon con el contenido de Status
 	 * @throws JSONException  Si la clave es null
 	 */
@@ -316,6 +317,12 @@ public class Satellite extends SuperAgent {
 		int[] surroundings = getSurroundings(droneStatus);
 		JSONArray jsArray = new JSONArray(surroundings);
 		status.put("radar", jsArray);
+		
+		//Compruebo si la casilla es conflictiva
+		/**
+		 * @TODO_AUTHOR Daniel
+		 * @TODO
+		 */
 
 		return status;
 	}
