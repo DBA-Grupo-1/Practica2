@@ -77,6 +77,8 @@ public class Drone extends SuperAgent {
 		
 		public static final int SCOUT = 0, SCOUT_IMPROVER = 1, FOLLOWER = 2, FREE = 3; //Comportamientos del drone
 		
+		private static final int MIN_SIZE_FOR_OBSTACLE_SKIRTING = 20;
+		
         private final int ESTADOREQUEST = 0, ESTADOINFORM = 1;
         private final int LIMIT_MOVEMENTS;
         private boolean exit;
@@ -131,11 +133,12 @@ public class Drone extends SuperAgent {
         protected BlockingQueue<ACLMessage> requestQueue;
         protected Thread dispatcher;
         private AgentID[] teammates;
-        private Trace trace, optimalTrace;
+        private Trace trace;
         
         private ConflictiveBox conflictiveBox;
         private ArrayList<ConflictiveBox> currentConflictiveBox;
         private boolean conflictiveBoxReached;
+        private ConflictiveBox lastConflictiveBox;
         private int contSalida = 0;
         private boolean preEsq = false;
         private boolean postEsq = false;
@@ -144,6 +147,7 @@ public class Drone extends SuperAgent {
         
         private HashMap<String, String> idsCombersationSubscribe;   // {nombreSubscripcion, id-combersation}
         private HashMap<String, String> subscribers;                                // {ID_Agente, id-combersation}
+        private HashMap<AgentID, Trace> otherTracesDrones;
 
         /**
          * Constructor del Drone.
@@ -181,9 +185,9 @@ public class Drone extends SuperAgent {
                 
                 idsCombersationSubscribe = new HashMap<String, String>();
                 subscribers = new HashMap<String, String>();
+                otherTracesDrones = new HashMap<AgentID, Trace>();
                 
                 state = SLEEPING;
-                optimalTrace = null;
                 currentPositionTracking = -1;
                 
                 conflictiveBoxReached = false;
@@ -306,7 +310,7 @@ public class Drone extends SuperAgent {
     	boolean entrandoEsq = !preEsq && postEsq; //Antes no estaba esquivando y ahora sí
     	boolean saliendoEsq = preEsq && !postEsq; //Antes estaba esquivando y ya no
     	
-    	if(state == SLEEPING){ //TODO: Revisar, "si se ha decidido quedar rezagado"
+    	if(state == LAGGING){ 
     		conflictiveBox.setDangerous(true);
     		Trace subtraza = trace.getSubtrace(conflictiveBox.getPosInicial(), new GPSLocation(posX, posY));
     		conflictiveBox.setLength(subtraza.size());
@@ -329,6 +333,13 @@ public class Drone extends SuperAgent {
     				conflictiveBox.setDangerous(false);
     				Trace subTrace = trace.getSubtrace(conflictiveBox.getPosInicial());
     				conflictiveBox.setLength(subTrace.size());
+    				
+    				/**
+    				 * Me quedo con la ultima casilla conflictiva que he estado.
+    				 * @author Jahiel
+    				 */
+    				lastConflictiveBox = conflictiveBox;
+    				
     				sendConflictiveBox();
     			}
     		}
@@ -634,15 +645,15 @@ public class Drone extends SuperAgent {
    
    /**
     * Se devuelve la de la traza óptima desde la que partirán los drones para seguir la traza. Esta posición es el comienzo de cuando el drone
-    * inicia la bajada por primera vez. En caso de no existir tal punto (el goal se encuantra en un punto (x, 0) de devuelve el punto final de la traza.
+    * inicia la bajada por primera vez. En caso de no existir tal punto (el goal se encuantra en un punto (x, 0) se devuelve el punto final de la traza.
     * @Jahiel 
     * @return Punto de partida.
     */
    	public int getInitialPosition(){
-   		int i, size = optimalTrace.size(); 
+   		int i, size = trace.size(); 
    		
    		for(i=0; i<size; ++i){
-   			if(optimalTrace.getLocation(i).getPositionY()>0)
+   			if(trace.getLocation(i).getPositionY()>0)
    				return i-1;
    		}
    		
@@ -676,20 +687,35 @@ public class Drone extends SuperAgent {
     		case GO_TO_POINT_TRACE:
     			int indexPosInic = getInitialPosition();
     			
-    			posiOX = optimalTrace.getLocation(indexPosInic).getPositionX();
-        		posiOY = optimalTrace.getLocation(indexPosInic).getPositionY();
+    			posiOX = trace.getLocation(indexPosInic).getPositionX();
+        		posiOY = trace.getLocation(indexPosInic).getPositionY();
         		
     			if(posX == posiOX && posY == posiOY)
     				state = FOLLOW_TRACE;
     			
     			break;
     		case FOLLOW_TRACE:
-    			
-    			currentPositionTracking++;
+    			// Se comprueba si estoy en una casilla conflictiva:
+    			// - Si estoy en ella y solo hay una anotada y su tamaño es grande -> bordear por el otro lado.
+    			// - Otro caso -> no cambio de estado
+    			if(conflictiveBoxReached){
+    				if(currentConflictiveBox.size() == 1){
+    					if(currentConflictiveBox.get(0).getLength() > MIN_SIZE_FOR_OBSTACLE_SKIRTING)
+    						state = FORCE_EXPLORATION;
+    				}
+    			}else
+    				currentPositionTracking++;
     			break;
     		case FORCE_EXPLORATION:
     			
     			break;
+    		case EXPLORE_MAP:
+    			
+    			if(behavior != SCOUT){
+    			//	Trace trace = trace.getSubtrace(lastConflictiveBox.getPosFinal());  // obtengo la subtraza desde mi posición al objetivo
+    			}
+    			break;
+    			//TODO
     		/*case LAGGING:
     			if(behavior == FOLLOWER || behavior == SCOUT_IMPROVER){
     				state = FOLLOW_TRACE;
@@ -769,8 +795,9 @@ public class Drone extends SuperAgent {
     }
 
     /**
-     * Segundo comportamiento intermedio del drone. Es el tercero en ejecutarse al recorrer los comportamientos.
-     * @author Alberto
+     * Segundo comportamiento intermedio del drone. Es el tercero en ejecutarse al recorrer los comportamientos:
+     *   Si el drone está en el estado FOLLOWER se sigue la traza óptima. Si además se encuentra en una casilla conflictiva
+     *   se cambia a la traza cuyo camino implique bordear el obstáculo por el camino más corto.
      * @author Jahiel
      * @param listaMovimientos Lista de movimientos a analizar
      * @param args Argumentos adicionales
@@ -779,7 +806,24 @@ public class Drone extends SuperAgent {
     protected int secondBehaviour(List<Pair> listaMovimientos, Object[] args) {
 
     	if(state == this.FOLLOWER){
-    		return optimalTrace.get(currentPositionTracking).getMove();
+    		if(conflictiveBoxReached){
+    			int minSize = 999999, indexMinBox = -1;
+    			int size = currentConflictiveBox.size();
+    			AgentID id = null;
+    			
+				for(int i=0; i<size; ++i){
+					if(currentConflictiveBox.get(i).getLength() < minSize){
+						 id = currentConflictiveBox.get(i).getDroneID();
+						 indexMinBox = i;
+					}
+				}
+				
+				lastConflictiveBox =  currentConflictiveBox.get(indexMinBox);
+				trace = otherTracesDrones.get(id); // Cambio a la traza que me conduce por el camino mas corto para bordear el obstaculo
+				currentPositionTracking = trace.getIndex( currentConflictiveBox.get(indexMinBox).getPosInicial());
+			}
+				
+    		return trace.get(currentPositionTracking).getMove();
     	}else
             return NO_DEC;
            
@@ -787,6 +831,7 @@ public class Drone extends SuperAgent {
     
     /**
      * Tercer comportamiento intermedio del drone. Es el cuarto en ejecutarse al recorrer los comportamientos.
+     * @author Alberto
      * @param listaMovimientos Lista de movimientos a analizar
      * @param args Argumentos adicionales
      * @return Decision tomada
@@ -2352,19 +2397,18 @@ public class Drone extends SuperAgent {
 		}
          
         try {
-			id = new AgentID(content.getString(JSONKeyLibrary.Decision));
+			id = new AgentID(content.getString(JSONKeyLibrary.DroneID));
 		} catch (JSONException e) {
 			throw new FailureException(ErrorLibrary.FailureInformationAccess);
 		}      
         
-        Trace trace =  askForDroneTrace(id); // pregunto la traza del drone que ha finalizado para ver si es mejor que la optima 
+        Trace t =  askForDroneTrace(id); // pregunto la traza del drone que ha finalizado para ver si es mejor que la optima 
         									 // hasta el momento.
+        otherTracesDrones.put(id, t);
         
-        if(optimalTrace == null)
-        	optimalTrace = trace;
-        else{
-        	if(optimalTrace.size() > trace.size())
-        		optimalTrace = trace;
+        for(Trace traceAux: otherTracesDrones.values()){ // Me quedo con la traza mas corta de todas
+        	if(this.trace.size() > traceAux.size())
+        		this.trace = traceAux;
         }
         
         this.leaveStandBy(); //Despertamos al drone

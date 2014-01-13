@@ -115,6 +115,20 @@ public class Trace extends LinkedList<Choice>{
 	}
 	
 	/**
+	 * Devuelve el indice del mapa cuya posición (X, Y) sea igual a g:(X, Y).
+	 * @author Jahiel
+	 * @param g Posicion (X, Y)
+	 * @return indice a esa posición
+	 */
+	public int getIndex(GPSLocation g){
+		for(int i=0; i<size(); i++)
+			if(get(i).getLocation().equals(g))
+				return i;
+		
+		return -1;
+	}
+	
+	/**
 	 * @author Daniel
 	 * @param mode modo en el que se imprimirá la traza.
 	 * @return cadena de caracteres con la traza.
