@@ -712,7 +712,17 @@ public class Drone extends SuperAgent {
     		case EXPLORE_MAP:
     			
     			if(behavior != SCOUT){
-    			//	Trace trace = trace.getSubtrace(lastConflictiveBox.getPosFinal());  // obtengo la subtraza desde mi posición al objetivo
+    				/*
+    				 * Nose si esto es correcto....
+    			 
+    				// si el estado = Explorar y el modo != scout significa que el drone acaba de salir de una zona conflictiva y por tanto
+    				// hay que elegir si ir hacia la traza o ir al objetivo directamente
+    				
+    			    Trace traceAux = null;
+    				for(ConflictiveBox box: currentConflictiveBox)
+    					if(lastConflictiveBox.getDecision() != box.getDecision())
+    						traceAux = otherTracesDrones.get(box.getDroneID()).getSubtrace(box.getPosFinal());
+    				*/	
     			}
     			break;
     			//TODO
