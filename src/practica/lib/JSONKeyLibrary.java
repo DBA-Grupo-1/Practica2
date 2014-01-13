@@ -13,7 +13,6 @@ public class JSONKeyLibrary {
 	public static final String Subject = "Subject";
 	public static final String DroneID = "DroneID";
 	
-	
 
 	/***************************************************************
 	 ****************ESPECÍFICOS DE PROTOCOLOS********************** 
