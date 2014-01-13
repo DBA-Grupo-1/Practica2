@@ -13,7 +13,6 @@ public class JSONKeyLibrary {
 	public static final String Subject = "Subject";
 	public static final String DroneID = "DroneID";
 	
-	
 
 	/***************************************************************
 	 ****************ESPECÍFICOS DE PROTOCOLOS********************** 
@@ -33,6 +32,6 @@ public class JSONKeyLibrary {
 	public static final String Straggler = "Straggler";
 	public static final String Selected = "Selected";
 	public static final String ConflictBox = "ConflictBox";
-	
-	
+	public static final String Mode = "Mode";
+
 }
