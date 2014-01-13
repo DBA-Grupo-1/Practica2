@@ -3,6 +3,7 @@ package practica.map;
 import java.util.ArrayList;
 
 import practica.trace.BadChoice;
+import practica.util.ConflictiveBox;
 import es.upv.dsic.gti_ia.core.AgentID;
 
 /**
@@ -194,6 +195,10 @@ public class SharedMap extends Map{
 			}
 		}
 		return false;
+	}
+
+	public void addConflictiveBox(ConflictiveBox cb) {
+		sharedSquares[cb.getPosInicial().getPositionX()][cb.getPosInicial().getPositionY()].addConflictiveBox(cb);
 	}
 	
 }

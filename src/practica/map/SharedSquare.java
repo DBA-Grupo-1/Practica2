@@ -3,6 +3,7 @@ package practica.map;
 import java.util.ArrayList;
 
 import practica.trace.BadChoice;
+import practica.util.ConflictiveBox;
 import es.upv.dsic.gti_ia.core.AgentID;
 
 /**
@@ -14,6 +15,7 @@ import es.upv.dsic.gti_ia.core.AgentID;
 public class SharedSquare {
 	private ArrayList<AgentID> visitingAgents;
 	private ArrayList<BadChoice> badChoices;
+	private ArrayList<ConflictiveBox> conflictiveBoxes;
 	
 	/**
 	 * Constructor de SharedSquare que inicializa las variables.
@@ -117,5 +119,14 @@ public class SharedSquare {
 		if (visitingAgents.size() == 0)
 			return null;
 		else return (visitingAgents.get(visitingAgents.size() - 1));
+	}
+
+	/**
+	 * Añade una casilla conflictiva
+	 * @author Jonay
+	 * @param cb la casilla conflictiva
+	 */
+	public void addConflictiveBox(ConflictiveBox cb) {
+		conflictiveBoxes.add(cb);
 	}
 }

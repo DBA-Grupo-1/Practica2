@@ -31,6 +31,7 @@ import practica.lib.SubjectLibrary;
 import practica.map.Map;
 import practica.map.SharedMap;
 import practica.trace.Trace;
+import practica.util.ConflictiveBox;
 import practica.util.GPSLocation;
 import practica.util.ImgMapConverter;
 import practica.util.MessageQueue;
@@ -429,6 +430,7 @@ public class Satellite extends SuperAgent {
 					case ProtocolLibrary.Finalize : onFinalize(proccesingMessage); break;
 					case ProtocolLibrary.Reload : onReload(proccesingMessage); break;
 					case ProtocolLibrary.Scout: onStart(proccesingMessage); break;
+					case ProtocolLibrary.Notification : onNotification(proccesingMessage);break;
 					default:
 						throw new NotUnderstoodException("");
 					}		
@@ -443,7 +445,6 @@ public class Satellite extends SuperAgent {
 		}
 	}
 	
-
 	@Override
 	/**
 	 * Método finalizador del satélite.
@@ -1166,11 +1167,9 @@ public class Satellite extends SuperAgent {
 					break;
 				case SubjectLibrary.DroneBattery:
 					
-					
 					try{
 						res.put("Subject","DroneBattery");
-						AgentID id =new AgentID(content.getString("AgentID"
-								+ ""));
+						AgentID id =new AgentID(content.getString("AgentID"));
 						System.out.println(id);
 						DroneStatus status = findStatus(id);
 						int bat=status.getBattery();
@@ -1182,7 +1181,6 @@ public class Satellite extends SuperAgent {
 					}catch(JSONException e){
 						throw new RuntimeException("Fallo en la obtencion respuesta mensaje");
 					}
-					
 						
 					break;
 				default: 
@@ -1199,6 +1197,33 @@ public class Satellite extends SuperAgent {
 		}	
 		
 	}
+	
+	/**
+	 * Recoge las acciones que debe realizar el satélite cuando recibe mensajes del protocolo
+	 * de notificaciones.
+	 * @author Jonay
+	 * @param msg El mensaje recibido
+	 * @throws JSONException
+	 */
+	private void onNotification(ACLMessage msg) throws JSONException {
+		JSONObject content = new JSONObject(msg.getContent());
+		String subject = content.getString("Subject");
+		//JSONObject res = new JSONObject();
+		
+		switch(subject){
+			case SubjectLibrary.ConflictInform:
+				String confJSON = content.getString("conflictBox");
+				Gson gson = new Gson();
+				ConflictiveBox cb = gson.fromJson(confJSON, ConflictiveBox.class);
+				mapSeguimiento.addConflictiveBox(cb);
+				break;
+			default: 
+				sendError(new NotUnderstoodException("Subject no encontrado"), msg);
+				break;
+		}
+			
+	}
+
 	
 	/**
      * Pregunta al cargador la cantidad de bateria que le queda.
