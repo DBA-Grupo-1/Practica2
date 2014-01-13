@@ -20,7 +20,7 @@ public class SharedMap extends Map{
 	 * @param heigh	Altura del mapa
 	 * @param width Anchura del mapa
 	 * 
-	 * @author jonay
+	 * @author Jonay
 	 */
 	public SharedMap(int heigh, int width) {
 		super(heigh, width);

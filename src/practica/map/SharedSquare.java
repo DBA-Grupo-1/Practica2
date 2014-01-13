@@ -47,7 +47,7 @@ public class SharedSquare {
 	 * Devuelve los agentes que han visitado la casilla
 	 * @return Un array con el identificador de los agentes
 	 * 
-	 * @author jonay
+	 * @author Jonay
 	 */
 	public ArrayList<AgentID> getVisitingAgents(){
 		return visitingAgents;

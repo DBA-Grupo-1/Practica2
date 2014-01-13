@@ -320,7 +320,7 @@ public class Drone extends SuperAgent {
     		conflictiveBox.setDecision(this.decision); // Se le asigna la decisión actual a la casilla
     	}
     	
-    	if(zonaObstaculo){
+    	if(zonaObstaculo){ 
     		if(!dodging){
     			contSalida++;
     			if(contSalida >= N_TO_OTHER_OBSTACLE){
