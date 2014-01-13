@@ -949,7 +949,7 @@ public class Satellite extends SuperAgent {
 				
 				res.remove(JSONKeyLibrary.Subject);
 				res.put(JSONKeyLibrary.Subject, SubjectLibrary.StragglerNotification);
-				res.put(JSONKeyLibrary.struggler, msg.getSender());
+				res.put(JSONKeyLibrary.Straggler, msg.getSender());
 				System.out.println("Envio el resto");
 				for(int i=0;i<listOfDrones.size();i++){
 					send(ACLMessage.INFORM,listOfDrones.get(i),ProtocolLibrary.Scout,"default",null,buildConversationId(), res);

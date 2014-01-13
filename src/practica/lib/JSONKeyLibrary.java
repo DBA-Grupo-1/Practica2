@@ -30,6 +30,7 @@ public class JSONKeyLibrary {
 	public static final String ConflictiveBox = "Conflictive box";
 	
 	//Scout
-	public static final String struggler="struggler";
-	public static final String Selected="Selected";
+	public static final String Straggler = "Straggler";
+	public static final String Selected = "Selected";
+	public static final String ConflictBox = "ConflictBox";
 }

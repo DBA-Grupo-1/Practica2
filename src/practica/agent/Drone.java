@@ -382,7 +382,7 @@ public class Drone extends SuperAgent {
             
             try {
                     data.put("decision", decision);
-                    data.put("Subject", SubjectLibrary.IMoved);
+                    data.put(JSONKeyLibrary.Subject, SubjectLibrary.IMoved);
             } catch (JSONException e) {
                     e.printStackTrace();
             }
@@ -407,8 +407,8 @@ public class Drone extends SuperAgent {
 		JSONObject data = new JSONObject();
 		
         try {
-                data.put("conflictBox", confBox);
-                data.put("Subject", SubjectLibrary.ConflictInform);
+                data.put(JSONKeyLibrary.ConflictBox, confBox);
+                data.put(JSONKeyLibrary.Subject, SubjectLibrary.ConflictInform);
         } catch (JSONException e) {
                 e.printStackTrace();
         }
@@ -1060,7 +1060,7 @@ public class Drone extends SuperAgent {
         
         try {
                 content = new JSONObject(msg.getContent());
-                subject = content.getString("Subject");
+                subject = content.getString(JSONKeyLibrary.Subject);
         } catch (JSONException e1) {
                 e1.printStackTrace();
         }
@@ -1208,7 +1208,7 @@ public class Drone extends SuperAgent {
 		ACLMessage answer=null;
 		
 		try {
-			requestContent.put("Subject", SubjectLibrary.BatteryLeft);
+			requestContent.put(JSONKeyLibrary.Subject, SubjectLibrary.BatteryLeft);
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
@@ -1249,7 +1249,7 @@ public class Drone extends SuperAgent {
 		ACLMessage answer=null;
 		
 		try {
-			requestContent.put("Subject", SubjectLibrary.Trace);
+			requestContent.put(JSONKeyLibrary.Subject, SubjectLibrary.Trace);
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
@@ -1294,7 +1294,7 @@ public class Drone extends SuperAgent {
 		ACLMessage answer=null;
 		
 		try {
-			requestContent.put("Subject", SubjectLibrary.Steps);
+			requestContent.put(JSONKeyLibrary.Subject, SubjectLibrary.Steps);
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
@@ -1336,7 +1336,7 @@ public class Drone extends SuperAgent {
 		int resultado = -1;
 		
 		try {
-			requestContent.put("Subject", SubjectLibrary.ChargerBattery);
+			requestContent.put(JSONKeyLibrary.Subject, SubjectLibrary.ChargerBattery);
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
@@ -1378,7 +1378,7 @@ public class Drone extends SuperAgent {
             JSONObject ask = new JSONObject();
                        
             try{
-                    ask.put("Subject", "MapGlobal");
+                    ask.put(JSONKeyLibrary.Subject, "MapGlobal");
                     
                     send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information, null, null, buildConversationId(), ask);
             } catch (JSONException e){
@@ -1530,7 +1530,7 @@ public class Drone extends SuperAgent {
            
            
             try{
-                    ask.put("Subject", "GoalDistance");
+                    ask.put(JSONKeyLibrary.Subject, "GoalDistance");
                     ask.put("ID", id);
                     send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
             } catch (JSONException e){
@@ -1666,7 +1666,7 @@ public class Drone extends SuperAgent {
             JSONObject ask = new JSONObject();
           
             try{
-                    ask.put("Subject", "DroneBattery");
+                    ask.put(JSONKeyLibrary.Subject, "DroneBattery");
                     ask.put("AgentID", id);
                     //Envio mensaje
                     send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information, null, null, buildConversationId(), ask);
@@ -1780,7 +1780,7 @@ public class Drone extends SuperAgent {
             
             try {
                     contenido = new JSONObject();
-                    contenido.put("Subject", SubjectLibrary.Status);
+                    contenido.put(JSONKeyLibrary.Subject, SubjectLibrary.Status);
             } catch (JSONException ex) {
                     ex.printStackTrace();
                     Logger.getLogger(Drone.class.getName()).log(Level.SEVERE, null, ex);
@@ -1917,7 +1917,7 @@ public class Drone extends SuperAgent {
                     if (content.length() == 0)
                             throw new RefuseException(ErrorLibrary.EmptyContent);
 
-                    if (!content.has("Subject") )
+                    if (!content.has(JSONKeyLibrary.Subject) )
                             throw new RefuseException(ErrorLibrary.BadlyStructuredContent);
             } catch (JSONException e) {
                     e.printStackTrace();
@@ -2055,7 +2055,7 @@ public class Drone extends SuperAgent {
             String combersationID;
             
             try {
-                    content.put("Subject", SubjectLibrary.DroneReachedGoal);
+                    content.put(JSONKeyLibrary.Subject, SubjectLibrary.DroneReachedGoal);
             } catch (JSONException e) {
                     // esto nunca pasa porque la clave nunca esta vacía
                     e.printStackTrace();
@@ -2081,7 +2081,7 @@ public class Drone extends SuperAgent {
                     String combersationID;
                     
                     try {
-                            content.put("Subject", SubjectLibrary.DroneRecharged);
+                            content.put(JSONKeyLibrary.Subject, SubjectLibrary.DroneRecharged);
                     } catch (JSONException e) {
                             // esto nunca pasa porque la clave nunca esta vacía
                             e.printStackTrace();
@@ -2110,7 +2110,7 @@ public class Drone extends SuperAgent {
             String combersationID;
             
             try {
-                    content.put("Subject", SubjectLibrary.YourMovements);
+                    content.put(JSONKeyLibrary.Subject, SubjectLibrary.YourMovements);
             } catch (JSONException e) {
                     // esto nunca pasa porque la clave nunca esta vacía
                     e.printStackTrace();
@@ -2138,7 +2138,7 @@ public class Drone extends SuperAgent {
             String combersationID;
             
             try {
-                    content.put("Subject", SubjectLibrary.AllMovements);
+                    content.put(JSONKeyLibrary.Subject, SubjectLibrary.AllMovements);
             } catch (JSONException e) {
                     // esto nunca pasa porque la clave nunca esta vacía
                     e.printStackTrace();
@@ -2165,7 +2165,7 @@ public class Drone extends SuperAgent {
             String combersationID;
             
             try {
-                    content.put("Subject", SubjectLibrary.ConflictiveSections);
+                    content.put(JSONKeyLibrary.Subject, SubjectLibrary.ConflictiveSections);
             } catch (JSONException e) {
                     // esto nunca pasa porque la clave nunca esta vacía
                     e.printStackTrace();
@@ -2234,7 +2234,7 @@ public class Drone extends SuperAgent {
             AgentID destino;
             
             try {
-                    content.put("Subject", name);
+                    content.put(JSONKeyLibrary.Subject, name);
             } catch (JSONException e) {
                     // nunca se ejecuta porque la clave no es vacía
                     e.printStackTrace();
@@ -2294,7 +2294,7 @@ public class Drone extends SuperAgent {
         
         if(! subscribers.isEmpty()){
             try {
-                content.put("Subject", SubjectLibrary.YourMovements);
+                content.put(JSONKeyLibrary.Subject, SubjectLibrary.YourMovements);
                 int[] previousPosition = {X, Y};
                 content.put("PreviousPosition", new JSONArray(previousPosition));
                 content.put("Decision", decision);
@@ -2397,7 +2397,7 @@ public class Drone extends SuperAgent {
             try {
                     data.put("ID", this.getAid().toString());
                     data.put("nombre_alumno", this.getAid().name);
-                    data.put("Subject", SubjectLibrary.Register);
+                    data.put(JSONKeyLibrary.Subject, SubjectLibrary.Register);
             } catch (JSONException e) {
                     e.printStackTrace();
                     throw new RuntimeException("Fallo en el registro: error al crear content del mensaje de envio");
@@ -2448,8 +2448,8 @@ public class Drone extends SuperAgent {
      ************************************************************************************************************************************/
     
     /**
-     * Comprueba el campo "subject" dentro del Content y llama a la funcion correspondiente de ese protocolo.
-     * Si el "subject" no esta entre los aceptados envia un mensaje NOT_UNDERSTOOD
+     * Comprueba el campo JSONKeyLibrary.Subject dentro del Content y llama a la funcion correspondiente de ese protocolo.
+     * Si el JSONKeyLibrary.Subject no esta entre los aceptados envia un mensaje NOT_UNDERSTOOD
      * 
      * @author Jahiel
      * @author Dani
@@ -2461,7 +2461,7 @@ public class Drone extends SuperAgent {
      */
     protected boolean dispatch(ACLMessage msg) throws JSONException{
             JSONObject content = new JSONObject(msg.getContent());
-            String subject = content.getString("Subject");
+            String subject = content.getString(JSONKeyLibrary.Subject);
             boolean res = true;
             JSONObject resp= new JSONObject();
             
@@ -2473,7 +2473,7 @@ public class Drone extends SuperAgent {
                                     throw new RefuseException(ErrorLibrary.UnespectedAmount);
                             }
                             else{
-                                    resp.put("Subject", SubjectLibrary.BatteryLeft);
+                                    resp.put(JSONKeyLibrary.Subject, SubjectLibrary.BatteryLeft);
                                     resp.put("EnergyLeft",batteryLeft);
                                     send(ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), resp);
                             }
@@ -2481,13 +2481,13 @@ public class Drone extends SuperAgent {
                     case SubjectLibrary.Trace:
                             Trace trc = onTraceQueried(msg);
                             String traceJSON = traceToStringJSON(trc);
-                            resp.put("Subject", SubjectLibrary.Trace);
+                            resp.put(JSONKeyLibrary.Subject, SubjectLibrary.Trace);
                             resp.put("trace", traceJSON);
                             send(ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), resp);
                             break;
                     case SubjectLibrary.Steps:
                             int nSteps = onStepsQueried(msg);
-                            resp.put("Subject", SubjectLibrary.Steps);
+                            resp.put(JSONKeyLibrary.Subject, SubjectLibrary.Steps);
                             resp.put("steps", nSteps);
                             send(ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), resp);
                             break;
@@ -2543,7 +2543,7 @@ public class Drone extends SuperAgent {
             String subject = null;
             try {
                     content = new JSONObject(msg.getContent());
-                    subject = content.getString("Subject");
+                    subject = content.getString(JSONKeyLibrary.Subject);
             } catch (JSONException e1) {
                     e1.printStackTrace();
             }
@@ -2579,7 +2579,7 @@ public class Drone extends SuperAgent {
             String subject = null;
             try {
                     content = new JSONObject(msg.getContent());
-                    subject = content.getString("Subject");
+                    subject = content.getString(JSONKeyLibrary.Subject);
             } catch (JSONException e1) {
                     e1.printStackTrace();
             }
