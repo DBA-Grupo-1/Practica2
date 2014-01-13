@@ -2,7 +2,6 @@ package practica.map;
 
 import java.util.ArrayList;
 
-import practica.trace.BadChoice;
 import practica.util.ConflictiveBox;
 import es.upv.dsic.gti_ia.core.AgentID;
 
@@ -135,18 +134,6 @@ public class SharedMap extends Map{
 	}
 	
 	/**
-	 * Devuelve las indicaciones sobre malas decisiones tomadas en una casilla
-	 * @param x Coordenada X
-	 * @param y Coordenada Y
-	 * @return Array con las malas decisiones de la casilla
-	 * 
-	 * @author jonay
-	 */
-	public ArrayList<BadChoice> getBadChoices(int x, int y){
-		return sharedSquares[y][x].getBadChoices();
-	}
-	
-	/**
 	 * Devuelve el array con el contenido de las casillas de tipo SharedSquare
 	 * @return Array de SharedSquare
 	 * 
@@ -155,55 +142,26 @@ public class SharedMap extends Map{
 	public SharedSquare[][] getSharedSquares() {
 		return sharedSquares;
 	}
-	
-	/**
-	 * Añade un indicador de mala decisión a una casilla
-	 * @param x Coordenada X
-	 * @param y Coordenada Y
-	 * @param bc La mala elección
-	 * 
-	 * @author jonay
-	 */
-	public void addBadChoice(int x, int y, BadChoice bc){
-		sharedSquares[y][x].addBadChoice(bc);
-	}
-	
-	/**
-	 * Elimina las malas decisiones anotadas por un agente en una casilla
-	 * @param x Coordenada X
-	 * @param y Coordenada Y
-	 * @param id El id del agente
-	 * 
-	 * @author jonay
-	 */
-	public void removeBadChoice(int x, int y, AgentID id){
-		sharedSquares[y][x].removeBadChoice(id);
-	}
-	
-	/**
-	 * Devuelve true si existe alguna casilla con indicador de BadChoice, o false en caso contrario
-	 * @return Si tiene o no BadChoice en alguna casilla
-	 * 
-	 * @author jonay
-	 */
-	public boolean hasBadChoices(){
-		for(int x=0; x<this.getWidth(); x++){
-			for(int y=0; y<this.getHeigh(); y++){
-				if (sharedSquares[y][x].hasBadChoices()){
-					return true;
-				}
-			}
-		}
-		return false;
-	}
 
 	public void addConflictiveBox(ConflictiveBox cb) {
 		sharedSquares[cb.getPosInicial().getPositionX()][cb.getPosInicial().getPositionY()].addConflictiveBox(cb);
 	}
 	
+	/**
+	 * Devuelve las secciones conflictivas que empieza en una casilla.
+	 * @author Daniel
+	 * @param x coordenada X del mapa.
+	 * @param y coordenada Y del mapa.
+	 * @return lista con las secciones conflictivas.
+	 */
+	public ArrayList<ConflictiveBox> getConflictiveBoxes (int x, int y){
+		return sharedSquares[x][y].getConflictiveBoxes();
+	}
+	
 	
 	/**
 	 * Comprueba si una casilla es conflictiva.
+	 * @author Daniel
 	 * @param x coordenada X del mapa.
 	 * @param y coordenada Y del mapa.
 	 * @return true si es conflictiva, false si no.

@@ -33,4 +33,5 @@ public class JSONKeyLibrary {
 	public static final String Selected = "Selected";
 	public static final String ConflictBox = "ConflictBox";
 	public static final String Mode = "Mode";
+
 }
