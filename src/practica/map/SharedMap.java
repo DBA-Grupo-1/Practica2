@@ -29,6 +29,7 @@ public class SharedMap extends Map{
 
 	/**
 	 * Constructor por copia de un Map, se inicializarán los obstáculos y la meta
+	 * @author Jonay
 	 * @param other	El mapa del que se obtendrán los datos
 	 */
 	public SharedMap(Map other) {
@@ -112,6 +113,7 @@ public class SharedMap extends Map{
 	
 	/**
 	 * Getter de un SharedSquare concreto.
+	 * @author Jonay
 	 * @author Daniel
 	 * @param x coordenada X del SharedSquare
 	 * @param y coordenada Y del SharedSquare
@@ -143,12 +145,18 @@ public class SharedMap extends Map{
 		return sharedSquares;
 	}
 
+	/**
+	 * Permite añadir una casilla conflictiva
+	 * @author Jonay
+	 * @param cb la casilla conflictiva
+	 */
 	public void addConflictiveBox(ConflictiveBox cb) {
 		sharedSquares[cb.getPosInicial().getPositionX()][cb.getPosInicial().getPositionY()].addConflictiveBox(cb);
 	}
 	
 	/**
 	 * Devuelve las secciones conflictivas que empieza en una casilla.
+	 * @author Jonay
 	 * @author Daniel
 	 * @param x coordenada X del mapa.
 	 * @param y coordenada Y del mapa.
@@ -161,6 +169,7 @@ public class SharedMap extends Map{
 	
 	/**
 	 * Comprueba si una casilla es conflictiva.
+	 * @author Jonay
 	 * @author Daniel
 	 * @param x coordenada X del mapa.
 	 * @param y coordenada Y del mapa.

@@ -20,6 +20,7 @@ import practica.lib.JSONKeyLibrary;
 import practica.lib.ProtocolLibrary;
 import practica.lib.SubjectLibrary;
 import practica.map.Map;
+import practica.trace.Choice;
 import practica.trace.Trace;
 import practica.util.ConflictiveBox;
 import practica.util.GPSLocation;
@@ -297,22 +298,10 @@ public class Drone extends SuperAgent {
     }
     
     /**
-     * Metodo llamado tras la actualizacion de la traza. Ideal para comprobaciones de la traza y del rendimiento del drone.
-     */
-    protected void postUpdateTrace() {
-            // TODO Todavía no está terminado, sólo casillas conflictivas
-            
-    }
-
-    /**
      * Actualiza la traza del drone con la nueva decision.
      * @author Jonay
-     * @param decision Decision tomada en think
      */
-    protected void updateTrace(int decision) {
-    	// TODO Todavía no está terminado, solo actualiza casillas conflictivas
-            
-    	
+    protected void postUpdateTrace() {
     	// Casillas conflictivas
     	boolean entrandoEsq = !preEsq && postEsq; //Antes no estaba esquivando y ahora sí
     	boolean saliendoEsq = preEsq && !postEsq; //Antes estaba esquivando y ya no
@@ -326,6 +315,7 @@ public class Drone extends SuperAgent {
     	
     	if(!zonaObstaculo && entrandoEsq){
     		zonaObstaculo=true;
+    		conflictiveBox = new ConflictiveBox(this.getAid());
     		conflictiveBox.setPosInicial(new GPSLocation(posX, posY));
     		conflictiveBox.setDecision(this.decision); // Se le asigna la decisión actual a la casilla
     	}
@@ -348,6 +338,15 @@ public class Drone extends SuperAgent {
     		contSalida = 0;
     		posSalidaTemporal = new GPSLocation(posX, posY);
     	}
+    }
+
+    /**
+     * Actualiza la traza del drone con la nueva decision.
+     * @author Jonay
+     * @param decision Decision tomada en think
+     */
+    protected void updateTrace(int decision) {
+    	trace.add(new Choice(decision, new GPSLocation(posX, posY)));
     }
     
 

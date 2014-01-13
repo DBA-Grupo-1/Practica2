@@ -85,6 +85,7 @@ public class SharedSquare {
 	
 	/**
 	 * Devuelve la lista de secciones conflictivas que empiezan en esta casilla.
+	 * @author Jonay
 	 * @author Daniel
 	 * @return lista de casillas conflictivas.
 	 */
@@ -94,6 +95,7 @@ public class SharedSquare {
 	
 	/**
 	 * Comprueba si la casilla es conflictiva.
+	 * @author Jonay
 	 * @author Daniel
 	 * @return true si es conflictiva, false si no.
 	 */
