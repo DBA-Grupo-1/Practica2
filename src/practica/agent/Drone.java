@@ -21,6 +21,7 @@ import practica.lib.SubjectLibrary;
 import practica.map.Map;
 import practica.trace.Trace;
 import practica.util.ConflictiveBox;
+import practica.util.GPSLocation;
 import practica.util.Pair;
 
 import com.google.gson.Gson;
@@ -66,7 +67,7 @@ public class Drone extends SuperAgent {
 								 EXPLORE_MAP = 2,
 								 FOLLOW_TRACE = 3,
 								 FORCE_EXPLORATION = 4,
-								 LAGGING = 5,
+								 LAGGING = 5, 			// Rezagado
 								 UNDO_TRACE = 6,
 								 FINISH_GOAL = 7;
 								// END = 6;
@@ -114,6 +115,9 @@ public class Drone extends SuperAgent {
         /** Decision de reiniciar el proceso de toma de decision. */
         public static final int RETHINK = -4;
         
+        /** Número de casillas que debe pasar separado de un obstáculo para considerar otra zona obstáculo*/
+		private static final int N_TO_OTHER_OBSTACLE = 10;
+        
         private AgentID sateliteID;
         private AgentID chargerID;
         
@@ -125,7 +129,13 @@ public class Drone extends SuperAgent {
         protected Thread dispatcher;
         private AgentID[] teammates;
         private Trace trace, optimalTrace;
+        
         private ConflictiveBox conflictiveBox;
+        private int contSalida = 0;
+        private boolean preEsq = false;
+        private boolean postEsq = false;
+        private boolean zonaObstaculo = false;
+        private GPSLocation posSalidaTemporal;
         
         private HashMap<String, String> idsCombersationSubscribe;   // {nombreSubscripcion, id-combersation}
         private HashMap<String, String> subscribers;                                // {ID_Agente, id-combersation}
@@ -261,17 +271,15 @@ public class Drone extends SuperAgent {
     
             register();
            
-            
             //subscribe(); Se anula hasta que no se sepa donde se usará
             
-           
-           
-            do{
-            		
+            do{   	
+            		preEsq = dodging;// Guarda si estaba esquivando desde antes de calcular su nueva decisión
                     decision = think();
+                    postEsq = dodging;
             		//sendInformYourMovement(posX, posY, decision); // activar si hay Subs. tipo YourMovements
                     
-                    System.out.println(""+decision);
+                    System.out.println("Decisión tomada: "+decision);
                     //Por si las moscas
                     if(decision != NO_DEC){
                             sendDecision(decision);
@@ -279,32 +287,67 @@ public class Drone extends SuperAgent {
                             postUpdateTrace();
                     }
             }while(decision != END_FAIL && decision != END_SUCCESS);
-          
-            
-           
-            
-          
-          
     }
     
     /**
      * Metodo llamado tras la actualizacion de la traza. Ideal para comprobaciones de la traza y del rendimiento del drone.
      */
     protected void postUpdateTrace() {
-            // TODO Auto-generated method stub
+            // TODO Todavía no está terminado, sólo casillas conflictivas
             
     }
 
     /**
      * Actualiza la traza del drone con la nueva decision.
+     * @author Jonay
      * @param decision Decision tomada en think
      */
     protected void updateTrace(int decision) {
-            // TODO Auto-generated method stub
+    	// TODO Todavía no está terminado, solo actualiza casillas conflictivas
             
+    	
+    	// Casillas conflictivas
+    	boolean entrandoEsq = !preEsq && postEsq; //Antes no estaba esquivando y ahora sí
+    	boolean saliendoEsq = preEsq && !postEsq; //Antes estaba esquivando y ya no
+    	
+    	if(state == SLEEPING){ //TODO: Revisar, "si se ha decidido quedar rezagado"
+    		conflictiveBox.setDangerous(true);
+    		Trace subtraza = trace.getSubtrace(conflictiveBox.getPosInicial(), new GPSLocation(posX, posY));
+    		conflictiveBox.setLength(subtraza.size());
+    		sendConflictiveBox();
+    	}
+    	
+    	if(!zonaObstaculo && entrandoEsq){
+    		zonaObstaculo=true;
+    		conflictiveBox.setPosInicial(new GPSLocation(posX, posY));
+    		conflictiveBox.setDecision(this.decision); // Se le asigna la decisión actual a la casilla
+    	}
+    	
+    	if(zonaObstaculo){
+    		if(!dodging){
+    			contSalida++;
+    			if(contSalida >= N_TO_OTHER_OBSTACLE){
+    				zonaObstaculo = false;
+    				conflictiveBox.setPosFinal(posSalidaTemporal);
+    				conflictiveBox.setDangerous(false);
+    				Trace subTrace = trace.getSubtrace(conflictiveBox.getPosInicial());
+    				conflictiveBox.setLength(subTrace.size());
+    				sendConflictiveBox();
+    			}
+    		}
+    	}
+    	
+    	if(zonaObstaculo && saliendoEsq){
+    		contSalida = 0;
+    		posSalidaTemporal = new GPSLocation(posX, posY);
+    	}
     }
     
-    /**
+
+
+
+
+	/**
      * Lanza el despachador.
      * @author Alberto
      */
@@ -353,7 +396,34 @@ public class Drone extends SuperAgent {
             }
     }
     
-    
+    /**
+     * Envía la casilla conflictiva al satélite
+     * @author Jonay
+     */
+    private void sendConflictiveBox() {
+		Gson gson = new Gson();
+		String confBox=gson.toJson(conflictiveBox);
+		
+		JSONObject data = new JSONObject();
+		
+        try {
+                data.put("conflictBox", confBox);
+                data.put("Subject", SubjectLibrary.ConflictInform);
+        } catch (JSONException e) {
+                e.printStackTrace();
+        }
+        
+        send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Notification, "default", null, buildConversationId(), data);
+        
+        /*   Quitar comentarios si se pone una respuesta de posibles errores por parte del satélite
+        try {
+                answerQueue.take();
+        } catch (InterruptedException e) {
+                e.printStackTrace();
+        }
+        */
+	}
+
     /************************************************************************************************************************************
      ******** Comunicación Explorador ********************************************************************************************
      ************************************************************************************************************************************/   
@@ -1035,7 +1105,7 @@ public class Drone extends SuperAgent {
         case SubjectLibrary.Register:
                 queue = answerQueue;
                 break;
-        /*case SubjectLibrary.BatteryLeft:
+        case SubjectLibrary.BatteryLeft:
         case SubjectLibrary.Trace:
         case SubjectLibrary.Steps:
                 if(msg.getPerformativeInt() == ACLMessage.QUERY_REF){
@@ -1044,7 +1114,6 @@ public class Drone extends SuperAgent {
                         queue = answerQueue;
                 }
                 break;
-                */
         case SubjectLibrary.YourMovements:
         case SubjectLibrary.DroneRecharged:
         case SubjectLibrary.DroneReachedGoal:

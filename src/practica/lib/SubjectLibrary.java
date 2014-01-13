@@ -48,5 +48,6 @@ public class SubjectLibrary {
 	//Finalizar
 	public static final String End = "End";
 	
-	// Ayuda ...
+	// Notificaciones
+	public static final String ConflictInform = "ConflictInform"; 
 }

@@ -124,6 +124,7 @@ public class TestJonay {
     		t1.add(c2);
     		t1.add(c3);
     		
+    		Thread.sleep(1000);
     		drone2.setTrace(t1);
     		drone1.testPedirInformacion(drone2.getAid());
             
