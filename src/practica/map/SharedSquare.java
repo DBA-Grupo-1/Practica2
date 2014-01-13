@@ -131,11 +131,21 @@ public class SharedSquare {
 	}
 	
 	/**
+	 * Devuelve la lista de secciones conflictivas que empiezan en esta casilla.
+	 * @author Daniel
+	 * @return lista de casillas conflictivas.
+	 */
+	public ArrayList<ConflictiveBox> getConflictiveBoxes (){
+		return conflictiveBoxes;
+	}
+	
+	/**
 	 * Comprueba si la casilla es conflictiva.
 	 * @author Daniel
-	 * @return true si es conflictiva, false si no lo es.
+	 * @return true si es conflictiva, false si no.
 	 */
-	public boolean isConflictive (){
+	public boolean isConflictive(){
 		return !conflictiveBoxes.isEmpty();
 	}
+	
 }

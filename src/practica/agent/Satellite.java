@@ -279,7 +279,8 @@ public class Satellite extends SuperAgent {
 	 * Creamos el objeto JSON status:
 	 * Status: {“connected”:”YES”, “ready”:”YES”, “gps”:{“x”:10,”y”:5},
 	 * “goal”:”No”, “gonio”:{“alpha”:0, “dist”:4.0}, “battery”:100,
-	 * “radar”:[0,0,0,0,0,0,0,1,1], "isConflictive":"True/False", "}
+	 * “radar”:[0,0,0,0,0,0,0,1,1], "isConflictive":"True/False", "ConflictiveData":ConflictiveBox}
+	 * ConflictiveBox es un objeto de la clase ConflictiveBox serializado en formato JSON.
 	 * @author Jahiel
 	 * @author Daniel
 	 * @return Objeto JSon con el contenido de Status
@@ -319,10 +320,12 @@ public class Satellite extends SuperAgent {
 		status.put("radar", jsArray);
 		
 		//Compruebo si la casilla es conflictiva
-		/**
-		 * @TODO_AUTHOR Daniel
-		 * @TODO
-		 */
+		if (mapSeguimiento.isConflictive(gps.getPositionX(), gps.getPositionY())){
+			//Creo el string JSON
+			String conflictiveData = new Gson().toJson(mapSeguimiento.getSharedSquare(gps.getPositionX(), gps.getPositionY()).getConflictiveBoxes());
+			//Lo añado
+			status.put(JSONKeyLibrary.ConflictiveBox, conflictiveData);
+		}
 
 		return status;
 	}

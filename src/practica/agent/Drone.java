@@ -19,6 +19,7 @@ import practica.lib.JSONKeyLibrary;
 import practica.lib.ProtocolLibrary;
 import practica.lib.SubjectLibrary;
 import practica.map.Map;
+import practica.trace.BadChoice;
 import practica.trace.Trace;
 import practica.util.ConflictiveBox;
 import practica.util.GPSLocation;
@@ -131,6 +132,8 @@ public class Drone extends SuperAgent {
         private Trace trace, optimalTrace;
         
         private ConflictiveBox conflictiveBox;
+        private ArrayList<ConflictiveBox> currentConflictiveBox;
+        private boolean conflictiveBoxReached;
         private int contSalida = 0;
         private boolean preEsq = false;
         private boolean postEsq = false;
@@ -143,6 +146,7 @@ public class Drone extends SuperAgent {
         /**
          * Constructor del Drone.
          * @author Jahiel
+         * @author Daniel
          * @param aid Identificador del drone.
          * @param mapWidth Ancho del mapa a explorar.
          * @param mapHeight Alto del mapa a explorar.
@@ -179,6 +183,8 @@ public class Drone extends SuperAgent {
                 state = SLEEPING;
                 optimalTrace = null;
                 currentPositionTracking = -1;
+                
+                conflictiveBoxReached = false;
         }
         
         
@@ -1616,7 +1622,6 @@ public class Drone extends SuperAgent {
             try {
 				msg=answerQueue.take();
 			} catch (InterruptedException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
             
@@ -1634,7 +1639,6 @@ public class Drone extends SuperAgent {
                                             || content.get("reason").equals("BadlyStructuredContent")) || content.get("reason").equals("FailureAgentID") ||content.get("reason").equals("FailureAccessPossition") )
                                     throw new RuntimeException("Fallo en la respuesta del satelite");
                     } catch (JSONException e) {
-                            // TODO Auto-generated catch block
                             e.printStackTrace();
                     }
             
@@ -1647,7 +1651,6 @@ public class Drone extends SuperAgent {
                             pos[0]= aux.getInt("x");
                             pos[1]= aux.getInt("y");
                     } catch (JSONException e) {
-                            // TODO Auto-generated catch block
                             e.printStackTrace();
                     }
                     break;
@@ -1705,7 +1708,6 @@ public class Drone extends SuperAgent {
                                             || content.get("reason").equals("BadlyStructuredContent")) || content.get("reason").equals("FailureAgentID") ||content.get("reason").equals("FailureLevelBatteryDrone") )
                                     throw new RuntimeException("Fallo en la respuesta del satelite");
                     } catch (JSONException e) {
-                            // TODO Auto-generated catch block
                             e.printStackTrace();
                     }
             
@@ -1714,7 +1716,6 @@ public class Drone extends SuperAgent {
                             content = new JSONObject(msg.getContent());
                             bat = content.getInt("Battery");
                     } catch (JSONException e) {
-                            // TODO Auto-generated catch block
                             e.printStackTrace();
                     }
                     break;
@@ -1804,6 +1805,7 @@ public class Drone extends SuperAgent {
      * 
      * @author Ismael
      * @author Jahiel
+     * @author Daniel
      */
     protected void updateStatus() {
     	ACLMessage msg=null;
@@ -1814,28 +1816,28 @@ public class Drone extends SuperAgent {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
-            JSONObject contenido = null;
+            JSONObject content = null;
             try {
-                    contenido = new JSONObject(msg.getContent());
+                    content = new JSONObject(msg.getContent());
             } catch (JSONException ex) {
                     ex.printStackTrace();
                     Logger.getLogger(Drone.class.getName()).log(Level.SEVERE, null, ex);
             }
             try {
-                    JSONObject aux, aux2,aux3 = new JSONObject();
+                    JSONObject contentValues, contentGPS,aux3 = new JSONObject();
                     
                     String campo=null;
-                    aux = contenido.getJSONObject(SubjectLibrary.Values);
-                    aux2 = aux.getJSONObject("gps");
-                    aux3 = aux.getJSONObject("gonio");
+                    contentValues = content.getJSONObject(SubjectLibrary.Values);
+                    contentGPS = contentValues.getJSONObject("gps");
+                    aux3 = contentValues.getJSONObject("gonio");
                     //actualizamos el mapa del drone antes de recoger las nuevas posiciones X e Y.
                     droneMap.setValue(posX,posY,Map.VISITADO);
-                    posX = aux2.getInt("x");
-                    posY = aux2.getInt("y");
+                    posX = contentGPS.getInt("x");
+                    posY = contentGPS.getInt("y");
                     distance = aux3.getDouble("dist");
                     angle= (float) aux3.getDouble("alpha");
-                    battery= aux.getInt("battery");
-                    String valor = aux.getString("goal");
+                    battery= contentValues.getInt("battery");
+                    String valor = contentValues.getString("goal");
                     if(valor.equals("No")){
                     	goal=false;
                     }
@@ -1843,13 +1845,18 @@ public class Drone extends SuperAgent {
                     	goal=true;
                     }
                     JSONArray jsArray = new JSONArray();
-                    jsArray= aux.getJSONArray("radar");
+                    jsArray= contentValues.getJSONArray("radar");
                     for(int i=0;i<9;i++){
                     	surroundings[i]=jsArray.getInt(i);
                     }
-                    if(contenido.has(JSONKeyLibrary.ConflictiveBox)){
-                    	// TODO crear objeto casilla conflictiva. Y comprobar si cambiar a estado ForzarExploracion
-                    }
+                    //Compruebo si ha llegado información sobre si la casilla es conflictiva
+                    if(content.has(JSONKeyLibrary.ConflictBox)){
+                    	//Extraigo la información
+                    	conflictiveBoxReached = true;
+                    	currentConflictiveBox = (ArrayList<ConflictiveBox>) content.get(JSONKeyLibrary.ConflictiveBox); 
+                    	
+                    }else
+                    	conflictiveBoxReached = false;
                     
                     
                     /**

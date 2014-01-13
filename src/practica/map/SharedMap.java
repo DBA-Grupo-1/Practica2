@@ -201,9 +201,21 @@ public class SharedMap extends Map{
 		sharedSquares[cb.getPosInicial().getPositionX()][cb.getPosInicial().getPositionY()].addConflictiveBox(cb);
 	}
 	
+	/**
+	 * Devuelve las secciones conflictivas que empieza en una casilla.
+	 * @author Daniel
+	 * @param x coordenada X del mapa.
+	 * @param y coordenada Y del mapa.
+	 * @return lista con las secciones conflictivas.
+	 */
+	public ArrayList<ConflictiveBox> getConflictiveBoxes (int x, int y){
+		return sharedSquares[x][y].getConflictiveBoxes();
+	}
+	
 	
 	/**
 	 * Comprueba si una casilla es conflictiva.
+	 * @author Daniel
 	 * @param x coordenada X del mapa.
 	 * @param y coordenada Y del mapa.
 	 * @return true si es conflictiva, false si no.
