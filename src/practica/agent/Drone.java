@@ -1,5 +1,6 @@
 package practica.agent;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -26,6 +27,7 @@ import practica.util.GPSLocation;
 import practica.util.Pair;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import es.upv.dsic.gti_ia.architecture.FIPAException;
 import es.upv.dsic.gti_ia.architecture.FailureException;
@@ -1853,7 +1855,11 @@ public class Drone extends SuperAgent {
                     if(content.has(JSONKeyLibrary.ConflictBox)){
                     	//Extraigo la información
                     	conflictiveBoxReached = true;
-                    	currentConflictiveBox = (ArrayList<ConflictiveBox>) content.get(JSONKeyLibrary.ConflictiveBox); 
+                    	String conflictiveBoxData = content.getString(JSONKeyLibrary.ConflictiveBox);
+                    	//Defino el tipo de datos que voy a extraer del JSON
+                    	Type collectionType = new TypeToken<ArrayList<ConflictiveBox>>(){}.getType();	
+                    	//Extraigo los datos
+                    	currentConflictiveBox = new Gson().fromJson(conflictiveBoxData, collectionType); 
                     	
                     }else
                     	conflictiveBoxReached = false;
