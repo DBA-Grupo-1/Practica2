@@ -4,6 +4,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import practica.gui.Log;
+import practica.lib.SubjectLibrary;
 import es.upv.dsic.gti_ia.architecture.FIPAException;
 import es.upv.dsic.gti_ia.core.ACLMessage;
 import es.upv.dsic.gti_ia.core.AgentID;
@@ -75,10 +76,12 @@ public class SuperAgent extends SingleAgent {
 	protected void sendError(FIPAException fe, ACLMessage msgOrig) {
 		ACLMessage msgError = fe.getACLMessage();
 		JSONObject content = new JSONObject();
+		String subject = "";
 		
 		try {
 			content.put("error",fe.getMessage());
-			content.put("Subject", new JSONObject(msgOrig.getContent()).get("Subject"));
+			subject = new JSONObject(msgOrig.getContent()).getString("Subject");
+			content.put("Subject", subject);
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
@@ -90,6 +93,9 @@ public class SuperAgent extends SingleAgent {
 		msgError.setInReplyTo(msgOrig.getReplyWith());
 		
 		this.send(msgError);
+
+		//Meter mensaje en el log
+		addMessageToLog(Log.RECEIVED, msgOrig.getSender(), msgOrig.getProtocol(), subject, "");
 	}
 	
 	/**
