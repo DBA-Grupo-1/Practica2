@@ -53,4 +53,11 @@ public class GPSLocation {
 		return positionY;
 	}
 	
+	/**
+	 * @author Daniel
+	 */
+	public String toString(){
+		return positionX + ", " + positionY;
+	}
+	
 }
