@@ -72,8 +72,9 @@ public class Drone extends SuperAgent {
 								 FORCE_EXPLORATION = 4,
 								 LAGGING = 5, 			// Rezagado
 								 UNDO_TRACE = 6,
-								 FINISH_GOAL = 7;
-								// END = 6;
+								 FINISH_GOAL = 7,
+								 OBSTACLE_AREA = 8;
+								
 		
 		public static final int SCOUT = 0, SCOUT_IMPROVER = 1, FOLLOWER = 2, FREE = 3; //Comportamientos del drone
 		
@@ -98,6 +99,7 @@ public class Drone extends SuperAgent {
         protected double posiOX, posiOY;
         protected int currentPositionTracking;
         protected int movingBlock;  // movimiento a bloquear para el modo explorar otras decisiones.
+        protected int indexPosition;
         
         /** Decision de mover al norte */
         public static final int NORTE = 3;
@@ -133,7 +135,7 @@ public class Drone extends SuperAgent {
         protected BlockingQueue<ACLMessage> requestQueue;
         protected Thread dispatcher;
         private AgentID[] teammates;
-        private Trace trace;
+        private Trace trace, optimalTrace;
         
         private ConflictiveBox conflictiveBox;
         private ArrayList<ConflictiveBox> currentConflictiveBox;
@@ -191,6 +193,7 @@ public class Drone extends SuperAgent {
                 currentPositionTracking = -1;
                 
                 conflictiveBoxReached = false;
+                optimalTrace = null;
         }
         
         
@@ -317,18 +320,29 @@ public class Drone extends SuperAgent {
     		sendConflictiveBox();
     	}
     	
-    	if(!zonaObstaculo && entrandoEsq){
-    		zonaObstaculo=true;
+    	/**
+    	 * if(!zonaObstaculo && entrandoEsq)
+    	 * 
+    	 * Actualizo codigo nuevo apartir de aqui:
+    	 *  - Sustituyo la variable zona_obstaculo por los estados correspondientes:
+    	 *    zona_Obstaculo = true -> state = Obstacle_Area
+    	 *    zona_Obstaculo = false -> state = EXPLORE_MAP
+    	 *    
+    	 * @author Jahiel
+    	 */
+    	if(state == EXPLORE_MAP && entrandoEsq && (behavior == SCOUT || behavior == SCOUT_IMPROVER) ){
+    		state = OBSTACLE_AREA;
+    		counterLaggin = 0;
     		conflictiveBox = new ConflictiveBox(this.getAid());
     		conflictiveBox.setPosInicial(new GPSLocation(posX, posY));
     		conflictiveBox.setDecision(this.decision); // Se le asigna la decisión actual a la casilla
     	}
     	
-    	if(zonaObstaculo){ 
+    	if(state == OBSTACLE_AREA){ 
     		if(!dodging){
     			contSalida++;
     			if(contSalida >= N_TO_OTHER_OBSTACLE){
-    				zonaObstaculo = false;
+    				state = EXPLORE_MAP;
     				conflictiveBox.setPosFinal(posSalidaTemporal);
     				conflictiveBox.setDangerous(false);
     				Trace subTrace = trace.getSubtrace(conflictiveBox.getPosInicial());
@@ -342,10 +356,13 @@ public class Drone extends SuperAgent {
     				
     				sendConflictiveBox();
     			}
+    		}else{
+    			if(counterLaggin == )
     		}
+    			counterLaggin++;
     	}
     	
-    	if(zonaObstaculo && saliendoEsq){
+    	if(state == OBSTACLE_AREA && saliendoEsq){
     		contSalida = 0;
     		posSalidaTemporal = new GPSLocation(posX, posY);
     	}
@@ -488,6 +505,7 @@ public class Drone extends SuperAgent {
 	   }
 	   return receive;
    }
+   
    /**
     * @author Ismael 
     * rececpcion de compañeros al mensaje STRAGGLER
@@ -519,7 +537,7 @@ public class Drone extends SuperAgent {
 		   }
    }
    
-   public void askOut(){
+   public int askOut(AgentID resId){
 	   JSONObject ask = new JSONObject();
 	   try{
 		   ask.put(JSONKeyLibrary.Subject, SubjectLibrary.Start);
@@ -527,10 +545,13 @@ public class Drone extends SuperAgent {
 	   }catch(JSONException e){
 		   e.printStackTrace();
 	   }
+	   
+	   return askOutReceive(resId);
    }
 
-   public void askOutReceive(AgentID resId, int Mod){
+   public int askOutReceive(AgentID resId){
 	   ACLMessage msg=null;
+	   int Mod = -1;
 	   
 	   try {
 			msg= answerQueue.take();
@@ -542,9 +563,8 @@ public class Drone extends SuperAgent {
 	   case ACLMessage.INFORM:
 		   try{
 		   JSONObject content= new JSONObject(msg.getContent());
-		   //AgentID id = new AgentID(content.getString(JSONKeyLibrary.Selected));
-		   int Mode = content.getInt("Mode");
-		   resId=null;
+		   resId = new AgentID(content.getString(JSONKeyLibrary.Selected));
+		   int Mode = content.getInt(JSONKeyLibrary.Mode);
 		   Mod=Mode;
 		   }catch(JSONException e){
 			   e.printStackTrace();
@@ -558,6 +578,8 @@ public class Drone extends SuperAgent {
 			   
 			   break;
 	   }
+	   
+	   return Mod;
    }
     
     
@@ -633,8 +655,8 @@ public class Drone extends SuperAgent {
     	int mode = -1;
     	AgentID drone_selected = new AgentID();
     	
-    	//Ismael llamar o mandar la peticion de salida al satelite. Y espera a recibir mensaje (actualizar mode)
-    	askOut();
+    	mode = askOut(drone_selected);
+    	
     	if(drone_selected.equals(this.getAid())){
     		behavior = mode;
     	}else{
@@ -650,10 +672,10 @@ public class Drone extends SuperAgent {
     * @return Punto de partida.
     */
    	public int getInitialPosition(){
-   		int i, size = trace.size(); 
+   		int i, size = optimalTrace.size(); 
    		
    		for(i=0; i<size; ++i){
-   			if(trace.getLocation(i).getPositionY()>0)
+   			if(optimalTrace.getLocation(i).getPositionY()>0)
    				return i-1;
    		}
    		
@@ -685,23 +707,34 @@ public class Drone extends SuperAgent {
     				state = EXPLORE_MAP;
     			break;
     		case GO_TO_POINT_TRACE:
-    			int indexPosInic = getInitialPosition();
     			
-    			posiOX = trace.getLocation(indexPosInic).getPositionX();
-        		posiOY = trace.getLocation(indexPosInic).getPositionY();
-        		
+    			if(behavior == FOLLOWER){
+        			int indexPosInic = getInitialPosition();
+        			
+        			posiOX = optimalTrace.getLocation(indexPosInic).getPositionX();
+            		posiOY = optimalTrace.getLocation(indexPosInic).getPositionY();
+    			}else if(behavior == SCOUT_IMPROVER){
+    				
+    				posiOX = optimalTrace.getLocation(indexPosition).getPositionX();
+            		posiOY = optimalTrace.getLocation(indexPosition).getPositionY();
+    			}else
+    				throw new RuntimeException("Comportamiento incongruente para el estado : "+state);
+    			
     			if(posX == posiOX && posY == posiOY)
-    				state = FOLLOW_TRACE;
-    			
+        			state = FOLLOW_TRACE;
+        				
     			break;
     		case FOLLOW_TRACE:
     			// Se comprueba si estoy en una casilla conflictiva:
     			// - Si estoy en ella y solo hay una anotada y su tamaño es grande -> bordear por el otro lado.
     			// - Otro caso -> no cambio de estado
-    			if(conflictiveBoxReached){
+    			if(conflictiveBoxReached && (behavior == SCOUT_IMPROVER)){
     				if(currentConflictiveBox.size() == 1){
-    					if(currentConflictiveBox.get(0).getLength() > MIN_SIZE_FOR_OBSTACLE_SKIRTING)
+    					if(currentConflictiveBox.get(0).getLength() > MIN_SIZE_FOR_OBSTACLE_SKIRTING){
     						state = FORCE_EXPLORATION;
+    						movingBlock = currentConflictiveBox.get(0).getDecision();  // Se coje la decisión que tomó el otro drone para bloquear
+    																				   // este movimiento
+    					}
     				}
     			}else
     				currentPositionTracking++;
@@ -712,6 +745,7 @@ public class Drone extends SuperAgent {
     		case EXPLORE_MAP:
     			
     			if(behavior != SCOUT){
+    				
     				/*
     				 * Nose si esto es correcto....
     			 
@@ -724,6 +758,9 @@ public class Drone extends SuperAgent {
     						traceAux = otherTracesDrones.get(box.getDroneID()).getSubtrace(box.getPosFinal());
     				*/	
     			}
+    			break;
+    		case OBSTACLE_AREA:
+    			
     			break;
     			//TODO
     		/*case LAGGING:
@@ -806,8 +843,14 @@ public class Drone extends SuperAgent {
 
     /**
      * Segundo comportamiento intermedio del drone. Es el tercero en ejecutarse al recorrer los comportamientos:
-     *   Si el drone está en el estado FOLLOWER se sigue la traza óptima. Si además se encuentra en una casilla conflictiva
+     * 
+     *     Si el drone está en el estado FOLLOW_TRACE se sigue la traza óptima. Si además se encuentra en una casilla conflictiva
      *   se cambia a la traza cuyo camino implique bordear el obstáculo por el camino más corto.
+     *   
+     *   Nota: si está en el estado FOLLOW_TRACE y además se encuentra con situado sobre una casilla conflictiva da igual el modo que tenga asignado, deberá
+     *   escojer el lado óptimo. Si su modo es SCOUT_IMPROVER deberá igualmente elegir el lado óptima sin pensar en si debe mejorarlo o no
+     *   puesto que si hubiera tenido que mejorarlo su estado habría cambiado de FOLLOW_TRACE -> FORCE_EXPLORATION.
+     *   
      * @author Jahiel
      * @param listaMovimientos Lista de movimientos a analizar
      * @param args Argumentos adicionales
@@ -815,7 +858,7 @@ public class Drone extends SuperAgent {
      */
     protected int secondBehaviour(List<Pair> listaMovimientos, Object[] args) {
 
-    	if(state == this.FOLLOWER){
+    	if(state == FOLLOW_TRACE){
     		if(conflictiveBoxReached){
     			int minSize = 999999, indexMinBox = -1;
     			int size = currentConflictiveBox.size();
@@ -829,11 +872,13 @@ public class Drone extends SuperAgent {
 				}
 				
 				lastConflictiveBox =  currentConflictiveBox.get(indexMinBox);
-				trace = otherTracesDrones.get(id); // Cambio a la traza que me conduce por el camino mas corto para bordear el obstaculo
-				currentPositionTracking = trace.getIndex( currentConflictiveBox.get(indexMinBox).getPosInicial());
+				optimalTrace = otherTracesDrones.get(id); // Cambio a la traza que me conduce por el camino mas corto para bordear el obstaculo
+				currentPositionTracking = optimalTrace.getIndex( currentConflictiveBox.get(indexMinBox).getPosInicial());
 			}
-				
-    		return trace.get(currentPositionTracking).getMove();
+			
+    		trace.add(optimalTrace.get(currentPositionTracking));  // ??????? nose si esto es correcto me he hecho un lio con lo que hay que meter en Trace
+    		
+    		return optimalTrace.get(currentPositionTracking).getMove();
     	}else
             return NO_DEC;
            
@@ -2416,9 +2461,15 @@ public class Drone extends SuperAgent {
         									 // hasta el momento.
         otherTracesDrones.put(id, t);
         
-        for(Trace traceAux: otherTracesDrones.values()){ // Me quedo con la traza mas corta de todas
-        	if(this.trace.size() > traceAux.size())
-        		this.trace = traceAux;
+        if(optimalTrace == null){
+        	
+        	optimalTrace = t;
+        }else{
+        	
+        	for(Trace traceAux: otherTracesDrones.values()){ // Me quedo con la traza mas corta de todas
+        		if(optimalTrace.size() > traceAux.size())
+        			optimalTrace = traceAux;
+        	}
         }
         
         this.leaveStandBy(); //Despertamos al drone

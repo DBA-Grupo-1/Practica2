@@ -866,7 +866,8 @@ public class Satellite extends SuperAgent {
 		case SubjectLibrary.Start:
 			onStartDrone(msg);
 			break;
-			case SubjectLibrary.Straggler:
+		
+		case SubjectLibrary.Straggler:
 				//Meter mensaje en el log
 				addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), SubjectLibrary.Straggler, "");
 						
