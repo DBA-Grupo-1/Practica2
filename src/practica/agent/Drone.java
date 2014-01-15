@@ -679,6 +679,8 @@ public class Drone extends SuperAgent {
                             e.printStackTrace();
                     }
                     
+                    System.out.println(this.getAid().toString() + " is thinking...");
+                    
                     if(state == SLEEPING){	
                     	sendRequestOutput();
                     	tempDecision = RETHINK;

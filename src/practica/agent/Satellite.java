@@ -966,147 +966,157 @@ public class Satellite extends SuperAgent {
 	 * @param msg
 	 */
 	public void onStartDrone(ACLMessage msg) throws FIPAException{
-		//Meter mensaje en el log
-		addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), SubjectLibrary.Start, "");
-		
-		ACLMessage answer = null;
-		Trace optimalTrace =  null;
-		Trace traceAux;
-		ArrayList<DroneStatus> dronesWithoutLeaving = new ArrayList<DroneStatus>();
-		int batteryInCharger = 0;
-		
-		n_requestStart++;
-		
-		if(n_requestStart == drones.length){
-			
-			// Se calcula que drones han acabado y se coje la traza optima (la mas corta). Se coje solo el tamaño de la traza
-			// desde el punto de partida hasta el final.
-			
-			for(int i=0; i<droneStuses.length; i++){
-				if(droneStuses[i].isGoalReached()){
-					traceAux = askForDroneTrace(droneStuses[i].getId());
-					if(optimalTrace == null)
-						optimalTrace = traceAux; 
-					if(traceAux.size() < optimalTrace.size())
-						optimalTrace = traceAux;
-				}else{
-					if(droneStuses[i].getLocation().getPositionX() == 0 && !droneStuses[i].isGoalReached()) // Se recogen los drones que aun no han salido
-						dronesWithoutLeaving.add(droneStuses[i]);
-				}
-			}
-			
-			GPSLocation start = new GPSLocation(optimalTrace.getLocation(0).getPositionX(), optimalTrace.getLocation(0).getPositionY());
-			int sizeTrace = optimalTrace.getSubtrace(start).size() * dronesWithoutLeaving.size(); // el tamaño de esta traza se multiplica por el numero
-																								  // de drones que deben recorrerla.
-			
-			// Se calcula cuanto gastan los drones (que aun no han salido) de bateria en ir hacia el punto de partida de la traza optima
-			
-			int positionInic = getInitialPosition(optimalTrace);
-			GPSLocation end = new GPSLocation(optimalTrace.getLocation(positionInic).getPositionX(), optimalTrace.getLocation(positionInic).getPositionY());
-			
-			for(DroneStatus status: dronesWithoutLeaving){
-				if(status.getLocation().getPositionX() == 0 && !status.isGoalReached())
-					sizeTrace += optimalTrace.getSubtrace(status.getLocation(), end).size();
-			}
-			
-			//Se calcula cuanto gastan de bateria en rescatar a un rezagado (cuanto se gasta en retroceder y en llegar al goal)
-			
-			ArrayList<ConflictiveBox> conflictiveList = new ArrayList<ConflictiveBox>();
-			
-			for(ConflictiveBox box: conflictiveList){
-				if(box.isDangerous()){
-					sizeTrace+=box.getLength() + optimalTrace.getSubtrace(box.getPosInicial()).size();
-				}
-			}
-			
-			// Se pide la bateria restante que le queda al cargador
-			
-			JSONObject content =  new JSONObject();
-			try {
-				content.put(JSONKeyLibrary.Subject, SubjectLibrary.ChargerBattery);
-			} catch (JSONException e1) {
-
-				e1.printStackTrace();
-			}
-			send(ACLMessage.INFORM, msg.getSender(), ProtocolLibrary.Information, null, null, buildConversationId(), content);
+		try{
 			//Meter mensaje en el log
-			addMessageToLog(Log.SENDED, msg.getSender(), ProtocolLibrary.Information, SubjectLibrary.ChargerBattery, "");
-			
-			try {
-				answer = answerQueue.take();
-				//Meter mensaje en el log
-				addMessageToLog(Log.RECEIVED, answer.getSender(), answer.getProtocol(), SubjectLibrary.ChargerBattery, "");
-			} catch (InterruptedException e) {
-				new RefuseException(ErrorLibrary.FailureCommunication);
-			}
-			
-			if(!answer.getPerformative().equals(ACLMessage.INFORM)){
-				throw new RuntimeException("Error en la recepcion del tipo de mensaje");
-			}
-			
-			try {
-				JSONObject contentRes = new JSONObject(answer.getContent());
-				
-				batteryInCharger = contentRes.getInt(SubjectLibrary.ChargerBattery);
-			} catch (JSONException e) {
-				new RefuseException(ErrorLibrary.FailureCommunication);
-			}
-			
-			// Se comprueba si pueden llegar todos los drones.
-			int batteryInDrones = dronesWithoutLeaving.size() * 75; // Se calcula cuanto bateria tienen los drones que quedan por salir
-			int behavior;
-			
-			if( (sizeTrace - batteryInDrones) <= batteryInCharger){
-				
-				behavior = Drone.FOLLOWER;
-			}else{
-				// Se selecciona el drone mas cercano dependiendo de los drones que hayan salido
-				
-				boolean rescueStragglers = false;  // variable que determina si se rescatan o no a los rezagados
-				
-				if(droneScout < 1)
-					behavior = Drone.SCOUT;
-				else if(droneScout_Improber < 2)
-					behavior = Drone.SCOUT_IMPROVER;
-				else{
-					behavior = Drone.FOLLOWER;
-					rescueStragglers = true;
-				}
-				
-				int index = findNerestDrone(rescueStragglers);
-				
-				// Si el drone elegido es rezagado comprobamos si no hay bateria para que de la vuelta y siga la traza y se le asigna
-				// el modo libre.
-				
-				if(rescueStragglers){
-					int pos = 0; // posición del drone rezagado elegido
-					
-					for(AgentID id: dronesLagger){
-						if(droneStuses[index].getId().equals(id)){
-							for(ConflictiveBox box: conflictiveList){
-								if(box.isDangerous() && box.getDroneID().equals(id)){
-									if( (box.getLength() + optimalTrace.getSubtrace(box.getPosInicial()).size()) > batteryInCharger)
-										behavior = Drone.FREE;
-								}
-							}
-						}else
-							pos++;
+			addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), SubjectLibrary.Start, "");
+
+			ACLMessage answer = null;
+			Trace optimalTrace =  null;
+			Trace traceAux;
+			ArrayList<DroneStatus> dronesWithoutLeaving = new ArrayList<DroneStatus>();
+			int batteryInCharger = 0, index, behavior;
+
+			n_requestStart++;
+
+			if(n_requestStart == drones.length){
+
+				// Se calcula que drones han acabado y se coje la traza optima (la mas corta). Se coje solo el tamaño de la traza
+				// desde el punto de partida hasta el final.
+
+				for(int i=0; i<droneStuses.length; i++){
+					if(droneStuses[i].isGoalReached()){
+						traceAux = askForDroneTrace(droneStuses[i].getId());
+						if(optimalTrace == null)
+							optimalTrace = traceAux; 
+						if(traceAux.size() < optimalTrace.size())
+							optimalTrace = traceAux;
+					}else{
+						if(droneStuses[i].getLocation().getPositionX() == 0 && !droneStuses[i].isGoalReached()) // Se recogen los drones que aun no han salido
+							dronesWithoutLeaving.add(droneStuses[i]);
 					}
-					
-					dronesLagger.remove(pos); // lo sacamos de la lista puesto que ya no será rezagado
 				}
+
+				if(optimalTrace!=null){
+					GPSLocation start = new GPSLocation(optimalTrace.getLocation(0).getPositionX(), optimalTrace.getLocation(0).getPositionY());
+					int sizeTrace = optimalTrace.getSubtrace(start).size() * dronesWithoutLeaving.size(); // el tamaño de esta traza se multiplica por el numero
+					// de drones que deben recorrerla.
+
+					// Se calcula cuanto gastan los drones (que aun no han salido) de bateria en ir hacia el punto de partida de la traza optima
+
+					int positionInic = getInitialPosition(optimalTrace);
+					GPSLocation end = new GPSLocation(optimalTrace.getLocation(positionInic).getPositionX(), optimalTrace.getLocation(positionInic).getPositionY());
+
+					for(DroneStatus status: dronesWithoutLeaving){
+						if(status.getLocation().getPositionX() == 0 && !status.isGoalReached())
+							sizeTrace += optimalTrace.getSubtrace(status.getLocation(), end).size();
+					}
+
+					//Se calcula cuanto gastan de bateria en rescatar a un rezagado (cuanto se gasta en retroceder y en llegar al goal)
+
+					ArrayList<ConflictiveBox> conflictiveList = new ArrayList<ConflictiveBox>();
+
+					for(ConflictiveBox box: conflictiveList){
+						if(box.isDangerous()){
+							sizeTrace+=box.getLength() + optimalTrace.getSubtrace(box.getPosInicial()).size();
+						}
+					}
+
+
+
+
+					// Se pide la bateria restante que le queda al cargador
+					//batteryInCharger = askBattery();
+					
+					JSONObject content =  new JSONObject();
+					try {
+						content.put(JSONKeyLibrary.Subject, SubjectLibrary.ChargerBattery);
+					} catch (JSONException e1) {
+
+						e1.printStackTrace();
+					}
+					send(ACLMessage.INFORM, msg.getSender(), ProtocolLibrary.Information, null, null, buildConversationId(), content);
+					//Meter mensaje en el log
+					addMessageToLog(Log.SENDED, msg.getSender(), ProtocolLibrary.Information, SubjectLibrary.ChargerBattery, "");
+
+					try {
+						answer = answerQueue.take();
+						//Meter mensaje en el log
+						addMessageToLog(Log.RECEIVED, answer.getSender(), answer.getProtocol(), SubjectLibrary.ChargerBattery, "");
+					} catch (InterruptedException e) {
+						new RefuseException(ErrorLibrary.FailureCommunication);
+					}
+
+					if(!answer.getPerformative().equals(ACLMessage.INFORM)){
+						throw new RuntimeException("Error en la recepcion del tipo de mensaje");
+					}
+
+					try {
+						JSONObject contentRes = new JSONObject(answer.getContent());
+
+						batteryInCharger = contentRes.getInt(SubjectLibrary.ChargerBattery);
+					} catch (JSONException e) {
+						new RefuseException(ErrorLibrary.FailureCommunication);
+					}
+
+
+					// Se comprueba si pueden llegar todos los drones.
+					int batteryInDrones = dronesWithoutLeaving.size() * 75; // Se calcula cuanto bateria tienen los drones que quedan por salir
+
+					if( (sizeTrace - batteryInDrones) <= batteryInCharger){
+
+						behavior = Drone.FOLLOWER;
+					}else{
+						// Se selecciona el drone mas cercano dependiendo de los drones que hayan salido
+
+						boolean rescueStragglers = false;  // variable que determina si se rescatan o no a los rezagados
+
+						if(droneScout < 1)
+							behavior = Drone.SCOUT;
+						else if(droneScout_Improber < 2)
+							behavior = Drone.SCOUT_IMPROVER;
+						else{
+							behavior = Drone.FOLLOWER;
+							rescueStragglers = true;
+						}
+
+						index = findNerestDrone(rescueStragglers);
+
+						// Si el drone elegido es rezagado comprobamos si no hay bateria para que de la vuelta y siga la traza y se le asigna
+						// el modo libre.
+
+						if(rescueStragglers){
+							int pos = 0; // posición del drone rezagado elegido
+
+							for(AgentID id: dronesLagger){
+								if(droneStuses[index].getId().equals(id)){
+									for(ConflictiveBox box: conflictiveList){
+										if(box.isDangerous() && box.getDroneID().equals(id)){
+											if( (box.getLength() + optimalTrace.getSubtrace(box.getPosInicial()).size()) > batteryInCharger)
+												behavior = Drone.FREE;
+										}
+									}
+								}else
+									pos++;
+							}
+
+							dronesLagger.remove(pos); // lo sacamos de la lista puesto que ya no será rezagado
+						}
+					}
+				}else{
+					behavior = Drone.SCOUT;
+				}
+				index = findNerestDrone(false);
 				
 				JSONObject contentSelected = new JSONObject();
-				
 				try {
 					contentSelected.put(JSONKeyLibrary.Subject, SubjectLibrary.Start);
 					contentSelected.put(JSONKeyLibrary.Selected, droneStuses[index].getId().toString());
 					contentSelected.put(JSONKeyLibrary.Mode, behavior);
 				} catch (JSONException e) {
-				
+
 					e.printStackTrace();
 				}
-								
+
 				for(DroneStatus status: droneStuses){
 					if(!status.isGoalReached()){
 						send(ACLMessage.INFORM, status.getId(), ProtocolLibrary.Scout, null, null, buildConversationId(), contentSelected);	
@@ -1114,9 +1124,11 @@ public class Satellite extends SuperAgent {
 						addMessageToLog(Log.SENDED, status.getId(), ProtocolLibrary.Scout, SubjectLibrary.Start, "Selected: " + droneStuses[index].getId().name + ", Mode: " + String.valueOf(behavior));		
 					}
 				}
-				
+
 			}
-			
+
+		}catch(RuntimeException e){
+			e.printStackTrace();
 		}
 	}
 	
