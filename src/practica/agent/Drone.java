@@ -122,6 +122,8 @@ public class Drone extends SuperAgent {
         /** Decision de reiniciar el proceso de toma de decision. */
         public static final int RETHINK = -4;
         
+        public static final int ENTER_LAGGING = -5;
+        
         /** Número de casillas que debe pasar separado de un obstáculo para considerar otra zona obstáculo*/
 		private static final int N_TO_OTHER_OBSTACLE = 10;
         
@@ -136,11 +138,9 @@ public class Drone extends SuperAgent {
         protected Thread dispatcher;
         private AgentID[] teammates;
         private Trace trace, optimalTrace;
-        
-        private ConflictiveBox conflictiveBox;
+        private ConflictiveBox conflictiveBox, otherSizeOfTheObstacle;
         private ArrayList<ConflictiveBox> currentConflictiveBox;
         private boolean conflictiveBoxReached;
-        private ConflictiveBox lastConflictiveBox;
         private int contSalida = 0;
         private boolean preEsq = false;
         private boolean postEsq = false;
@@ -256,14 +256,7 @@ public class Drone extends SuperAgent {
                     if(standBy > 0)
                             wait();
             }
-    }
-    
-    
-    
-    
-    
-    
-    
+    }   
     
     
     
@@ -302,6 +295,55 @@ public class Drone extends SuperAgent {
                             postUpdateTrace();
                     }
             }while(decision != END_FAIL && decision != END_SUCCESS);
+            
+            /**
+            if(decision == END_SUCCESS){  // ??? deben esperar tambien los drones que han acabado mal??? Yo creo que no
+            	// mandar al satelite mensaje de finalizacion Ismael
+            	
+            	this.enterStandBy();
+            	
+            	try {
+                    waitIfStandBy();
+            	} catch (InterruptedException e) {
+                    e.printStackTrace();
+            	}
+            	
+            }
+            */
+    }
+    
+    /**
+     * 
+     * @author Jahiel
+     */
+    public void getOutPutDecision(){
+    	Trace subTrace = optimalTrace.getSubtrace(otherSizeOfTheObstacle.getPosFinal());
+    	GPSLocation posTemp = new GPSLocation();
+    	GPSLocation actual = new GPSLocation(posX, posY);
+    	double dist = 99999.0;
+    	double distTemp;
+    	int index = -1;
+    	
+    	for(int i=0; i<subTrace.size(); i++){
+    		distTemp = Math.abs(subTrace.getLocation(i).getPositionX() - posX) + 
+    					Math.abs(subTrace.getLocation(i).getPositionY() - posY);
+    		if(distTemp < dist){
+    			dist = distTemp;
+    			posTemp = subTrace.getLocation(i);
+    			index = i;
+    		}
+    	}
+    	
+    	subTrace = optimalTrace.getSubtrace(posTemp);
+    	dist = dist + subTrace.size();
+    	
+    	if(distance <= dist){
+    		state = EXPLORE_MAP;
+    	}else{
+    		state = GO_TO_POINT_TRACE;
+    		indexPosition = index; 
+    	}
+    	
     }
     
     /**
@@ -331,9 +373,10 @@ public class Drone extends SuperAgent {
     	 *    
     	 * @author Jahiel
     	 */
-    	if(state == EXPLORE_MAP && entrandoEsq && (behavior == SCOUT || behavior == SCOUT_IMPROVER) ){
-    		state = OBSTACLE_AREA;
-    		counterLaggin = 0;
+    	if((state == EXPLORE_MAP || state == FORCE_EXPLORATION) && (behavior == SCOUT || behavior == SCOUT_IMPROVER) && entrandoEsq ){
+    		if(state == EXPLORE_MAP)
+    			state = OBSTACLE_AREA;
+    		
     		conflictiveBox = new ConflictiveBox(this.getAid());
     		conflictiveBox.setPosInicial(new GPSLocation(posX, posY));
     		conflictiveBox.setDecision(this.decision); // Se le asigna la decisión actual a la casilla
@@ -343,17 +386,16 @@ public class Drone extends SuperAgent {
     		if(!dodging){
     			contSalida++;
     			if(contSalida >= N_TO_OTHER_OBSTACLE){
-    				state = EXPLORE_MAP;
+    				if(behavior == SCOUT)
+    					state = EXPLORE_MAP;
+    				else{
+    					getOutPutDecision();
+    				}
+    					
     				conflictiveBox.setPosFinal(posSalidaTemporal);
     				conflictiveBox.setDangerous(false);
     				Trace subTrace = trace.getSubtrace(conflictiveBox.getPosInicial());
     				conflictiveBox.setLength(subTrace.size());
-    				
-    				/**
-    				 * Me quedo con la ultima casilla conflictiva que he estado.
-    				 * @author Jahiel
-    				 */
-    				lastConflictiveBox = conflictiveBox;
     				
     				sendConflictiveBox();
     			}
@@ -526,6 +568,14 @@ public class Drone extends SuperAgent {
 			   JSONObject content= new JSONObject(msg.getContent());
 			  what = content.getString(JSONKeyLibrary.Subject);		   
 			   who = content.getString(SubjectLibrary.StragglerNotification);
+			   
+			   /**
+			    * Despierto al drone. No incluyo la traza del rezagado puesto que es una traza peligrosa.
+			    * 
+			    * @author Jahiel
+			    */
+			   this.leaveStandBy();
+			   
 			   }catch(JSONException e){
 				   e.printStackTrace();
 			   }
@@ -683,7 +733,7 @@ public class Drone extends SuperAgent {
    	public int getInitialPosition(){
    		int i, size = optimalTrace.size(); 
    		
-   		for(i=0; i<size; ++i){
+   		for(i=0; i<size; i++){
    			if(optimalTrace.getLocation(i).getPositionY()>0)
    				return i-1;
    		}
@@ -706,6 +756,8 @@ public class Drone extends SuperAgent {
     				state = EXPLORE_MAP;
     			}else if(behavior == FOLLOWER || behavior == SCOUT_IMPROVER){
     				state = GO_TO_POINT_TRACE;
+    				if(behavior == SCOUT_IMPROVER)
+    					indexPosition = getInitialPosition();
     			}else 
     				throw new RuntimeException("Comportamiento incongruente para el estado : "+state);
     			break;
@@ -743,43 +795,18 @@ public class Drone extends SuperAgent {
     						state = FORCE_EXPLORATION;
     						movingBlock = currentConflictiveBox.get(0).getDecision();  // Se coje la decisión que tomó el otro drone para bloquear
     																				   // este movimiento
+    						otherSizeOfTheObstacle = currentConflictiveBox.get(0);
     					}
     				}
     			}else
     				currentPositionTracking++;
     			break;
-    		case FORCE_EXPLORATION:
+    		case UNDO_TRACE:
     			
-    			break;
-    		case EXPLORE_MAP:
-    			
-    			if(behavior != SCOUT){
-    				
-    				/*
-    				 * Nose si esto es correcto....
-    			 
-    				// si el estado = Explorar y el modo != scout significa que el drone acaba de salir de una zona conflictiva y por tanto
-    				// hay que elegir si ir hacia la traza o ir al objetivo directamente
-    				
-    			    Trace traceAux = null;
-    				for(ConflictiveBox box: currentConflictiveBox)
-    					if(lastConflictiveBox.getDecision() != box.getDecision())
-    						traceAux = otherTracesDrones.get(box.getDroneID()).getSubtrace(box.getPosFinal());
-    				*/	
-    			}
-    			break;
-    		case OBSTACLE_AREA:
-    			
-    			break;
-    			//TODO
-    		/*case LAGGING:
-    			if(behavior == FOLLOWER || behavior == SCOUT_IMPROVER){
+    			if(conflictiveBox.getPosInicial().equals(new GPSLocation(posX, posY)))
     				state = FOLLOW_TRACE;
-    			}else if(behavior == FREE)
-    				state = LOST;
+    				
     			break;
-    		case ROAD_FORCE:
-    			break;*/
     		default: break;
     		}
            
@@ -840,26 +867,31 @@ public class Drone extends SuperAgent {
     }
 
     /**
-     * Primer comportamiento intermedio del drone. Es el segundo en ejecutarse al recorrer los comportamientos.
+     * Primer comportamiento intermedio del drone. Es el segundo en ejecutarse al recorrer los comportamientos:
+     *   Se comprueba si el drone debe entrar en modo rezagado.
+     * 
+     * @author Jahiel
      * @param listaMovimientos Lista de movimientos a analizar
      * @param args Argumentos adicionales
      * @return Decision tomada
      */
     protected int firstBehaviour(List<Pair> listaMovimientos, Object[] args) {
     	
-    	   return NO_DEC;
+    	if((state == OBSTACLE_AREA) && (behavior == SCOUT_IMPROVER)){
+    		Trace subTrace = trace.getSubtrace(conflictiveBox.getPosInicial());
+    		if(subTrace.size() >= otherSizeOfTheObstacle.getLength())
+    			return Drone.ENTER_LAGGING;
+    	}
+    	
+    	return NO_DEC;
     }
 
     /**
      * Segundo comportamiento intermedio del drone. Es el tercero en ejecutarse al recorrer los comportamientos:
      * 
-     *     Si el drone está en el estado FOLLOW_TRACE se sigue la traza óptima. Si además se encuentra en una casilla conflictiva
-     *   se cambia a la traza cuyo camino implique bordear el obstáculo por el camino más corto.
-     *   
-     *   Nota: si está en el estado FOLLOW_TRACE y además se encuentra con situado sobre una casilla conflictiva da igual el modo que tenga asignado, deberá
-     *   escojer el lado óptimo. Si su modo es SCOUT_IMPROVER deberá igualmente elegir el lado óptima sin pensar en si debe mejorarlo o no
-     *   puesto que si hubiera tenido que mejorarlo su estado habría cambiado de FOLLOW_TRACE -> FORCE_EXPLORATION.
-     *   
+     *     Deshacer la traza. Exlcusivo para los rezagados que deberán deshacer la traza hasta el inicio de la casilla conflictiva 
+     *   si dicho punto está más cerca del objetivo.
+     *       
      * @author Jahiel
      * @param listaMovimientos Lista de movimientos a analizar
      * @param args Argumentos adicionales
@@ -867,20 +899,47 @@ public class Drone extends SuperAgent {
      */
     protected int secondBehaviour(List<Pair> listaMovimientos, Object[] args) {
 
+    	if(state == UNDO_TRACE){
+    		GPSLocation actual = new GPSLocation(posX, posY);
+    		
+    		currentPositionTracking = optimalTrace.getIndex(actual);
+    		
+    		return optimalTrace.get(currentPositionTracking).getMove();	
+    	}
+    	
+    	return NO_DEC;
+    }
+    
+    /**
+     * Tercer comportamiento intermedio del drone. Es el cuarto en ejecutarse al recorrer los comportamientos.
+     * 
+     *     Si el drone está en el estado FOLLOW_TRACE se sigue la traza óptima. Si además se encuentra en una casilla conflictiva
+     *   se cambia a la traza cuyo camino implique bordear el obstáculo por el camino más corto.
+     *   
+     *   Nota: si está en el estado FOLLOW_TRACE y además se encuentra con situado sobre una casilla conflictiva da igual el modo que tenga asignado, deberá
+     *   escojer el lado óptimo. Si su modo es SCOUT_IMPROVER deberá igualmente elegir el lado óptima sin pensar en si debe mejorarlo o no
+     *   puesto que si hubiera tenido que mejorarlo su estado habría cambiado de FOLLOW_TRACE -> FORCE_EXPLORATION.
+     *  
+     * @author Jahiel
+     * @param listaMovimientos Lista de movimientos a analizar
+     * @param args Argumentos adicionales
+     * @return Decision tomada
+     */
+    protected int thirdBehaviour(List<Pair> listaMovimientos, Object[] args) {
+    	 
     	if(state == FOLLOW_TRACE){
     		if(conflictiveBoxReached){
     			int minSize = 999999, indexMinBox = -1;
     			int size = currentConflictiveBox.size();
     			AgentID id = null;
     			
-				for(int i=0; i<size; ++i){
+				for(int i=0; i<size; i++){
 					if(currentConflictiveBox.get(i).getLength() < minSize){
 						 id = currentConflictiveBox.get(i).getDroneID();
 						 indexMinBox = i;
 					}
 				}
-				
-				lastConflictiveBox =  currentConflictiveBox.get(indexMinBox);
+
 				optimalTrace = otherTracesDrones.get(id); // Cambio a la traza que me conduce por el camino mas corto para bordear el obstaculo
 				currentPositionTracking = optimalTrace.getIndex( currentConflictiveBox.get(indexMinBox).getPosInicial());
 			}
@@ -894,74 +953,77 @@ public class Drone extends SuperAgent {
     }
     
     /**
-     * Tercer comportamiento intermedio del drone. Es el cuarto en ejecutarse al recorrer los comportamientos.
+     * Cuarto comportamiento intermedio del drone. Es el quinto en ejecutarse al recorrer los comportamientos.
      * @author Alberto
      * @param listaMovimientos Lista de movimientos a analizar
      * @param args Argumentos adicionales
      * @return Decision tomada
      */
-    protected int thirdBehaviour(List<Pair> listaMovimientos, Object[] args) {
-    	 if(dodging){
-             //Buscamos el mejor movimiento en la lista y comprobamos si es posible
-             boolean betterIsPosible = false;
-             for(int i=0; i<4; i++)
-                     if(listaMovimientos.get(i).getSecond() == betterMoveBeforeDodging)
-                             betterIsPosible = listaMovimientos.get(i).getThird(); 
+    protected int fourthBehaviour(List<Pair> listaMovimientos, Object[] args) {
+    	if(dodging){
+            //Buscamos el mejor movimiento en la lista y comprobamos si es posible
+            boolean betterIsPosible = false;
+            for(int i=0; i<4; i++)
+                    if(listaMovimientos.get(i).getSecond() == betterMoveBeforeDodging)
+                            betterIsPosible = listaMovimientos.get(i).getThird(); 
 
-             //Si es posible lo realizamos y salimos del modo esquivando
-             if(dodging && betterIsPosible){
-                     dodging=false;
-                     System.out.println("Saliendo dodging: " + betterMoveBeforeDodging);
-                     return betterMoveBeforeDodging;
-             }
+            //Si es posible lo realizamos y salimos del modo esquivando
+            if(dodging && betterIsPosible){
+                    dodging=false;
+                    System.out.println("Saliendo dodging: " + betterMoveBeforeDodging);
+                    return betterMoveBeforeDodging;
+            }
 
 
-             //Comprobamos si estamos esquivando y podemos hacer un movimiento que nos deje cerca de un obstaculo
+            //Comprobamos si estamos esquivando y podemos hacer un movimiento que nos deje cerca de un obstaculo
 
-             //Al lado de un obstaculo (en un movimiento)
-             if(dodging)
-                     for(Pair pair: listaMovimientos){
-                             int move = pair.getSecond();
-                             if(pair.getThird() && (getCorner(move, (move+1)%4) == Map.OBSTACULO || getCorner(move, (move+3)%4) == Map.OBSTACULO))
-                                     return move;
-                     }
+            //Al lado de un obstaculo (en un movimiento)
+            if(dodging)
+                    for(Pair pair: listaMovimientos){
+                            int move = pair.getSecond();
+                            if(pair.getThird() && (getCorner(move, (move+1)%4) == Map.OBSTACULO || getCorner(move, (move+3)%4) == Map.OBSTACULO))
+                                    return move;
+                    }
 
-             //Al lado de un obstaculo (en dos movimientos)
-             if(dodging){
-                     int [] validMovs=getValidMovements();
-                     for(Pair pair: listaMovimientos){
-                             int move = pair.getSecond();
-                             if(pair.getThird() && (validMovs[(move+1)%4] == Map.OBSTACULO || validMovs[(move+3)%4] == Map.OBSTACULO))
-                                     return move;
-                     }
-             }
+            //Al lado de un obstaculo (en dos movimientos)
+            if(dodging){
+                    int [] validMovs=getValidMovements();
+                    for(Pair pair: listaMovimientos){
+                            int move = pair.getSecond();
+                            if(pair.getThird() && (validMovs[(move+1)%4] == Map.OBSTACULO || validMovs[(move+3)%4] == Map.OBSTACULO))
+                                    return move;
+                    }
+            }
 
-             return NO_DEC;
-    	 }else{
-             //Comprobamos si no podemos hacer el mejor movimiento debido a un obstaculo
-             //En ese caso pasamos al modo esquivar
-             int [] validMov=getValidMovements();
-             if(!listaMovimientos.get(0).getThird() && validMov[listaMovimientos.get(0).getSecond()]==Map.OBSTACULO && !dodging){
-                     dodging=true;
-                     /**
-                     @author Jahiel
-                     */
-                     if(listaMovimientos.get(0).getSecond() == movingBlock){
-                     	state = EXPLORE_MAP;
-                     }
-                     
-                     betterMoveBeforeDodging=listaMovimientos.get(0).getSecond();
-                     System.out.println("Entrando dodging: "+betterMoveBeforeDodging);
-             }
-             
-             return NO_DEC;
-    	 }
+            return NO_DEC;
+   	 }else{
+            //Comprobamos si no podemos hacer el mejor movimiento debido a un obstaculo
+            //En ese caso pasamos al modo esquivar
+            int [] validMov=getValidMovements();
+            if(!listaMovimientos.get(0).getThird() && validMov[listaMovimientos.get(0).getSecond()]==Map.OBSTACULO && !dodging){
+                    dodging=true;
+                    /**
+                    @author Jahiel
+                    */
+                    if(listaMovimientos.get(0).getSecond() == movingBlock){
+                    	state = EXPLORE_MAP;
+                    }
+                    
+                    betterMoveBeforeDodging=listaMovimientos.get(0).getSecond();
+                    System.out.println("Entrando dodging: "+betterMoveBeforeDodging);
+            }
+            
+            return NO_DEC;
+   	 }
+    	
     }
+    
     
     /**
      * Comportamiento critico del drone. Es el primero en ejecutarse al recorrer los comportamientos.
      * @author Dani
      * @author Ismael
+     * @author Jahiel
      * @param listaMovimientos Lista de movimientos a analizar
      * @param args Argumentos adicionales
      * @return Decision tomada
@@ -974,8 +1036,14 @@ public class Drone extends SuperAgent {
                     enterStandBy();
                   
                    return RETHINK;
-            }
-            else 
+            }else if(state == LAGGING){
+            	iStraggler();          // comunico que paso al estado Rezagado y espero la confirmación
+            	iStragglerReceive();
+            	
+            	enterStandBy();
+            	
+            	return RETHINK;
+            }else
                     return NO_DEC;
     }
 
