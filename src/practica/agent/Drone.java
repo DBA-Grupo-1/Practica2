@@ -122,8 +122,6 @@ public class Drone extends SuperAgent {
         /** Decision de reiniciar el proceso de toma de decision. */
         public static final int RETHINK = -4;
         
-        public static final int ENTER_LAGGING = -5;
-        
         /** Número de casillas que debe pasar separado de un obstáculo para considerar otra zona obstáculo*/
 		private static final int N_TO_OTHER_OBSTACLE = 10;
         
@@ -538,6 +536,10 @@ public class Drone extends SuperAgent {
 		   }
    }
    
+   /**
+    * @author Ismael
+    * Función mensaje para petición de salida
+    */
    public int askOut(AgentID resId){
 	   JSONObject ask = new JSONObject();
 	   try{
@@ -550,6 +552,12 @@ public class Drone extends SuperAgent {
 	   return askOutReceive(resId);
    }
 
+   /**
+    * @author Ismael
+    * Funcion de que recibe mensaje de peticion de salida
+    * @param resId
+    * @param Mod
+    */
    public int askOutReceive(AgentID resId){
 	   ACLMessage msg=null;
 	   int Mod = -1;
