@@ -519,6 +519,10 @@ public class Drone extends SuperAgent {
 		   }
    }
    
+   /**
+    * @author Ismael
+    * Función mensaje para petición de salida
+    */
    public void askOut(){
 	   JSONObject ask = new JSONObject();
 	   try{
@@ -529,6 +533,12 @@ public class Drone extends SuperAgent {
 	   }
    }
 
+   /**
+    * @author Ismael
+    * Funcion de que recibe mensaje de peticion de salida
+    * @param resId
+    * @param Mod
+    */
    public void askOutReceive(AgentID resId, int Mod){
 	   ACLMessage msg=null;
 	   
