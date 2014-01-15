@@ -122,6 +122,8 @@ public class Drone extends SuperAgent {
         /** Decision de reiniciar el proceso de toma de decision. */
         public static final int RETHINK = -4;
         
+        public static final int ENTER_LAGGING = -5;
+        
         /** Número de casillas que debe pasar separado de un obstáculo para considerar otra zona obstáculo*/
 		private static final int N_TO_OTHER_OBSTACLE = 10;
         
@@ -313,7 +315,8 @@ public class Drone extends SuperAgent {
     	boolean entrandoEsq = !preEsq && postEsq; //Antes no estaba esquivando y ahora sí
     	boolean saliendoEsq = preEsq && !postEsq; //Antes estaba esquivando y ya no
     	
-    	if(state == LAGGING){ 
+    	if(trace.get(trace.size()-1).getMove() == Drone.ENTER_LAGGING){ 
+    		state = LAGGING;
     		conflictiveBox.setDangerous(true);
     		Trace subtraza = trace.getSubtrace(conflictiveBox.getPosInicial(), new GPSLocation(posX, posY));
     		conflictiveBox.setLength(subtraza.size());
@@ -356,10 +359,8 @@ public class Drone extends SuperAgent {
     				
     				sendConflictiveBox();
     			}
-    		}else{
-    			if(counterLaggin == )
     		}
-    			counterLaggin++;
+    		
     	}
     	
     	if(state == OBSTACLE_AREA && saliendoEsq){
