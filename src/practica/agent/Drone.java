@@ -100,6 +100,7 @@ public class Drone extends SuperAgent {
         protected int currentPositionTracking;
         protected int movingBlock;  // movimiento a bloquear para el modo explorar otras decisiones.
         protected int indexPosition;
+        protected boolean enterLagging;  // indica en el estado lagging si el drone acaba de entrar en dicho estado o debe salir de él.
         
         /** Decision de mover al norte */
         public static final int NORTE = 3;
@@ -194,6 +195,7 @@ public class Drone extends SuperAgent {
                 
                 conflictiveBoxReached = false;
                 optimalTrace = null;
+                enterLagging = false;
         }
         
         
@@ -357,6 +359,8 @@ public class Drone extends SuperAgent {
     	
     	if(trace.get(trace.size()-1).getMove() == Drone.ENTER_LAGGING){ 
     		state = LAGGING;
+    		enterLagging = true;
+    		this.enterStandBy();
     		conflictiveBox.setDangerous(true);
     		Trace subtraza = trace.getSubtrace(conflictiveBox.getPosInicial(), new GPSLocation(posX, posY));
     		conflictiveBox.setLength(subtraza.size());
@@ -764,10 +768,15 @@ public class Drone extends SuperAgent {
     				throw new RuntimeException("Comportamiento incongruente para el estado : "+state);
     			break;
     		case LAGGING:
-    			if(behavior == FOLLOWER){
-    				state = UNDO_TRACE;
-    			}else if(behavior == FREE)
-    				state = EXPLORE_MAP;
+    			if(enterLagging){
+    				enterLagging = false;
+    			}else{
+    				if(behavior == FOLLOWER){
+        				state = UNDO_TRACE;
+        			}else if(behavior == FREE)
+        				state = EXPLORE_MAP;
+    			}
+    			
     			break;
     		case GO_TO_POINT_TRACE:
     			
@@ -1033,19 +1042,18 @@ public class Drone extends SuperAgent {
     protected int criticalBehaviour(List<Pair> listaMovimientos, Object[] args) {
             //Si no le queda batería el drone la pide y se queda en standby.
     	int amount=75;
-            if (battery == 0){
-                    askForBattery(amount);
-                    enterStandBy();
-                  
-                   return RETHINK;
-            }else if(state == LAGGING){
-            	iStraggler();          // comunico que paso al estado Rezagado y espero la confirmación
-            	iStragglerReceive();
-            	
-            	enterStandBy();
-            	
-            	return RETHINK;
-            }else
+    	if(state == LAGGING){
+        	iStraggler();          // comunico que paso al estado Rezagado y espero la confirmación
+        	iStragglerReceive();
+        	
+        	enterStandBy();
+        	
+        	return RETHINK;
+        } else if (battery == 0){
+        	askForBattery(amount);
+            enterStandBy();
+            return RETHINK;
+        }else
                     return NO_DEC;
     }
 

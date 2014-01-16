@@ -39,6 +39,9 @@ import practica.util.MessageQueue;
 import practica.util.DroneStatus;
 
 public class Satellite extends SuperAgent {
+	private final int  LIMIT_DRONES_SCOUT = 1,
+						LIMIT_DRONES_SCOUTIMPROBER = 2;
+	
 	private SharedMap mapOriginal;						//Mapa original a partir del cual transcurre todo.
 	private SharedMap mapSeguimiento;						//Mapa que se va actualizando a medida que los drones se muevan.
 	private double goalPosX;						//Coordenada X del objetivo.
@@ -966,6 +969,7 @@ public class Satellite extends SuperAgent {
 	 * @param msg
 	 */
 	public void onStartDrone(ACLMessage msg) throws FIPAException{
+		
 		try{
 			//Meter mensaje en el log
 			addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), SubjectLibrary.Start, "");
@@ -1025,39 +1029,8 @@ public class Satellite extends SuperAgent {
 
 
 					// Se pide la bateria restante que le queda al cargador
-					//batteryInCharger = askBattery();
-					
-					JSONObject content =  new JSONObject();
-					try {
-						content.put(JSONKeyLibrary.Subject, SubjectLibrary.ChargerBattery);
-					} catch (JSONException e1) {
-
-						e1.printStackTrace();
-					}
-					send(ACLMessage.INFORM, msg.getSender(), ProtocolLibrary.Information, null, null, buildConversationId(), content);
-					//Meter mensaje en el log
-					addMessageToLog(Log.SENDED, msg.getSender(), ProtocolLibrary.Information, SubjectLibrary.ChargerBattery, "");
-
-					try {
-						answer = answerQueue.take();
-						//Meter mensaje en el log
-						addMessageToLog(Log.RECEIVED, answer.getSender(), answer.getProtocol(), SubjectLibrary.ChargerBattery, "");
-					} catch (InterruptedException e) {
-						new RefuseException(ErrorLibrary.FailureCommunication);
-					}
-
-					if(!answer.getPerformative().equals(ACLMessage.INFORM)){
-						throw new RuntimeException("Error en la recepcion del tipo de mensaje");
-					}
-
-					try {
-						JSONObject contentRes = new JSONObject(answer.getContent());
-
-						batteryInCharger = contentRes.getInt(SubjectLibrary.ChargerBattery);
-					} catch (JSONException e) {
-						new RefuseException(ErrorLibrary.FailureCommunication);
-					}
-
+					batteryInCharger = askBattery();
+				
 
 					// Se comprueba si pueden llegar todos los drones.
 					int batteryInDrones = dronesWithoutLeaving.size() * 75; // Se calcula cuanto bateria tienen los drones que quedan por salir
@@ -1070,11 +1043,12 @@ public class Satellite extends SuperAgent {
 
 						boolean rescueStragglers = false;  // variable que determina si se rescatan o no a los rezagados
 
-						if(droneScout < 1)
+						if(droneScout < LIMIT_DRONES_SCOUT)
 							behavior = Drone.SCOUT;
-						else if(droneScout_Improber < 2)
+						else if(droneScout_Improber < LIMIT_DRONES_SCOUTIMPROBER){
 							behavior = Drone.SCOUT_IMPROVER;
-						else{
+							droneScout_Improber++;
+						}else{
 							behavior = Drone.FOLLOWER;
 							rescueStragglers = true;
 						}
@@ -1104,6 +1078,7 @@ public class Satellite extends SuperAgent {
 					}
 				}else{
 					behavior = Drone.SCOUT;
+					droneScout++;
 				}
 				index = findNerestDrone(false);
 				
@@ -1535,6 +1510,8 @@ public class Satellite extends SuperAgent {
 				}
 				else
 					*/
+				
+				
 					if(finalize==maxDrones){
 					//System.out.println("Finalizando");
 					
