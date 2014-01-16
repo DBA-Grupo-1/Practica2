@@ -160,13 +160,7 @@ public class Charger extends SuperAgent {
 							send(ACLMessage.REFUSE, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), content);
 						} catch (RefuseException e) {
 							e.printStackTrace();
-							JSONObject content = new JSONObject();
-							try {
-								content.put("Error", e.getMessage());
-								send(ACLMessage.REFUSE, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), content);
-							} catch (JSONException e1) {
-								e1.printStackTrace();
-							}
+							sendError(e, msg);
 						} catch (NotUnderstoodException e) {
 							send(ACLMessage.NOT_UNDERSTOOD, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), null);
 							e.printStackTrace();
@@ -422,6 +416,7 @@ public class Charger extends SuperAgent {
 			
 			givenBattery = requestedBattery;	
 			battery -= givenBattery; 
+			System.out.println("BATERIA CONCEDIDA: " + givenBattery);
 
 			JSONObject sendContent = new JSONObject();
 			sendContent.put (JSONKeyLibrary.AmountGiven, givenBattery);

@@ -92,7 +92,7 @@ public class SharedMap extends Map{
 	public void setValue(int x, int y, int value, AgentID id) throws Exception{
 		super.setValue(x, y, value);
 		if(value == VISITADO){
-			sharedSquares[x][y].addVisitingAgent(id);
+			sharedSquares[y][x].addVisitingAgent(id);
 		}
 	}
 	
@@ -120,7 +120,7 @@ public class SharedMap extends Map{
 	 * @return SharedSquare en la posición [x][y]
 	 */
 	public SharedSquare getSharedSquare (int x, int y){
-		return (sharedSquares[x][y]);
+		return (sharedSquares[y][x]);
 	}
 
 	/**
@@ -151,7 +151,7 @@ public class SharedMap extends Map{
 	 * @param cb la casilla conflictiva
 	 */
 	public void addConflictiveBox(ConflictiveBox cb) {
-		sharedSquares[cb.getPosInicial().getPositionX()][cb.getPosInicial().getPositionY()].addConflictiveBox(cb);
+		sharedSquares[cb.getPosInicial().getPositionY()][cb.getPosInicial().getPositionX()].addConflictiveBox(cb);
 	}
 	
 	/**
@@ -163,7 +163,7 @@ public class SharedMap extends Map{
 	 * @return lista con las secciones conflictivas.
 	 */
 	public ArrayList<ConflictiveBox> getConflictiveBoxes (int x, int y){
-		return sharedSquares[x][y].getConflictiveBoxes();
+		return sharedSquares[y][x].getConflictiveBoxes();
 	}
 	
 	
@@ -176,7 +176,7 @@ public class SharedMap extends Map{
 	 * @return true si es conflictiva, false si no.
 	 */
 	public boolean isConflictive (int x, int y){
-		return sharedSquares[x][y].isConflictive();
+		return sharedSquares[y][x].isConflictive();
 	}
 	
 }

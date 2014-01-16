@@ -59,7 +59,7 @@ public class Satellite extends SuperAgent {
 	private int n_requestStart;
 	private HashMap<String, HashMap<String, String>> subscriptions;  // <tipoSubcripcion, < IDAgent, ID-combersation>>
 	private AgentID cargador;			//Añadida variable para que el satelite se comunique con el cargador
-	private int countDronesStar;
+	private int countDronesReachedGoal;
 	private int droneScout, droneScout_Improber;    //Contador de exploradores y exploradores mejoradores
 	private ArrayList<AgentID> dronesLagger;
 	
@@ -78,7 +78,7 @@ public class Satellite extends SuperAgent {
 	public Satellite(AgentID sat,AgentID charger, Map map, int maxDrones) throws Exception{
 		//Inicialización de atributos.
 		super(sat);
-		countDronesStar=0;
+		countDronesReachedGoal=0;
 		cargador=charger;
 		exit = false;
 		mapOriginal = new SharedMap(map);
@@ -161,6 +161,9 @@ public class Satellite extends SuperAgent {
 			case SubjectLibrary.ChargerBattery:
 			case SubjectLibrary.Charge:
 			case SubjectLibrary.DetailedCharges:
+			case SubjectLibrary.Trace:
+			case SubjectLibrary.Steps:
+			case SubjectLibrary.BatteryLeft:
 				queue = answerQueue;
 				break;
 			
@@ -334,6 +337,7 @@ public class Satellite extends SuperAgent {
 			String conflictiveData = new Gson().toJson(mapSeguimiento.getSharedSquare(gps.getPositionX(), gps.getPositionY()).getConflictiveBoxes());
 			//Lo añado
 			status.put(JSONKeyLibrary.ConflictiveBox, conflictiveData);
+			System.out.println("ZZZ AÑADIENDO CASILLA CONFLICTIVA AL STATUS pos" + status.toString());
 		}
 
 		return status;
@@ -637,6 +641,8 @@ public class Satellite extends SuperAgent {
 			try {
 				o = new JSONObject(msg.getContent());
 				if(o.getInt(JSONKeyLibrary.Decision) == Drone.END_SUCCESS){
+					findStatus(droneID).setGoalReached(true);
+					countDronesReachedGoal++;
 					sendInformSubscribeFinalize(msg);
 				}else
 					sendInformSubscribeAllMovement(msg, currentPosition, o.getInt(JSONKeyLibrary.Decision));
@@ -742,10 +748,11 @@ public class Satellite extends SuperAgent {
 	 */
 	private void sendInformSubscribeFinalize(ACLMessage msg){
 		JSONObject contentSub = new JSONObject();
+		String sender = msg.getSender().toString();
 		
 		try {
 			contentSub.put(JSONKeyLibrary.Subject, SubjectLibrary.DroneReachedGoal);
-			contentSub.put(JSONKeyLibrary.DroneID, msg.getSender().toString());
+			contentSub.put(JSONKeyLibrary.DroneID, sender);
 			
 		} catch (JSONException e) {
 			// no sudece nunca
@@ -753,8 +760,9 @@ public class Satellite extends SuperAgent {
 		}
 		
 		for(String name: this.subscriptions.get(SubjectLibrary.DroneReachedGoal).keySet()){
-			send(ACLMessage.INFORM, new AgentID(name), ProtocolLibrary.Subscribe, null, null, 
-					this.subscriptions.get(SubjectLibrary.DroneReachedGoal).get(name), contentSub);
+			if(!sender.equals(name))
+				send(ACLMessage.INFORM, new AgentID(name), ProtocolLibrary.Subscribe, null, null, 
+						this.subscriptions.get(SubjectLibrary.DroneReachedGoal).get(name), contentSub);
 			//Meter mensaje en el log
 			addMessageToLog(Log.SENDED, msg.getSender(), msg.getProtocol(), SubjectLibrary.DroneReachedGoal, msg.getSender().name);	
 		}
@@ -953,6 +961,7 @@ public class Satellite extends SuperAgent {
 				distXAux = (int) Math.abs(goalPosX - droneStuses[i].getLocation().getPositionX());
 				if( (droneStuses[i].getLocation().getPositionY() == 0) && ( distXAux < dist) && !droneStuses[i].isGoalReached() ){
 					dist = distXAux;
+					System.out.println("ELEGIDOOOOOOOOOOOOOOOOOO: " + droneStuses[i].getId().toString());
 					droneSelected = i;
 				}
 			}
@@ -977,12 +986,12 @@ public class Satellite extends SuperAgent {
 			Trace optimalTrace =  null;
 			Trace traceAux;
 			ArrayList<DroneStatus> dronesWithoutLeaving = new ArrayList<DroneStatus>();
-			int batteryInCharger = 0, index, behavior;
+			int batteryInCharger = 0, index = 0, behavior;
 
 			n_requestStart++;
 
-			if(n_requestStart == drones.length){
-
+			if(n_requestStart == drones.length - countDronesReachedGoal){
+				n_requestStart = 0;
 				// Se calcula que drones han acabado y se coje la traza optima (la mas corta). Se coje solo el tamaño de la traza
 				// desde el punto de partida hasta el final.
 
@@ -994,7 +1003,7 @@ public class Satellite extends SuperAgent {
 						if(traceAux.size() < optimalTrace.size())
 							optimalTrace = traceAux;
 					}else{
-						if(droneStuses[i].getLocation().getPositionX() == 0 && !droneStuses[i].isGoalReached()) // Se recogen los drones que aun no han salido
+						if(droneStuses[i].getLocation().getPositionY() == 0 && !droneStuses[i].isGoalReached()) // Se recogen los drones que aun no han salido
 							dronesWithoutLeaving.add(droneStuses[i]);
 					}
 				}
@@ -1010,8 +1019,8 @@ public class Satellite extends SuperAgent {
 					GPSLocation end = new GPSLocation(optimalTrace.getLocation(positionInic).getPositionX(), optimalTrace.getLocation(positionInic).getPositionY());
 
 					for(DroneStatus status: dronesWithoutLeaving){
-						if(status.getLocation().getPositionX() == 0 && !status.isGoalReached())
-							sizeTrace += optimalTrace.getSubtrace(status.getLocation(), end).size();
+						if(status.getLocation().getPositionY() == 0 && !status.isGoalReached())
+							sizeTrace += Math.abs(end.getPositionX() - status.getLocation().getPositionX());
 					}
 
 					//Se calcula cuanto gastan de bateria en rescatar a un rezagado (cuanto se gasta en retroceder y en llegar al goal)
@@ -1078,8 +1087,8 @@ public class Satellite extends SuperAgent {
 				}else{
 					behavior = Drone.SCOUT;
 					droneScout++;
+					index = findNerestDrone(false);
 				}
-				index = findNerestDrone(false);
 				
 				JSONObject contentSelected = new JSONObject();
 				try {
@@ -1305,9 +1314,6 @@ public class Satellite extends SuperAgent {
 							res.put(JSONKeyLibrary.Subject,"GoalDistance");
 							
 							AgentID id= new AgentID(content.getString("ID"));
-							if(id==null){
-								throw new RuntimeException("Fallo: ID agente no existe");
-							}
 							DroneStatus status= findStatus(id);
 							GPSLocation n = status.getLocation();
 							double x=n.getPositionX();
@@ -1374,10 +1380,12 @@ public class Satellite extends SuperAgent {
 		addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), subject, "");	
 		switch(subject){
 			case SubjectLibrary.ConflictInform:
-				String confJSON = content.getString("conflictBox");
+				String confJSON = content.getString(JSONKeyLibrary.ConflictBox);
 				Gson gson = new Gson();
 				ConflictiveBox cb = gson.fromJson(confJSON, ConflictiveBox.class);
+				System.out.println("ZZZ RECIBIENDO CASILLA CONFLICTIVA pos: " + cb.getPosInicial().getPositionX() + ", " + cb.getPosInicial().getPositionY());
 				mapSeguimiento.addConflictiveBox(cb);
+				System.out.println("ZZZ AÑADIENDO CASILLA CONFLICTIVA pos: " + cb.getPosInicial().getPositionX() + ", " + cb.getPosInicial().getPositionY());
 				break;
 			default: 
 				sendError(new NotUnderstoodException("Subject no encontrado"), msg);
@@ -1533,7 +1541,7 @@ public class Satellite extends SuperAgent {
 		 * @author Jahiel
 		 */
 		
-			sendInformSubscribeFinalize(msg);
+			
 			}catch(JSONException e){
 				e.printStackTrace();
 			}

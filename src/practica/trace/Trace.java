@@ -58,11 +58,7 @@ public class Trace extends LinkedList<Choice>{
 	public Trace getSubtrace (GPSLocation start) throws IllegalArgumentException{
 		Trace tr;
 		//Busco la posición
-		int startLocation = -1;
-		for (int i = 0; i < size(); i++){
-			if (get(i).getLocation() == start)
-				startLocation = i;
-		}
+		int startLocation = getIndex(start);
 		
 		//Si la encuentro copio, si no lanzo excepción.
 		if (startLocation == -1)

@@ -60,4 +60,10 @@ public class GPSLocation {
 		return positionX + ", " + positionY;
 	}
 	
+	@Override
+	public boolean equals(Object other){
+		GPSLocation otherLoc = (GPSLocation) other;
+		return (otherLoc.positionX == this.positionX) && (otherLoc.positionY == this.positionY);
+	}
+	
 }
