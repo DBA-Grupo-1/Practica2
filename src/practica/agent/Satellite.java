@@ -360,10 +360,10 @@ public class Satellite extends SuperAgent {
 
 		try {
 			JSONObject ob = new JSONObject(msg.getContent());
-			decision = ob.getInt("decision");
+			decision = ob.getInt(JSONKeyLibrary.Decision);
 		} catch (JSONException e) {
 			//Cambio de P3: si el JSON no está creado el satélite devuelve NOT_UNDERSTOOD en lugar de FAILURE, ya que no es culpa del satélite.
-			send(ACLMessage.NOT_UNDERSTOOD, msg.getSender(), msg.getProtocol(), null, msg.getInReplyTo(), msg.getConversationId(), null);
+			sendError(new NotUnderstoodException(ErrorLibrary.BadlyStructuredContent), msg);
 			return true;
 		}
 
@@ -615,14 +615,6 @@ public class Satellite extends SuperAgent {
 						System.out.print("");//Necesario para volver a comprobar la condición del while.
 					}
 
-			JSONObject content = null;
-			try {
-				content = new JSONObject(msg.getContent());
-			} catch (JSONException e) {
-				e.printStackTrace();
-				//TODO enviar error
-				//sendError("IMoved", msg.getSender(),"Error al crear objeto JSON con la decision");
-			}
 			
 			//@author Jahiel
 			AgentID droneID = msg.getSender();  //obtenemos la posicion actual
@@ -630,7 +622,14 @@ public class Satellite extends SuperAgent {
 			GPSLocation currentPosition = droneStatus.getLocation();
 			
 			exit = evalueDecision(msg);
-			send(ACLMessage.INFORM, msg.getSender(), ProtocolLibrary.DroneMove, null, msg.getReplyWith(), msg.getConversationId(), null);	
+			
+			JSONObject content = new JSONObject();
+			try {
+				content.put(JSONKeyLibrary.Subject, SubjectLibrary.IMoved);
+			} catch (JSONException e1) {
+				e1.printStackTrace();
+			}
+			send(ACLMessage.INFORM, msg.getSender(), ProtocolLibrary.DroneMove, null, msg.getReplyWith(), msg.getConversationId(), content);	
 			//Meter mensaje en el log
 			addMessageToLog(Log.SENDED, msg.getSender(), msg.getProtocol(), SubjectLibrary.Register, "You are registered!");			
 			

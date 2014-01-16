@@ -460,7 +460,7 @@ public class Drone extends SuperAgent {
             JSONObject data = new JSONObject();
             
             try {
-                    data.put("decision", decision);
+                    data.put(JSONKeyLibrary.Decision, decision);
                     data.put(JSONKeyLibrary.Subject, SubjectLibrary.IMoved);
             } catch (JSONException e) {
                     e.printStackTrace();
@@ -594,7 +594,7 @@ public class Drone extends SuperAgent {
     * @author Ismael
     * Función mensaje para petición de salida
     */
-   public int askOut(AgentID resId){
+   public Object[] askOut(){
 	   JSONObject ask = new JSONObject();
 	   try{
 		   ask.put(JSONKeyLibrary.Subject, SubjectLibrary.Start);
@@ -603,7 +603,7 @@ public class Drone extends SuperAgent {
 		   e.printStackTrace();
 	   }
 	   
-	   return askOutReceive(resId);
+	   return askOutReceive();
    }
 
    /**
@@ -612,8 +612,10 @@ public class Drone extends SuperAgent {
     * @param resId
     * @param Mod
     */
-   public int askOutReceive(AgentID resId){
+   public Object[] askOutReceive(){
 	   ACLMessage msg=null;
+	   AgentID resId=null;
+	   Integer mode=null;
 	   int Mod = -1;
 	   
 	   try {
@@ -627,8 +629,7 @@ public class Drone extends SuperAgent {
 		   try{
 		   JSONObject content= new JSONObject(msg.getContent());
 		   resId = new AgentID(content.getString(JSONKeyLibrary.Selected));
-		   int Mode = content.getInt(JSONKeyLibrary.Mode);
-		   Mod=Mode;
+		   mode = new Integer(content.getInt(JSONKeyLibrary.Mode));
 		   }catch(JSONException e){
 			   e.printStackTrace();
 		   }
@@ -642,7 +643,7 @@ public class Drone extends SuperAgent {
 			   break;
 	   }
 	   
-	   return Mod;
+	   return new Object[]{resId, mode};
    }
     
     
@@ -718,12 +719,20 @@ public class Drone extends SuperAgent {
      */
    public void sendRequestOutput(){
     	int mode = -1;
-    	AgentID drone_selected = new AgentID();
+    	Object[] res;
+    	AgentID drone_selected;
     	
-    	mode = askOut(drone_selected);
+    	res = askOut();
+    	drone_selected = (AgentID)res[0];
+    	mode = ((Integer) res[1]).intValue();
     	
-    	if(drone_selected.equals(this.getAid())){
+    	if(this.getAid().toString().equals((drone_selected.toString()))){
     		behavior = mode;
+    		if(behavior == SCOUT){
+    			state = EXPLORE_MAP;
+    		}else{
+    			state = GO_TO_POINT_TRACE;
+    		}
     	}else{
     		this.enterStandBy();
     	}
@@ -1250,15 +1259,17 @@ public class Drone extends SuperAgent {
     public void onMessage(ACLMessage msg){
         JSONObject content;
         String subject = null;
-        
+
+        System.out.println(msg.getProtocol());
         try {
                 content = new JSONObject(msg.getContent());
                 subject = content.getString(JSONKeyLibrary.Subject);
         } catch (JSONException e1) {
                 e1.printStackTrace();
         }
-        BlockingQueue<ACLMessage> queue = null;
+
         System.out.println("RECIBO DRONE: "+subject);
+        BlockingQueue<ACLMessage> queue = null;
         switch(subject){
        
         	

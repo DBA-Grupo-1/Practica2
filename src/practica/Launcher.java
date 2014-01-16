@@ -90,7 +90,7 @@ public class Launcher {
         try{
             System.out.println("Main: Creando agentes");
             //PARTE CONFLICTIVA
-        	map = ImgMapConverter.imgToMap("src/maps/map2.png");
+        	map = ImgMapConverter.imgToMap("src/maps/MeetingPoint1.png");
     		ImgMapConverter.mapToImg("src/maps/pruebaoriginal.png", map);
     		//(Ismael) modificada la función Satellite para que acepte una identida de cargador
         	satellite = new Satellite(id_satelite,id_charger, map, droneAmount);
