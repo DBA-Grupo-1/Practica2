@@ -369,7 +369,7 @@ public class Visualizer extends JFrame {
 			mapSelector.setVisible(false);
 			miniMap.setVisible(false);
 			btnLoadMap.setVisible(false);
-	        btnLaunchAll.setVisible(true);
+	        //btnLaunchAll.setVisible(true);
 	        btnLaunchExplorer.setVisible(true);
 	        
 	        mapToLoad = ImgMapConverter.imgToMap("src/maps/" + mapSelector.getSelectedItem().toString());
