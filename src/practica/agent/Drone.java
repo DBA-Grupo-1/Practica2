@@ -1085,7 +1085,13 @@ public class Drone extends SuperAgent {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-        	onBatteryReceived(msg);
+        	int batteryReceived = onBatteryReceived(msg);
+        	
+        	if(batteryReceived > 0){
+        		battery += batteryReceived;
+        	}else{
+        		return END_FAIL;
+        	}
         }
     	
     	return NO_DEC;
@@ -2205,12 +2211,13 @@ public class Drone extends SuperAgent {
      * @param msg mensaje a analizar.
      * 
      */
-    private void onBatteryReceived(ACLMessage msg) {
+    private int onBatteryReceived(ACLMessage msg) {
+    	int batteryReceived = 0;
             if (msg.getPerformativeInt() == ACLMessage.INFORM){
                     //Se ha producido una recarga
                     try {
                             JSONObject content = new JSONObject(msg.getContent());
-                            battery += content.getInt(JSONKeyLibrary.AmountGiven);
+                            batteryReceived += content.getInt(JSONKeyLibrary.AmountGiven);
                     } catch (JSONException e) {
                             System.err.println("Error JSON al recibir batería");
                             e.printStackTrace();
@@ -2225,7 +2232,7 @@ public class Drone extends SuperAgent {
                     System.out.println("onBatteryReceiver: recibido refuse.");
                     try {
                             JSONObject content = new JSONObject(msg.getContent());
-                            System.out.println("Batería no recibida. Motivo: " + content.getDouble("Error"));
+                            System.out.println("Batería no recibida. Motivo: " + content.getString("error"));
                             //TODO: gestionar algunos errores, como el de no más batería.
                             decision=END_FAIL;
                     } catch (JSONException e) {
@@ -2233,6 +2240,8 @@ public class Drone extends SuperAgent {
                             e.printStackTrace();
                     }
             }
+            
+            return batteryReceived;
     }
     
     

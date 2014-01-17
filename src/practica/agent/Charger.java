@@ -159,11 +159,9 @@ public class Charger extends SuperAgent {
 							}
 							send(ACLMessage.REFUSE, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), content);
 						} catch (RefuseException e) {
-							e.printStackTrace();
 							sendError(e, msg);
 						} catch (NotUnderstoodException e) {
 							send(ACLMessage.NOT_UNDERSTOOD, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), null);
-							e.printStackTrace();
 						}
 					break;
 					/********************END RELOAD***********************/
