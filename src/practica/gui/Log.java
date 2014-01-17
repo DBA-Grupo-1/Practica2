@@ -8,6 +8,7 @@ import javax.swing.JTextPane;
 import com.sun.xml.internal.messaging.saaj.packaging.mime.internet.ContentType;
 
 import practica.lib.ErrorLibrary;
+import java.awt.Font;
 
 /**
  * Clase que almacena un log de mensajes en formato HTML.
@@ -23,13 +24,17 @@ public class Log extends JTextPane{
 	private int messageCount;
 	public static final int RECEIVED = 0;
 	public static final int SENDED = 1;
-	private static final int MAX_MESSAGES = 100;
+	private static final int MAX_MESSAGES = 200;
 	
 	/**
 	 * Constructor vacío
 	 * @author Daniel
 	 */
 	public Log(){
+		initialize();
+	}
+	private void initialize() {
+		setFont(new Font("Arial", Font.PLAIN, 11));
 		htmlStart = "<html><body style='width : 250'>";
 		htmlEnd = "</body></html>";
 		body = "";

@@ -399,8 +399,12 @@ public class Satellite extends SuperAgent {
 				decisionString = "North";
 				break;
 			case Drone.END_SUCCESS:
+        		//Meter mensaje en el log
+            	addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), SubjectLibrary.IMoved, "Success! ^_^ ");
 				return true;
 			case Drone.END_FAIL:
+        		//Meter mensaje en el log
+            	addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), SubjectLibrary.IMoved, "Fail u_u");
 				return true;
 			default: // Fin, No me gusta, prefiero un case para el fin y en el default sea un caso de error pero no me deja poner -1 en el case.
 				/**

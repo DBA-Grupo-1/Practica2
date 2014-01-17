@@ -15,6 +15,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import practica.gui.Log;
 import practica.lib.ErrorLibrary;
 import practica.lib.JSONKeyLibrary;
 import practica.lib.ProtocolLibrary;
@@ -468,7 +469,7 @@ public class Drone extends SuperAgent {
                     e.printStackTrace();
             }
             
-            send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.DroneMove, "default", null, buildConversationId(), data);
+            send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.DroneMove, "default", null, buildConversationId(), data);	
             
             try {
                     answerQueue.take();
@@ -496,6 +497,8 @@ public class Drone extends SuperAgent {
 
 		System.out.println("ZZZ ENVIANDO CASILLA CONFLICTIVA posicion: " + posX + ", " + posY);
         send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Notification, "default", null, buildConversationId(), data);
+		//Meter mensaje en el log
+		addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Notification, SubjectLibrary.ConflictInform, conflictiveBox.toString());	
         
         /*   Quitar comentarios si se pone una respuesta de posibles errores por parte del satélite
         try {
@@ -518,6 +521,8 @@ public class Drone extends SuperAgent {
 	   try{
 		   ask.put(JSONKeyLibrary.Subject, SubjectLibrary.Straggler);
 		   send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Scout, "default", null, buildConversationId(), ask);
+			//Meter mensaje en el log
+			addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Scout, SubjectLibrary.Straggler, "");
 	   }catch(JSONException e){
 		   e.printStackTrace();
 	   }
@@ -602,6 +607,8 @@ public class Drone extends SuperAgent {
 	   try{
 		   ask.put(JSONKeyLibrary.Subject, SubjectLibrary.Start);
 		   send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Scout, "default", null, buildConversationId(), ask);
+			//Meter mensaje en el log
+			addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Scout, SubjectLibrary.Start, "");
 	   }catch(JSONException e){
 		   e.printStackTrace();
 	   }
@@ -1299,9 +1306,16 @@ public class Drone extends SuperAgent {
         }
 
         BlockingQueue<ACLMessage> queue = null;
+        
+
+		//Meter mensaje en el log
+        if (!subject.equals(SubjectLibrary.Status) && !subject.equals(SubjectLibrary.IMoved) && !subject.equals(SubjectLibrary.BatteryRequest))
+        	addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), subject, "");
+        
         switch(subject){
        
         	
+
         case SubjectLibrary.StragglerNotification:
         	queue=answerQueue;
         	break;
@@ -1406,7 +1420,6 @@ public class Drone extends SuperAgent {
 					e.printStackTrace();
 				}
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
     		
@@ -1444,6 +1457,8 @@ public class Drone extends SuperAgent {
 		}
 		
 		send(ACLMessage.QUERY_REF, DroneID, ProtocolLibrary.Information, "default", null, buildConversationId(), requestContent);
+		//Meter mensaje en el log
+    	addMessageToLog(Log.SENDED, DroneID, ProtocolLibrary.Information, SubjectLibrary.BatteryLeft, "");
 		
 		try {
 			answer = answerQueue.take();
@@ -1485,6 +1500,8 @@ public class Drone extends SuperAgent {
 		}
 		
 		send(ACLMessage.QUERY_REF, DroneID, ProtocolLibrary.Information, "default", null, buildConversationId(), requestContent);
+		//Meter mensaje en el log
+    	addMessageToLog(Log.SENDED, DroneID, ProtocolLibrary.Information, SubjectLibrary.Trace, "");
 		
 		try {
 			answer = answerQueue.take();
@@ -1530,6 +1547,8 @@ public class Drone extends SuperAgent {
 		}
 		
 		send(ACLMessage.QUERY_REF, DroneID, ProtocolLibrary.Information, "default", null, buildConversationId(), requestContent);
+		//Meter mensaje en el log
+    	addMessageToLog(Log.SENDED, DroneID, ProtocolLibrary.Information, SubjectLibrary.Steps, "");
 		
 		try {
 			answer = answerQueue.take();
@@ -1572,6 +1591,8 @@ public class Drone extends SuperAgent {
 		}
 		
 		send(ACLMessage.QUERY_REF, chargerID, ProtocolLibrary.Information, "Get-RemainingBattery", null, buildConversationId(), requestContent);
+		//Meter mensaje en el log
+    	addMessageToLog(Log.SENDED, chargerID, ProtocolLibrary.Information, SubjectLibrary.ChargerBattery, "");
 		
 		try {
 			answer = answerQueue.take();
@@ -1608,9 +1629,11 @@ public class Drone extends SuperAgent {
             JSONObject ask = new JSONObject();
                        
             try{
-                    ask.put(JSONKeyLibrary.Subject, "MapGlobal");
+                    ask.put(JSONKeyLibrary.Subject, SubjectLibrary.MapGlobal);
                     
                     send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information, null, null, buildConversationId(), ask);
+            		//Meter mensaje en el log
+                	addMessageToLog(Log.SENDED, chargerID, ProtocolLibrary.Information, SubjectLibrary.MapGlobal, "");
             } catch (JSONException e){
                     e.printStackTrace();
             }
@@ -1646,7 +1669,6 @@ public class Drone extends SuperAgent {
                                             || content.get("reason").equals("BadlyStructuredContent")) || content.get("reason").equals("FailureAccess") || content.get("reason").equals("SenderDrone") )
                                     throw new RuntimeException("Fallo en la respuesta del satelite");
                     } catch (JSONException e) {
-                            // TODO Auto-generated catch block
                             e.printStackTrace();
                     }
             
@@ -1663,14 +1685,12 @@ public class Drone extends SuperAgent {
                                             try {
 												m.setValue(i, j, data.getInt(z));
 											} catch (Exception e) {
-												// TODO Auto-generated catch block
 												e.printStackTrace();
 											}
                                     }
                             }
                             
                     } catch (JSONException e) {
-                            // TODO Auto-generated catch block
                             e.printStackTrace();
                     }
                     break;
@@ -1694,6 +1714,8 @@ public class Drone extends SuperAgent {
                     ask.put(JSONKeyLibrary.Subject, SubjectLibrary.IdAgent);
                     ask.put(SubjectLibrary.Name, name);
                     send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
+            		//Meter mensaje en el log
+                	addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Information, SubjectLibrary.IdAgent, name);
             } catch (JSONException e){
                     e.printStackTrace();
             }
@@ -1729,7 +1751,6 @@ public class Drone extends SuperAgent {
                                             || content.get("reason").equals("BadlyStructuredContent")) || content.get("reason").equals("FailureAgentID") )
                                     throw new RuntimeException("Fallo en la respuesta del satelite");
                     } catch (JSONException e) {
-                            // TODO Auto-generated catch block
                             e.printStackTrace();
                     }
             
@@ -1738,7 +1759,6 @@ public class Drone extends SuperAgent {
                             content = new JSONObject(msg.getContent());
                             id = new AgentID(content.getString("ID"));
                     } catch (JSONException e) {
-                            // TODO Auto-generated catch block
                             e.printStackTrace();
                     }
                     break;
@@ -1759,9 +1779,11 @@ public class Drone extends SuperAgent {
            
            
             try{
-                    ask.put(JSONKeyLibrary.Subject, "GoalDistance");
+                    ask.put(JSONKeyLibrary.Subject, SubjectLibrary.GoalDistance);
                     ask.put("ID", id);
                     send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
+            		//Meter mensaje en el log
+                	addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Information, SubjectLibrary.GoalDistance, id.name);
             } catch (JSONException e){
                     e.printStackTrace();
             }
@@ -1797,7 +1819,6 @@ public class Drone extends SuperAgent {
                                             || content.get("reason").equals("BadlyStructuredContent")) || content.get("reason").equals("FailureAgentID") ||content.get("reason").equals("FailureAccessDistance") )
                                     throw new RuntimeException("Fallo en la respuesta del satelite");
                     } catch (JSONException e) {
-                            // TODO Auto-generated catch block
                             e.printStackTrace();
                     }
             
@@ -1806,7 +1827,6 @@ public class Drone extends SuperAgent {
                             content = new JSONObject(msg.getContent());
                             Ggoal = content.getDouble("Distance");
                     } catch (JSONException e) {
-                            // TODO Auto-generated catch block
                             e.printStackTrace();
                     }
                     break;
@@ -1827,6 +1847,8 @@ public class Drone extends SuperAgent {
             try{
                     ask.put(JSONKeyLibrary.Subject, SubjectLibrary.Position);
                     send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information,null, null, buildConversationId(), ask);
+            		//Meter mensaje en el log
+                	addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Information, SubjectLibrary.Position, "");
             } catch (JSONException e){
                     e.printStackTrace();
             }
@@ -1896,6 +1918,8 @@ public class Drone extends SuperAgent {
                     ask.put("AgentID", id);
                     //Envio mensaje
                     send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information, null, null, buildConversationId(), ask);
+            		//Meter mensaje en el log
+                	addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Information, SubjectLibrary.DroneBattery, "");
             } catch (JSONException e){
                     e.printStackTrace();
             }
@@ -2226,15 +2250,20 @@ public class Drone extends SuperAgent {
             //not-understood
             else if (msg.getPerformativeInt() == ACLMessage.NOT_UNDERSTOOD){
                     System.out.println("onBatteryReceived: recibido not-understood.");
+            		//Meter mensaje en el log
+                	addMessageToLog(Log.RECEIVED, chargerID, msg.getProtocol(), SubjectLibrary.BatteryRequest, "Not-understood");
             }
             //refuse
             else if (msg.getPerformativeInt() == ACLMessage.REFUSE){
                     System.out.println("onBatteryReceiver: recibido refuse.");
                     try {
                             JSONObject content = new JSONObject(msg.getContent());
-                            System.out.println("Batería no recibida. Motivo: " + content.getString("error"));
+                            String errorReason = content.getString(JSONKeyLibrary.Error);
+                            System.out.println("Batería no recibida. Motivo: " + errorReason);
                             //TODO: gestionar algunos errores, como el de no más batería.
                             decision=END_FAIL;
+                    		//Meter mensaje en el log
+                        	addMessageToLog(Log.RECEIVED, chargerID, msg.getProtocol(), SubjectLibrary.BatteryRequest, errorReason);
                     } catch (JSONException e) {
                             System.out.println("Error JSON al gestionar el refuse en la batería");
                             e.printStackTrace();
@@ -2289,7 +2318,7 @@ public class Drone extends SuperAgent {
      */
     private void subscribeDroneReachedGoal(){
             JSONObject content = new JSONObject();
-            String combersationID;
+            String conversationID;
             
             try {
                     content.put(JSONKeyLibrary.Subject, SubjectLibrary.DroneReachedGoal);
@@ -2298,11 +2327,13 @@ public class Drone extends SuperAgent {
                     e.printStackTrace();
             }
             
-            combersationID = buildConversationId();
-            idsCombersationSubscribe.put(SubjectLibrary.DroneReachedGoal, this.getAid().toString()+"#"+combersationID);
+            conversationID = buildConversationId();
+            idsCombersationSubscribe.put(SubjectLibrary.DroneReachedGoal, this.getAid().toString()+"#"+conversationID);
             
             send(ACLMessage.SUBSCRIBE, sateliteID, ProtocolLibrary.Subscribe, "confirmation", null,
-                            combersationID, content);
+                            conversationID, content);
+    		//Meter mensaje en el log
+        	addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Subscribe, SubjectLibrary.DroneReachedGoal, "");
             
             WaitResponseSubscriber();
     }
@@ -2315,7 +2346,7 @@ public class Drone extends SuperAgent {
      */
     private void subscribeDroneRecharged(){
                     JSONObject content = new JSONObject();
-                    String combersationID;
+                    String conversationID;
                     
                     try {
                             content.put(JSONKeyLibrary.Subject, SubjectLibrary.DroneRecharged);
@@ -2325,12 +2356,14 @@ public class Drone extends SuperAgent {
                     }
                     
 
-                    combersationID = buildConversationId();
+                    conversationID = buildConversationId();
                     
-                    idsCombersationSubscribe.put(SubjectLibrary.DroneRecharged, this.getAid().toString()+"#"+combersationID);
+                    idsCombersationSubscribe.put(SubjectLibrary.DroneRecharged, this.getAid().toString()+"#"+conversationID);
                     
                     send(ACLMessage.SUBSCRIBE, chargerID, ProtocolLibrary.Subscribe, "confirmation", null,
-                                    combersationID, content);
+                                    conversationID, content);
+            		//Meter mensaje en el log
+                	addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Subscribe, SubjectLibrary.DroneRecharged, "");
                     
                     WaitResponseSubscriber();
     }
@@ -2344,7 +2377,7 @@ public class Drone extends SuperAgent {
      */
     private void subscribeYourMovements(AgentID id){
             JSONObject content = new JSONObject();
-            String combersationID;
+            String conversationID;
             
             try {
                     content.put(JSONKeyLibrary.Subject, SubjectLibrary.YourMovements);
@@ -2353,11 +2386,13 @@ public class Drone extends SuperAgent {
                     e.printStackTrace();
             }
 
-            combersationID = buildConversationId();
+            conversationID = buildConversationId();
             
-            idsCombersationSubscribe.put(SubjectLibrary.YourMovements+id.getLocalName(), this.getAid().toString()+"#"+combersationID);
+            idsCombersationSubscribe.put(SubjectLibrary.YourMovements+id.getLocalName(), this.getAid().toString()+"#"+conversationID);
             send(ACLMessage.SUBSCRIBE, id, ProtocolLibrary.Subscribe, "confirmation", null,
-                            combersationID, content);
+                            conversationID, content);
+    		//Meter mensaje en el log
+        	addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Subscribe, SubjectLibrary.YourMovements, "");
                     
             WaitResponseSubscriber();
             
@@ -2372,7 +2407,7 @@ public class Drone extends SuperAgent {
      */
     private void subscribeAllMovements(){
             JSONObject content = new JSONObject();
-            String combersationID;
+            String conversationID;
             
             try {
                     content.put(JSONKeyLibrary.Subject, SubjectLibrary.AllMovements);
@@ -2381,12 +2416,14 @@ public class Drone extends SuperAgent {
                     e.printStackTrace();
             }
             
-            combersationID = buildConversationId();
+            conversationID = buildConversationId();
             
-            idsCombersationSubscribe.put(SubjectLibrary.AllMovements, this.getAid().toString()+"#"+combersationID);
+            idsCombersationSubscribe.put(SubjectLibrary.AllMovements, this.getAid().toString()+"#"+conversationID);
             
             send(ACLMessage.SUBSCRIBE, sateliteID, ProtocolLibrary.Subscribe, "confirmation", null,
-                            combersationID, content);
+                            conversationID, content);
+    		//Meter mensaje en el log
+        	addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Subscribe, SubjectLibrary.AllMovements, "");
             
             WaitResponseSubscriber();
     }
@@ -2399,7 +2436,7 @@ public class Drone extends SuperAgent {
      */
     private void subscribeConflictiveSections(){
             JSONObject content = new JSONObject();
-            String combersationID;
+            String conversationID;
             
             try {
                     content.put(JSONKeyLibrary.Subject, SubjectLibrary.ConflictiveSections);
@@ -2408,12 +2445,14 @@ public class Drone extends SuperAgent {
                     e.printStackTrace();
             }
             
-            combersationID = buildConversationId();
+            conversationID = buildConversationId();
             
-            idsCombersationSubscribe.put(SubjectLibrary.ConflictiveSections, this.getAid().toString()+"#"+combersationID);
+            idsCombersationSubscribe.put(SubjectLibrary.ConflictiveSections, this.getAid().toString()+"#"+conversationID);
             
             send(ACLMessage.SUBSCRIBE, sateliteID, ProtocolLibrary.Subscribe, "confirmation", null,
-                            combersationID, content);
+                            conversationID, content);
+    		//Meter mensaje en el log
+        	addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Subscribe, SubjectLibrary.ConflictiveSections, "");
             
             WaitResponseSubscriber();
             
@@ -2445,7 +2484,6 @@ public class Drone extends SuperAgent {
                                             || content.get("reason").equals("IWontReachGoal")) )
                                     throw new RuntimeException("Fallo en la respuesta de subscripcion: petición denegada");
                     } catch (JSONException e) {
-                            // TODO Auto-generated catch block
                             e.printStackTrace();
                     }
                     
@@ -2495,6 +2533,8 @@ public class Drone extends SuperAgent {
             
             send(ACLMessage.CANCEL, destino, ProtocolLibrary.Subscribe, null, null,
                             this.idsCombersationSubscribe.get(name), content);
+    		//Meter mensaje en el log
+        	addMessageToLog(Log.SENDED, destino, ProtocolLibrary.Subscribe, name, "Cancel subscription");
     }
     
     /**
@@ -2503,12 +2543,15 @@ public class Drone extends SuperAgent {
      * - MissingAgent: aun no está todos los agentes registrados en el satélite.
      * 
      * @author Jahiel
+     * @author Daniel
      * @param msg Mesaje de subscripción recibido
      */
     public void newSubscription(ACLMessage msg)throws RefuseException{
             JSONObject content = null;
+            String subject = "";
 			try {
 				content = new JSONObject(msg.getContent());
+				subject = content.getString(JSONKeyLibrary.Subject);
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
@@ -2521,7 +2564,9 @@ public class Drone extends SuperAgent {
                     throw new RefuseException(ErrorLibrary.MissingAgents);
             }else{*/
                     subscribers.put(msg.getSender().toString(), msg.getConversationId().toString());
-                    send(ACLMessage.ACCEPT_PROPOSAL, msg.getSender(), ProtocolLibrary.Subscribe, null, "confirmation", msg.getConversationId(), content);        
+                    send(ACLMessage.ACCEPT_PROPOSAL, msg.getSender(), ProtocolLibrary.Subscribe, null, "confirmation", msg.getConversationId(), content);   
+            		//Meter mensaje en el log
+                	addMessageToLog(Log.SENDED, msg.getSender(), ProtocolLibrary.Subscribe, subject, "");     
             }
             
     }
@@ -2542,7 +2587,7 @@ public class Drone extends SuperAgent {
         
             for(String name: subscribers.keySet()){
                 send(ACLMessage.INFORM, new AgentID(name), ProtocolLibrary.Subscribe, null, null,
-                                this.subscribers.get(name), content);                         // Con el nombre del agente sacamos la ID-combersation
+                                this.subscribers.get(name), content);                         // Con el nombre del agente sacamos la ID-combersation    
             }
         }
     }
@@ -2646,7 +2691,9 @@ public class Drone extends SuperAgent {
                     throw new RuntimeException("Fallo en el registro: error al crear content del mensaje de envio");
             }
             
-            send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Registration, "default", null, buildConversationId(), data);
+            send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Registration, "default", null, buildConversationId(), data);   
+    		//Meter mensaje en el log
+        	addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Registration, SubjectLibrary.Register, "ID:" + this.getAid().toString() + " Name:" + this.getAid().name);     
             
             try {
                     msg = answerQueue.take();
@@ -2719,6 +2766,8 @@ public class Drone extends SuperAgent {
                                     resp.put(JSONKeyLibrary.Subject, SubjectLibrary.BatteryLeft);
                                     resp.put("EnergyLeft",batteryLeft);
                                     send(ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), resp);
+                            		//Meter mensaje en el log
+                                	addMessageToLog(Log.SENDED, msg.getSender(), msg.getProtocol(), SubjectLibrary.BatteryLeft, String.valueOf(batteryLeft));   
                             }
                             break;
                     case SubjectLibrary.Trace:
@@ -2727,12 +2776,16 @@ public class Drone extends SuperAgent {
                             resp.put(JSONKeyLibrary.Subject, SubjectLibrary.Trace);
                             resp.put("trace", traceJSON);
                             send(ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), resp);
+                    		//Meter mensaje en el log
+                        	addMessageToLog(Log.SENDED, msg.getSender(), msg.getProtocol(), SubjectLibrary.Trace, "");   
                             break;
                     case SubjectLibrary.Steps:
                             int nSteps = onStepsQueried(msg);
                             resp.put(JSONKeyLibrary.Subject, SubjectLibrary.Steps);
                             resp.put("steps", nSteps);
                             send(ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), resp);
+                    		//Meter mensaje en el log
+                        	addMessageToLog(Log.SENDED, msg.getSender(), msg.getProtocol(), SubjectLibrary.Steps, String.valueOf(nSteps));   
                             break;
                     case SubjectLibrary.DroneReachedGoal:
                             onDroneReachedGoalInform(msg);

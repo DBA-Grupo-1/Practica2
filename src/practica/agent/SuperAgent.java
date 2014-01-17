@@ -93,6 +93,8 @@ public class SuperAgent extends SingleAgent {
 		msgError.setInReplyTo(msgOrig.getReplyWith());
 		
 		this.send(msgError);
+		//Meter mensaje en el log
+    	addMessageToLog(Log.SENDED, msgError.getReceiver(), msgError.getProtocol(), subject, "ERROR:" + fe.getMessage());   
 	}
 	
 	/**

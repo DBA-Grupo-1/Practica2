@@ -6,6 +6,7 @@ import es.upv.dsic.gti_ia.core.AgentID;
  * Clase que modela las casillas conflictivas, es decir, las que pudieran tener varias resoluciones,
  * y su contenido.
  * @author Jonay
+ * @author Daniel
  */
 public class ConflictiveBox {
 	private boolean dangerous;
@@ -147,6 +148,13 @@ public class ConflictiveBox {
 	 */
 	public void setDroneID(AgentID droneID) {
 		this.droneID = droneID;
+	}
+	
+	/**
+	 * @author Daniel
+	 */
+	public String toString(){
+		return ("Starts at: " + posInicial.toString() + " Ends at: " +posFinal.toString() + " Length: " + String.valueOf(length));
 	}
 
 }
