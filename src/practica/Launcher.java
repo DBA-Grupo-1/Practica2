@@ -46,10 +46,10 @@ public class Launcher {
         
         launcher.id_satelite = new AgentID("Satelite");  
         launcher.id_charger = new AgentID("Charger");
-		//launcher.visualizer = new Visualizer(launcher);
+		launcher.visualizer = new Visualizer(launcher);
 		
 		//Comentar la línea anterior y descomentar esta para lanzar sin visualizador.
-		launcher.launchWithoutVisualizer();
+		//launcher.launchWithoutVisualizer();
 	}
 	
 	/**

@@ -166,10 +166,10 @@ public abstract class ImgMapConverter {
 						SharedSquare square = map.getSharedSquare(i, j);
 						//Miro el último agente que visitó la casilla y pinto la casilla de su color.
 						AgentID id = square.getLastVisited();
-						valueRGB = -25631; //Valor por defecto.
+						valueRGB = -1852; //Valor por defecto.
 						
 						for (int k = 0; k < droneIDs.length; k++){
-							if (id == droneIDs[k]){
+							if (id.toString().equals(droneIDs[k].toString())){
 								valueRGB = droneColors[k];
 							}
 						}						

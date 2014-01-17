@@ -1,6 +1,6 @@
 package practica.gui;
 
-import java.awt.BorderLayout;
+import java.awt.Font;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -20,12 +20,11 @@ import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.UnsupportedLookAndFeelException;
 
-import es.upv.dsic.gti_ia.core.AgentID;
+import practica.Launcher;
 import practica.agent.Satellite;
 import practica.map.Map;
 import practica.util.ImgMapConverter;
-
-import java.awt.Font;
+import es.upv.dsic.gti_ia.core.AgentID;
 
 /**
  * Interfaz de usuario.
@@ -34,6 +33,7 @@ import java.awt.Font;
  */
 public class Visualizer extends JFrame {
 	private static final long serialVersionUID = 1L;
+	private boolean paused = true;
 	private JComboBox mapSelector;
 	private JButton btnLoadMap;
 	private JButton btnLaunchExplorer;
@@ -41,7 +41,7 @@ public class Visualizer extends JFrame {
 	private JLabel miniMap;
 	private JLabel satelliteMapIcon;
 	private Map mapToLoad;
-	private TestDani launcher;
+	private Launcher launcher;
 	
 	private Satellite satellite;
 	private JTabbedPane tabbedPane;
@@ -100,15 +100,12 @@ public class Visualizer extends JFrame {
 	}
 	
 	/**
-	 * Constructor. Inicializa componentes y se hace visible.
-	 * TODO cambiar argumento tras testeo.
-	 * @author Daniel
+	 * Constructor del visualizador
+	 * @param l lanzador de la aplicación
 	 */
-	public Visualizer(TestDani l) {		
+	public Visualizer(Launcher l) {		
 		try {			
 			LookAndFeelInfo [] lookAndFeels = UIManager.getInstalledLookAndFeels();
-			for (int i = 0; i < lookAndFeels.length; i++)
-				System.out.println(lookAndFeels[i].getClassName());
 			UIManager.setLookAndFeel(lookAndFeels[0].getClassName());
 		} catch (ClassNotFoundException | InstantiationException
 				| IllegalAccessException | UnsupportedLookAndFeelException e1) {
@@ -117,7 +114,6 @@ public class Visualizer extends JFrame {
 		initialize();
 		launcher = l;
 		setBounds(100, 100, 800, 600);
-		setTabNames();
 		buildLogArray();
 		setVisible(true);	
 	}
@@ -143,7 +139,7 @@ public class Visualizer extends JFrame {
 	 * @author Daniel
 	 */
 	private void setTabNames(){
-		AgentID[] droneIDs = launcher.getDroneIDs();
+		AgentID[] droneIDs = Launcher.getDroneIDs();
 		//Copio los nombres
 		for (int i = 0; i < droneIDs.length; i++){
 			tabbedPane.setTitleAt(i + 2, droneIDs[i].name);
@@ -164,13 +160,19 @@ public class Visualizer extends JFrame {
 		String [] mapNames = f.list();
 		getContentPane().setLayout(null);
 		mapSelector = new JComboBox (mapNames);
+		mapSelector.setSelectedIndex(-1);
 		mapSelector.addActionListener(new MapSelectorActionListener());
 		{
 			buttonTest = new JButton("Test");
+			buttonTest.setVisible(false);
 			buttonTest.addActionListener(new ButtonTestActionListener());
 			buttonTest.setBounds(404, 528, 89, 23);
 			getContentPane().add(buttonTest);
 		}
+		
+		miniMap = new JLabel("");
+		miniMap.setBounds(10, 40, 500, 500);
+		getContentPane().add(miniMap);
 		{
 			tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 			tabbedPane.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -181,7 +183,6 @@ public class Visualizer extends JFrame {
 				tabbedPane.addTab("Satellite", null, satelliteLogPanel, null);
 				{
 					satelliteLog = new Log();
-					//satelliteLogPanel.add(satelliteLog);
 				}
 				satelliteLogPanel.setLayout(new BoxLayout(satelliteLogPanel, BoxLayout.X_AXIS));
 				{
@@ -197,7 +198,6 @@ public class Visualizer extends JFrame {
 				chargerLogPanel.setLayout(new BoxLayout(chargerLogPanel, BoxLayout.X_AXIS));
 				{
 					chargerLog = new Log();
-					//chargerLogPanel.add(chargerLog);
 				}
 				{
 					chargerScrollPane = new JScrollPane(chargerLog);
@@ -209,7 +209,6 @@ public class Visualizer extends JFrame {
 				tabbedPane.addTab("Drone1", null, drone1LogPanel, null);
 				{
 					drone1Log = new Log();
-					//drone1LogPanel.add(drone1Log);
 				}
 				drone1LogPanel.setLayout(new BoxLayout(drone1LogPanel, BoxLayout.X_AXIS));
 				{
@@ -223,7 +222,6 @@ public class Visualizer extends JFrame {
 				drone2LogPanel.setLayout(new BoxLayout(drone2LogPanel, BoxLayout.X_AXIS));
 				{
 					drone2Log = new Log();
-					//drone2LogPanel.add(drone2Log);
 				}
 				{
 					drone2ScrollPane = new JScrollPane(drone2Log);
@@ -236,7 +234,6 @@ public class Visualizer extends JFrame {
 				drone3LogPanel.setLayout(new BoxLayout(drone3LogPanel, BoxLayout.X_AXIS));
 				{
 					drone3Log = new Log();
-					//drone3LogPanel.add(drone3Log);
 				}
 				{
 					drone3ScrollPane = new JScrollPane(drone3Log);
@@ -249,7 +246,6 @@ public class Visualizer extends JFrame {
 				drone4LogPanel.setLayout(new BoxLayout(drone4LogPanel, BoxLayout.X_AXIS));
 				{
 					drone4Log = new Log();
-					//drone4LogPanel.add(drone4Log);
 				}
 				{
 					drone4ScrollPane = new JScrollPane(drone4Log);
@@ -262,7 +258,6 @@ public class Visualizer extends JFrame {
 				drone5LogPanel.setLayout(new BoxLayout(drone5LogPanel, BoxLayout.X_AXIS));
 				{
 					drone5Log = new Log();
-					//drone5LogPanel.add(drone5Log);
 				}
 				{
 					drone5ScrollPane = new JScrollPane(drone5Log);
@@ -275,7 +270,6 @@ public class Visualizer extends JFrame {
 				drone6LogPanel.setLayout(new BoxLayout(drone6LogPanel, BoxLayout.X_AXIS));
 				{
 					drone6Log = new Log();
-					//drone6LogPanel.add(drone6Log);
 				}
 				{
 					drone6ScrollPane = new JScrollPane(drone6Log);
@@ -296,16 +290,14 @@ public class Visualizer extends JFrame {
 		btnLoadMap.setBounds(129, 10, 96, 23);
 		getContentPane().add(btnLoadMap);
 		
-		miniMap = new JLabel("");
-		miniMap.setBounds(10, 44, 210, 210);
-		getContentPane().add(miniMap);
-		
 		btnLaunchExplorer = new JButton("Launch first explorer");
+		btnLaunchExplorer.setVisible(false);
 		btnLaunchExplorer.addActionListener(new BtnLaunchExplorerActionListener());
 		btnLaunchExplorer.setBounds(10, 528, 190, 23);
 		getContentPane().add(btnLaunchExplorer);
 		
 		btnLaunchAll = new JButton("Launch all");
+		btnLaunchAll.setVisible(false);
 		btnLaunchAll.addActionListener(new BtnLaunchAllActionListener());
 		btnLaunchAll.setBounds(210, 528, 190, 23);
 		getContentPane().add(btnLaunchAll);
@@ -324,8 +316,8 @@ public class Visualizer extends JFrame {
 	 * @author Daniel
 	 * @return true si está deshabilitado (y por lo tanto se pulsó). False si no.
 	 */
-	public boolean isBtnThinkOnceEnabled(){
-		return btnLaunchExplorer.isEnabled();
+	public boolean paused(){
+		return paused;
 	}
 	
 	/**
@@ -358,7 +350,7 @@ public class Visualizer extends JFrame {
 			//Me creo una imagen a partir de la del icono
 			Image img = mapIcon.getImage();
 			//Me creo otra reescalándola.
-			Image scalatedImg = img.getScaledInstance(210, 210, Image.SCALE_SMOOTH);
+			Image scalatedImg = img.getScaledInstance(500, 500, Image.SCALE_SMOOTH);
 			//Se la asigno al icono
 			mapIcon.setImage(scalatedImg);
 			//Asigno el icon al label
@@ -377,10 +369,13 @@ public class Visualizer extends JFrame {
 			mapSelector.setVisible(false);
 			miniMap.setVisible(false);
 			btnLoadMap.setVisible(false);
+	        btnLaunchAll.setVisible(true);
+	        btnLaunchExplorer.setVisible(true);
 	        
 	        mapToLoad = ImgMapConverter.imgToMap("src/maps/" + mapSelector.getSelectedItem().toString());
-	        //TODO: descomentar despues de testeo.
-	        //launcher.launch();			
+	        launcher.launch();			
+			setTabNames();
+			updateMap();
 		}
 	}
 	
@@ -393,7 +388,6 @@ public class Visualizer extends JFrame {
 		public void actionPerformed(ActionEvent arg0) {
 			btnLaunchExplorer.setEnabled(false);
 			btnLaunchAll.setEnabled(false);
-			//System.out.println("Botones desactivados");
 		}
 	}
 	
@@ -404,8 +398,20 @@ public class Visualizer extends JFrame {
 	 */
 	private class BtnLaunchExplorerActionListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
-			btnLaunchExplorer.setEnabled(false);
-			btnLaunchExplorer.setText("Launch next explorer");
+			switch (btnLaunchExplorer.getText()){
+			case "Launch first explorer" : 
+				btnLaunchExplorer.setText("Pause");
+				paused = false;
+				break;
+			case "Pause":
+				btnLaunchExplorer.setText("Continue");
+				paused = true;
+				break;
+			case "Continue":
+				btnLaunchExplorer.setText("Pause");
+				paused = false;
+				break;
+			}
 		}
 	}
 	private class ButtonTestActionListener implements ActionListener {

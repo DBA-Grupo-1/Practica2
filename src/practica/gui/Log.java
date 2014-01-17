@@ -20,24 +20,24 @@ public class Log extends JTextPane{
 	private String body;
 	private String htmlStart;
 	private String htmlEnd;
+	private int messageCount;
 	public static final int RECEIVED = 0;
 	public static final int SENDED = 1;
+	private static final int MAX_MESSAGES = 100;
 	
 	/**
 	 * Constructor vacío
 	 * @author Daniel
 	 */
 	public Log(){
-		//super(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		htmlStart = "<html><body style='width : 250'>";
 		htmlEnd = "</body></html>";
 		body = "";
 		log = htmlStart+body+htmlEnd;
-		//label = new JTextPane();
 		setText(log);
 		setContentType("text/html");
 		setEditable(false);
-		//setViewportView(label);
+		messageCount = 0;
 	}
 	
 	/**
@@ -49,6 +49,15 @@ public class Log extends JTextPane{
 	 * @param content content del mensaje, sin subject.
 	 */
 	public void addMessage (int type, String name, String protocol, String subject, String content){
+		//Aumentar contador de mensajes
+		messageCount ++;
+		
+		//Si hay demasiados mensajes, borrarlos
+		if (messageCount >= MAX_MESSAGES){
+			body = "";
+			messageCount = 0;
+		}
+		
 		String message = "";
 		if (type != RECEIVED && type != SENDED)
 			throw new RuntimeException(ErrorLibrary.LogInvalidFirstArgument);

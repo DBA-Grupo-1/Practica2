@@ -107,7 +107,6 @@ public class Charger extends SuperAgent {
 			try {
 				throw new NotUnderstoodException("Subject no encontrado.");
 			} catch (NotUnderstoodException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
 			break;
@@ -263,7 +262,6 @@ public class Charger extends SuperAgent {
 					} catch(FIPAException fe){
 						sendError(fe, msg);
 					} catch (JSONException e1) {
-						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
 				break;
@@ -291,9 +289,6 @@ public class Charger extends SuperAgent {
 	 */
 	protected void askForMap(){
 		JSONObject ask = new JSONObject();
-		
-		
-		
 		
 		try{
 			ask.put("Subject", "MapOriginal");
@@ -328,7 +323,6 @@ public class Charger extends SuperAgent {
 						|| content.get("reason").equals("BadlyStructuredContent")) || content.get("reason").equals("FailureAccess") || content.get("reason").equals("SenderDrone") )
 					throw new RuntimeException("Fallo en la respuesta del satelite");
 			} catch (JSONException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		
@@ -345,14 +339,12 @@ public class Charger extends SuperAgent {
                             try {
 								m.setValue(i, j, data.getInt(z));
 							} catch (Exception e) {
-								// TODO Auto-generated catch block
 								e.printStackTrace();
 							}
                     }
             }
 				
 			} catch (JSONException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			break;
@@ -410,7 +402,7 @@ public class Charger extends SuperAgent {
 			 *		givenBattery = battery;
 			 */
 			//Meter mensaje en el log
-			addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), SubjectLibrary.BatteryRequest, String.valueOf(requestedBattery));
+			//addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), SubjectLibrary.BatteryRequest, String.valueOf(requestedBattery));
 			
 			givenBattery = requestedBattery;	
 			battery -= givenBattery; 
@@ -426,7 +418,7 @@ public class Charger extends SuperAgent {
 			send (ACLMessage.INFORM, IDSatellite, msg.getProtocol(), null, null, buildConversationId(), sendContent);
 			
 			//Meter mensaje en el log
-			addMessageToLog(Log.SENDED, msg.getSender(), msg.getProtocol(), SubjectLibrary.BatteryRequest, String.valueOf(givenBattery));
+			//addMessageToLog(Log.SENDED, msg.getSender(), msg.getProtocol(), SubjectLibrary.BatteryRequest, String.valueOf(givenBattery));
 
 			/**
 			 * @author jahiel
