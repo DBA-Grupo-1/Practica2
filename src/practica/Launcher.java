@@ -61,16 +61,30 @@ public class Launcher {
 	public void launch(){
         try{
             System.out.println("Main: Creando agentes");
+            //Cargar el mapa del visualizador
         	map = visualizer.getMapToLoad();
+        	
+            //LLamar a los constructores de los agentes
         	satellite = new Satellite(id_satelite,id_charger, map, droneAmount, visualizer);
         	charger = new Charger(id_charger, 500*droneAmount, id_satelite);
-        	charger.setLog(visualizer.getLogs()[1]);
         	drone1 = new Drone(new AgentID("Drone1"), map.getWidth(), map.getHeigh(), id_satelite, id_charger);
-        	droneIDs[0] = drone1.getAid();
         	drone2 = new Drone(new AgentID("Drone2"), map.getWidth(), map.getHeigh(), id_satelite, id_charger);
+        	
+        	//Cargar IDs de los drones en droneIDs
+        	droneIDs[0] = drone1.getAid();
         	droneIDs[1] = drone2.getAid();
-        	System.out.println("MAIN : Iniciando agentes...");
+        	
+        	//Asignar logs        	
+        	satellite.setLog(visualizer.getLogs()[0]);
+        	charger.setLog(visualizer.getLogs()[1]);        	
+        	drone1.setLog(visualizer.getLogs()[2]);
+        	drone2.setLog(visualizer.getLogs()[3]);
+        	
+        	//Conectar visualizador con el satélite
         	visualizer.setSatelite(satellite);
+        	
+        	//Lanzar agentes
+        	System.out.println("MAIN : Iniciando agentes...");
             satellite.start();
             drone1.start();
             drone2.start();
