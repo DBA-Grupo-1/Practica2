@@ -68,9 +68,11 @@ public class Log extends JTextPane{
 			throw new RuntimeException(ErrorLibrary.LogInvalidFirstArgument);
 		//Enviado/recibido
 		if (type == RECEIVED)
-			message += "<b>&lt;---</b>";
+			//message += "<b>&lt;---</b>";
+			message += "<b>IN </b>";
 		else if (type == SENDED)
-			message += "<b>---</b>>";
+			//message += "<b>---</b>>";
+			message += "<b>OUT </b>";
 		//Destinatario/remitente
 		message += ("<font color = 'blue'>" + name + " " +  "</font>");
 		//Procotolo

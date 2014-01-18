@@ -48,10 +48,10 @@ public class Launcher {
         
         launcher.id_satelite = new AgentID("Satelite");  
         launcher.id_charger = new AgentID("Charger");
-		//launcher.visualizer = new Visualizer(launcher);
+		launcher.visualizer = new Visualizer(launcher);
 		
 		//Comentar la línea anterior y descomentar esta para lanzar sin visualizador.
-		launcher.launchWithoutVisualizer();
+		//launcher.launchWithoutVisualizer();
 	}
 	
 	/**
@@ -66,21 +66,16 @@ public class Launcher {
             //Cargar el mapa del visualizador
         	map = visualizer.getMapToLoad();
         	
-            //LLamar a los constructores de los agentes
+            //LLamar a los constructores de los agentes y asignar logs
         	satellite = new Satellite(id_satelite,id_charger, map, droneAmount, visualizer);
-        	charger = new Charger(id_charger, 500*droneAmount, id_satelite);
-        	drone1 = new Drone(new AgentID("Drone1"), map.getWidth(), map.getHeigh(), id_satelite, id_charger);
-        	drone2 = new Drone(new AgentID("Drone2"), map.getWidth(), map.getHeigh(), id_satelite, id_charger);
-        	
-        	//Cargar IDs de los drones en droneIDs
-        	droneIDs[0] = drone1.getAid();
-        	droneIDs[1] = drone2.getAid();
-        	
-        	//Asignar logs        	
         	satellite.setLog(visualizer.getLogs()[0]);
-        	charger.setLog(visualizer.getLogs()[1]);        	
-        	drone1.setLog(visualizer.getLogs()[2]);
-        	drone2.setLog(visualizer.getLogs()[3]);
+        	charger = new Charger(id_charger, 500*droneAmount, id_satelite);
+        	charger.setLog(visualizer.getLogs()[1]);
+        	for(int i=0; i<droneAmount; i++){
+            	drones[i] = new Drone(new AgentID("Drone" + i), map.getWidth(), map.getHeigh(), id_satelite, id_charger);
+            	droneIDs[i] = drones[i].getAid();	
+            	drones[i].setLog(visualizer.getLogs()[i+2]);
+        	}
         	
         	//Conectar visualizador con el satélite
         	visualizer.setSatelite(satellite);
@@ -88,8 +83,9 @@ public class Launcher {
         	//Lanzar agentes
         	System.out.println("MAIN : Iniciando agentes...");
             satellite.start();
-            drone1.start();
-            drone2.start();
+            for(int i=0; i<droneAmount; i++){
+            	drones[i].start();	
+        	}
             charger.start();
         }catch(Exception e){
         	System.err.println("Main: Error al crear los agentes");

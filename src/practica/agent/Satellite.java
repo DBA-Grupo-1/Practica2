@@ -759,11 +759,12 @@ public class Satellite extends SuperAgent {
 		}
 		
 		for(String name: this.subscriptions.get(SubjectLibrary.DroneReachedGoal).keySet()){
-			if(!sender.equals(name))
+			if(!sender.equals(name)){
 				send(ACLMessage.INFORM, new AgentID(name), ProtocolLibrary.Subscribe, null, null, 
 						this.subscriptions.get(SubjectLibrary.DroneReachedGoal).get(name), contentSub);
-			//Meter mensaje en el log
-			addMessageToLog(Log.SENDED, msg.getSender(), msg.getProtocol(), SubjectLibrary.DroneReachedGoal, msg.getSender().name);	
+				//Meter mensaje en el log
+				addMessageToLog(Log.SENDED, msg.getSender(), msg.getProtocol(), SubjectLibrary.DroneReachedGoal, msg.getSender().name);	
+			}
 		}
 		
 	}
