@@ -82,9 +82,9 @@ public class Trace extends LinkedList<Choice>{
 		int startLocation = -2;
 		int endLocation = -1;
 		for (int i = 0; i < size(); i++){
-			if (get(i).getLocation() == start)
+			if (get(i).getLocation().equals(start))
 				startLocation = i;
-			else if (get(i).getLocation() == end)
+			else if (get(i).getLocation().equals(end))
 				endLocation = i;
 		}
 		

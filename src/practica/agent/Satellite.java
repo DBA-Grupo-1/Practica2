@@ -144,6 +144,7 @@ public class Satellite extends SuperAgent {
 	 * @param msg mensaje recibido.
 	 */
 	public void onMessage (ACLMessage msg){	
+		try{
 		JSONObject content;
 		String subject = null;
 		BlockingQueue<ACLMessage> queue = null;
@@ -179,6 +180,9 @@ public class Satellite extends SuperAgent {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}	
+		}catch(RuntimeException e){
+			e.printStackTrace();
+		}
 	}
 
 
@@ -406,13 +410,8 @@ public class Satellite extends SuperAgent {
         		//Meter mensaje en el log
             	addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), SubjectLibrary.IMoved, "Fail u_u");
 				return true;
-			default: // Fin, No me gusta, prefiero un case para el fin y en el default sea un caso de error pero no me deja poner -1 en el case.
-				/**
-				 * @TODOauthor Dani
-				 * TODO mandar error.
-				 */
-				//sendError("IMoved", droneID, "Error al actualizar el mapa");
-			break;
+			default:
+				return false;
 		}
 		
 		//Actualizar status
@@ -443,6 +442,7 @@ public class Satellite extends SuperAgent {
 	protected void execute() {
 		ACLMessage proccesingMessage = null;
 		System.out.println("Agente " + this.getName() + " en ejecución");
+		try{
 		
 		while (!exit) {
 			//Si la cola de mensajes no está vacía, saca un elemento y lo procesa.
@@ -476,6 +476,9 @@ public class Satellite extends SuperAgent {
 					e.printStackTrace();
 				}	
 			}
+		}
+		}catch(RuntimeException e){
+			e.printStackTrace();
 		}
 	}
 	
@@ -889,9 +892,10 @@ public class Satellite extends SuperAgent {
 				
 				res.remove(JSONKeyLibrary.Subject);
 				res.put(JSONKeyLibrary.Subject, SubjectLibrary.StragglerNotification);
-				res.put(JSONKeyLibrary.Straggler, msg.getSender());
+				res.put(JSONKeyLibrary.Straggler, msg.getSender().toString());
 				
 				for(int i=0;i<listOfDrones.size();i++){
+					System.out.println("MANDANDO STRAGGLER NOT a " + listOfDrones.get(i).toString());
 					send(ACLMessage.INFORM,listOfDrones.get(i),ProtocolLibrary.Scout,"default",null,buildConversationId(), res);
 					//Meter mensaje en el log
 					addMessageToLog(Log.SENDED, listOfDrones.get(i), msg.getProtocol(), SubjectLibrary.StragglerNotification, "Straggler: " + msg.getSender().name);	
@@ -957,7 +961,6 @@ public class Satellite extends SuperAgent {
 				distXAux = (int) Math.abs(goalPosX - droneStuses[i].getLocation().getPositionX());
 				if( (droneStuses[i].getLocation().getPositionY() == 0) && ( distXAux < dist) && !droneStuses[i].isGoalReached() ){
 					dist = distXAux;
-					System.out.println("ELEGIDOOOOOOOOOOOOOOOOOO: " + droneStuses[i].getId().toString());
 					droneSelected = i;
 				}
 			}
@@ -993,13 +996,14 @@ public class Satellite extends SuperAgent {
 
 				for(int i=0; i<droneStuses.length; i++){
 					if(droneStuses[i].isGoalReached()){
+						System.out.println("PIDIENDO TRAZA A: " + droneStuses[i].getId().toString());
 						traceAux = askForDroneTrace(droneStuses[i].getId());
 						if(optimalTrace == null)
 							optimalTrace = traceAux; 
 						if(traceAux.size() < optimalTrace.size())
 							optimalTrace = traceAux;
 					}else{
-						if(droneStuses[i].getLocation().getPositionY() == 0 && !droneStuses[i].isGoalReached()) // Se recogen los drones que aun no han salido
+						if(droneStuses[i].getLocation().getPositionY() == 0) // Se recogen los drones que aun no han salido
 							dronesWithoutLeaving.add(droneStuses[i]);
 					}
 				}
@@ -1040,7 +1044,8 @@ public class Satellite extends SuperAgent {
 					int batteryInDrones = dronesWithoutLeaving.size() * 75; // Se calcula cuanto bateria tienen los drones que quedan por salir
 
 					if( (sizeTrace - batteryInDrones) <= batteryInCharger){
-
+						System.out.println("SALLLLLLLLL FOLLOWER MADAFAKAR: " + (sizeTrace - batteryInDrones));
+						index = findNerestDrone(true);
 						behavior = Drone.FOLLOWER;
 					}else{
 						// Se selecciona el drone mas cercano dependiendo de los drones que hayan salido
@@ -1381,7 +1386,7 @@ public class Satellite extends SuperAgent {
 				System.out.println("ZZZ RECIBIENDO CASILLA CONFLICTIVA pos: " + cb.getPosInicial().getPositionX() + ", " + cb.getPosInicial().getPositionY());
 				mapSeguimiento.addConflictiveBox(cb);
 				System.out.println("ZZZ AÑADIENDO CASILLA CONFLICTIVA pos: " + cb.getPosInicial().getPositionX() + ", " + cb.getPosInicial().getPositionY());//Meter mensaje en el log
-				addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), subject, cb.toString());	
+				//addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), subject, cb.toString());	
 				break;
 			default: 
 				sendError(new NotUnderstoodException("Subject no encontrado"), msg);

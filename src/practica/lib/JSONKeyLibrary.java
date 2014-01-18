@@ -21,7 +21,7 @@ public class JSONKeyLibrary {
 	//Recharge
 	public static final String RequestAmount = "Requested battery amount";
 	public static final String AmountGiven = "Given battery amount";
-	public static final String Error = "Error";
+	public static final String Error = "error";
 	
 	//MOVE DRONE
 	public static final String Decision = "Decision";

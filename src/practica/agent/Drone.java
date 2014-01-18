@@ -79,7 +79,7 @@ public class Drone extends SuperAgent {
 		
 		public static final int SCOUT = 0, SCOUT_IMPROVER = 1, FOLLOWER = 2, FREE = 3; //Comportamientos del drone
 		
-		private static final int MIN_SIZE_FOR_OBSTACLE_SKIRTING = 20;
+		private static final int MIN_SIZE_FOR_OBSTACLE_SKIRTING = 40;
 		
         private final int ESTADOREQUEST = 0, ESTADOINFORM = 1;
         private final int LIMIT_MOVEMENTS;
@@ -101,7 +101,6 @@ public class Drone extends SuperAgent {
         protected int currentPositionTracking;
         protected int movingBlock;  // movimiento a bloquear para el modo explorar otras decisiones.
         protected int indexPosition;
-        protected boolean enterLagging;  // indica en el estado lagging si el drone acaba de entrar en dicho estado o debe salir de él.
         
         /** Decision de mover al norte */
         public static final int NORTE = 3;
@@ -127,7 +126,7 @@ public class Drone extends SuperAgent {
         public static final int ENTER_LAGGING = -5;
         
         /** Número de casillas que debe pasar separado de un obstáculo para considerar otra zona obstáculo*/
-		private static final int N_TO_OTHER_OBSTACLE = 10;
+		private static final int N_TO_OTHER_OBSTACLE = 20;
         
         private AgentID sateliteID;
         private AgentID chargerID;
@@ -151,7 +150,9 @@ public class Drone extends SuperAgent {
         
         private HashMap<String, String> idsCombersationSubscribe;   // {nombreSubscripcion, id-combersation}
         private HashMap<String, String> subscribers;                                // {ID_Agente, id-combersation}
-        private HashMap<AgentID, Trace> otherTracesDrones;
+        private HashMap<String, Trace> otherTracesDrones;
+
+
 
         /**
          * Constructor del Drone.
@@ -189,14 +190,13 @@ public class Drone extends SuperAgent {
                 
                 idsCombersationSubscribe = new HashMap<String, String>();
                 subscribers = new HashMap<String, String>();
-                otherTracesDrones = new HashMap<AgentID, Trace>();
+                otherTracesDrones = new HashMap<String, Trace>();
                 
                 state = SLEEPING;
                 currentPositionTracking = -1;
                 
                 conflictiveBoxReached = false;
                 optimalTrace = null;
-                enterLagging = false;
         }
         
         
@@ -358,12 +358,13 @@ public class Drone extends SuperAgent {
     	
     	if(trace.get(trace.size()-1).getMove() == Drone.ENTER_LAGGING){ 
     		state = LAGGING;
-    		enterLagging = true;
-    		this.enterStandBy();
     		conflictiveBox.setDangerous(true);
-    		Trace subtraza = trace.getSubtrace(conflictiveBox.getPosInicial(), new GPSLocation(posX, posY));
+    		Trace subtraza = trace.getSubtrace(conflictiveBox.getPosInicial());
     		conflictiveBox.setLength(subtraza.size());
+    		conflictiveBox.setPosFinal(new GPSLocation(posX,posY));
     		sendConflictiveBox();
+    		iStraggler();
+        	iStragglerReceive();
     	}
     	
     	/**
@@ -383,7 +384,6 @@ public class Drone extends SuperAgent {
     		conflictiveBox = new ConflictiveBox(this.getAid());
     		conflictiveBox.setPosInicial(new GPSLocation(posX, posY));
     		conflictiveBox.setDecision(this.decision); // Se le asigna la decisión actual a la casilla
-    		System.out.println("ZZZ CREANDO CASILLA CONFLICTIVA posicion: " + posX + ", " + posY);
     	}
     	
     	if(state == OBSTACLE_AREA){ 
@@ -400,9 +400,8 @@ public class Drone extends SuperAgent {
     					
     				conflictiveBox.setPosFinal(posSalidaTemporal);
     				conflictiveBox.setDangerous(false);
-    				Trace subTrace = trace.getSubtrace(conflictiveBox.getPosInicial());
+    				Trace subTrace = trace.getSubtrace(conflictiveBox.getPosInicial(), posSalidaTemporal);
     				conflictiveBox.setLength(subTrace.size());
-    	    		System.out.println("ZZZ TERMINANDO CASILLA CONFLICTIVA size: " + subTrace.size());
     				
     				sendConflictiveBox();
     			}
@@ -495,7 +494,6 @@ public class Drone extends SuperAgent {
                 e.printStackTrace();
         }
 
-		System.out.println("ZZZ ENVIANDO CASILLA CONFLICTIVA posicion: " + posX + ", " + posY);
         send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Notification, "default", null, buildConversationId(), data);
 		//Meter mensaje en el log
 		addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Notification, SubjectLibrary.ConflictInform, conflictiveBox.toString());	
@@ -512,7 +510,7 @@ public class Drone extends SuperAgent {
     /************************************************************************************************************************************
      ******** Comunicación Explorador ********************************************************************************************
      ************************************************************************************************************************************/   
-  /*
+  /**
    * @author Ismael
    * comunica que esta STRAGGLER
    */
@@ -565,32 +563,20 @@ public class Drone extends SuperAgent {
     * @param who
     * @param what
     */
-   public void heStragglerReceive(String who,String what){
-	 	ACLMessage msg=null;
-		   
-		   try {
-				msg= answerQueue.take();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		   
+   private void heStragglerReceive(ACLMessage msg){
 		   switch(msg.getPerformativeInt()){
 		   case ACLMessage.INFORM:
 			   try{
-			   JSONObject content= new JSONObject(msg.getContent());
-			  what = content.getString(JSONKeyLibrary.Subject);		   
-			   who = content.getString(SubjectLibrary.StragglerNotification);
-			   
+				   JSONObject content= new JSONObject(msg.getContent());
+			   }catch(JSONException e){
+				   e.printStackTrace();
+			   }
 			   /**
 			    * Despierto al drone. No incluyo la traza del rezagado puesto que es una traza peligrosa.
 			    * 
 			    * @author Jahiel
 			    */
 			   this.leaveStandBy();
-			   
-			   }catch(JSONException e){
-				   e.printStackTrace();
-			   }
 			   break;
 		   case ACLMessage.FAILURE:
 			   
@@ -789,15 +775,11 @@ public class Drone extends SuperAgent {
     				throw new RuntimeException("Comportamiento incongruente para el estado : "+state);
     			break;
     		case LAGGING:
-    			if(enterLagging){
-    				enterLagging = false;
-    			}else{
-    				if(behavior == FOLLOWER){
-        				state = UNDO_TRACE;
-        			}else if(behavior == FREE)
-        				state = EXPLORE_MAP;
-    			}
-    			
+    			if(behavior == FOLLOWER){
+    				state = UNDO_TRACE;
+    			}else if(behavior == FREE)
+    				state = EXPLORE_MAP;
+
     			break;
     		case GO_TO_POINT_TRACE:
     			
@@ -825,28 +807,26 @@ public class Drone extends SuperAgent {
     			// Se comprueba si estoy en una casilla conflictiva:
     			// - Si estoy en ella y solo hay una anotada y su tamaño es grande -> bordear por el otro lado.
     			// - Otro caso -> no cambio de estado
-    			if(conflictiveBoxReached && (behavior == SCOUT_IMPROVER)){
-	            	System.out.println("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ size: " + currentConflictiveBox.size());
-    				if(currentConflictiveBox.size() == 1){
-		            	System.out.println("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ tamaño: " + currentConflictiveBox.get(0).getLength());
-    					if(currentConflictiveBox.get(0).getLength() > MIN_SIZE_FOR_OBSTACLE_SKIRTING){
-    		            	System.out.println("ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ");
-    						state = FORCE_EXPLORATION;
-    						movingBlock = currentConflictiveBox.get(0).getDecision();  // Se coje la decisión que tomó el otro drone para bloquear
-    																				   // este movimiento
-    						otherSizeOfTheObstacle = currentConflictiveBox.get(0);
-    					}
-    				}
+    			if(conflictiveBoxReached && (behavior == SCOUT_IMPROVER)
+    					&& currentConflictiveBox.size() == 1
+    					&& currentConflictiveBox.get(0).getLength() > MIN_SIZE_FOR_OBSTACLE_SKIRTING){
+    				state = FORCE_EXPLORATION;
+    				posiOX= (posX + (Math.cos(angle) * distance));
+    				posiOY= (posY + (Math.sin(angle)*distance));
+    				movingBlock = currentConflictiveBox.get(0).getDecision();  // Se coje la decisión que tomó el otro drone para bloquear
+    				// este movimiento
+    				otherSizeOfTheObstacle = currentConflictiveBox.get(0);
     			}else{
     				currentPositionTracking++;
     			}
     			break;
     		case UNDO_TRACE:
     			
-    			if(conflictiveBox.getPosInicial().equals(new GPSLocation(posX, posY)))
+    			if(otherSizeOfTheObstacle.getPosInicial().equals(new GPSLocation(posX, posY)))
     				state = FOLLOW_TRACE;
     				
     			break;
+    		case FORCE_EXPLORATION:
     		case EXPLORE_MAP:
     			posiOX= (posX + (Math.cos(angle) * distance));
     			posiOY= (posY + (Math.sin(angle)*distance));
@@ -871,6 +851,8 @@ public class Drone extends SuperAgent {
     protected int checkBehaviours(){
             List<Pair> listaMovimientos;
             int tempDecision;
+            
+         
             
             listaMovimientos = getMovementList();
 
@@ -982,14 +964,14 @@ public class Drone extends SuperAgent {
     			AgentID id = null;
     			
 				for(int i=0; i<size; i++){
-					if(currentConflictiveBox.get(i).getLength() < minSize){
+					if(currentConflictiveBox.get(i).getLength() < minSize && !currentConflictiveBox.get(i).isDangerous()){
 						minSize = currentConflictiveBox.get(i).getLength();
-						 id = currentConflictiveBox.get(i).getDroneID();
-						 indexMinBox = i;
+						id = currentConflictiveBox.get(i).getDroneID();
+						indexMinBox = i;
 					}
 				}
 
-				optimalTrace = otherTracesDrones.get(id); // Cambio a la traza que me conduce por el camino mas corto para bordear el obstaculo
+				optimalTrace = otherTracesDrones.get(id.toString()); // Cambio a la traza que me conduce por el camino mas corto para bordear el obstaculo
 				currentPositionTracking = optimalTrace.getIndex( currentConflictiveBox.get(indexMinBox).getPosInicial());
 			}
 			
@@ -1015,46 +997,44 @@ public class Drone extends SuperAgent {
                     if(listaMovimientos.get(i).getSecond() == betterMoveBeforeDodging)
                             betterIsPosible = listaMovimientos.get(i).getThird(); 
 
+            
             //Si es posible lo realizamos y salimos del modo esquivando
-            if(dodging && betterIsPosible){
-                    dodging=false;
-                    return betterMoveBeforeDodging;
+            if(betterIsPosible){
+            	if(state == FORCE_EXPLORATION)
+            		state = OBSTACLE_AREA;
+            	dodging=false;
+            	return betterMoveBeforeDodging;
             }
 
 
             //Comprobamos si estamos esquivando y podemos hacer un movimiento que nos deje cerca de un obstaculo
 
             //Al lado de un obstaculo (en un movimiento)
-            if(dodging)
-                    for(Pair pair: listaMovimientos){
-                            int move = pair.getSecond();
-                            if(pair.getThird() && (getCorner(move, (move+1)%4) == Map.OBSTACULO || getCorner(move, (move+3)%4) == Map.OBSTACULO))
-                                    return move;
-                    }
+            for(Pair pair: listaMovimientos){
+            	int move = pair.getSecond();
+            	if(pair.getThird() && (getCorner(move, (move+1)%4) == Map.OBSTACULO || getCorner(move, (move+3)%4) == Map.OBSTACULO))
+            		return move;
+            }
 
             //Al lado de un obstaculo (en dos movimientos)
-            if(dodging){
-                    int [] validMovs=getValidMovements();
-                    for(Pair pair: listaMovimientos){
-                            int move = pair.getSecond();
-                            if(pair.getThird() && (validMovs[(move+1)%4] == Map.OBSTACULO || validMovs[(move+3)%4] == Map.OBSTACULO))
-                                    return move;
-                    }
+            int [] validMovs=getValidMovements();
+            for(Pair pair: listaMovimientos){
+            	int move = pair.getSecond();
+            	if(pair.getThird() && (validMovs[(move+1)%4] == Map.OBSTACULO || validMovs[(move+3)%4] == Map.OBSTACULO))
+            		return move;
             }
+            
 
             return NO_DEC;
    	 }else{
             //Comprobamos si no podemos hacer el mejor movimiento debido a un obstaculo
             //En ese caso pasamos al modo esquivar
             int [] validMov=getValidMovements();
-            if(!listaMovimientos.get(0).getThird() && validMov[listaMovimientos.get(0).getSecond()]==Map.OBSTACULO && !dodging){
+            if(!listaMovimientos.get(0).getThird() && validMov[listaMovimientos.get(0).getSecond()]==Map.OBSTACULO){
                     dodging=true;
-                    /**
-                    @author Jahiel
-                    */
-                    if(state == FORCE_EXPLORATION && listaMovimientos.get(0).getSecond() == movingBlock){
-                    	state = EXPLORE_MAP;
-                    }
+                    
+                    if(state == FORCE_EXPLORATION && listaMovimientos.get(0).getSecond()==movingBlock)
+                    	state=OBSTACLE_AREA;
                     
                     betterMoveBeforeDodging=listaMovimientos.get(0).getSecond();
             }
@@ -1077,14 +1057,7 @@ public class Drone extends SuperAgent {
     protected int criticalBehaviour(List<Pair> listaMovimientos, Object[] args) {
             //Si no le queda batería el drone la pide y se queda en standby.
     	int amount=1;
-    	if(state == LAGGING){
-        	iStraggler();          // comunico que paso al estado Rezagado y espero la confirmación
-        	iStragglerReceive();
-        	
-        	enterStandBy();
-        	
-        	return RETHINK;
-        } else if (battery == 0){
+    	if (battery == 0){
         	askForBattery(amount);
         	ACLMessage msg = null;
         	try {
@@ -1242,6 +1215,11 @@ public class Drone extends SuperAgent {
                     basicond[NORTE]=         validSqr[1]==Map.LIBRE        && !(validSqr[0]==Map.VISITADO && validSqr[2]==Map.VISITADO);
             }
             
+            if(state == FORCE_EXPLORATION && !(basicond[ESTE] || basicond[SUR] || basicond[OESTE] || basicond[NORTE])){
+            	int lastMove = (trace.get(trace.size()-1).getMove()+2)%4;
+            	basicond[lastMove]=true;
+            }
+            
             return basicond;
     }
     
@@ -1317,7 +1295,7 @@ public class Drone extends SuperAgent {
         	
 
         case SubjectLibrary.StragglerNotification:
-        	queue=answerQueue;
+        	queue=requestQueue;
         	break;
         case SubjectLibrary.Start:
         	queue=answerQueue;
@@ -2097,15 +2075,16 @@ public class Drone extends SuperAgent {
                     	surroundings[i]=jsArray.getInt(i);
                     }
                     //Compruebo si ha llegado información sobre si la casilla es conflictiva
-                    if(content.has(JSONKeyLibrary.ConflictiveBox)){
+                    
+                    if(contentValues.has(JSONKeyLibrary.ConflictiveBox)){
                     	//Extraigo la información
-                    	System.out.println("Estoy en casilla conflictiva");
                     	conflictiveBoxReached = true;
-                    	String conflictiveBoxData = content.getString(JSONKeyLibrary.ConflictiveBox);
+                    	String conflictiveBoxData = contentValues.getString(JSONKeyLibrary.ConflictiveBox);
                     	//Defino el tipo de datos que voy a extraer del JSON
                     	Type collectionType = new TypeToken<ArrayList<ConflictiveBox>>(){}.getType();	
                     	//Extraigo los datos
                     	currentConflictiveBox = new Gson().fromJson(conflictiveBoxData, collectionType); 
+                    	
                     	
                     }else
                     	conflictiveBoxReached = false;
@@ -2146,7 +2125,7 @@ public class Drone extends SuperAgent {
                     System.out.println("|"+surroundings[0]+", "+surroundings[1]+", "+surroundings[2]+"|");
                     System.out.println("|"+surroundings[3]+", "+surroundings[4]+", "+surroundings[5]+"|");
                     System.out.println("|"+surroundings[6]+", "+surroundings[7]+", "+surroundings[8]+"|");
-                       */             
+                        */          
             } catch (JSONException ex) {
                     System.out.println("numeritos");
                     ex.printStackTrace();
@@ -2261,7 +2240,6 @@ public class Drone extends SuperAgent {
                             String errorReason = content.getString(JSONKeyLibrary.Error);
                             System.out.println("Batería no recibida. Motivo: " + errorReason);
                             //TODO: gestionar algunos errores, como el de no más batería.
-                            decision=END_FAIL;
                     		//Meter mensaje en el log
                         	addMessageToLog(Log.RECEIVED, chargerID, msg.getProtocol(), SubjectLibrary.BatteryRequest, errorReason);
                     } catch (JSONException e) {
@@ -2613,38 +2591,40 @@ public class Drone extends SuperAgent {
      * @throws RuntimeException En caso de error en el procesamiento del mensaje (comportamiento del drone ante el mensaje).
      */
     protected void onDroneReachedGoalInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException {
-    	System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxx");
-    	JSONObject content = null;
-    	AgentID id = null;
-    	
-    	try {
-			content = new JSONObject(msg.getContent());
-		} catch (JSONException e) {
-			throw new NotUnderstoodException(ErrorLibrary.NotUnderstood);
-		}
-         
-        try {
-			id = new AgentID(content.getString(JSONKeyLibrary.DroneID));
-		} catch (JSONException e) {
-			throw new FailureException(ErrorLibrary.FailureInformationAccess);
-		}      
-        
-        Trace t =  askForDroneTrace(id); // pregunto la traza del drone que ha finalizado para ver si es mejor que la optima 
-        									 // hasta el momento.
-        otherTracesDrones.put(id, t);
-        
-        if(optimalTrace == null){
-        	
-        	optimalTrace = t;
-        }else{
-        	
-        	for(Trace traceAux: otherTracesDrones.values()){ // Me quedo con la traza mas corta de todas
-        		if(optimalTrace.size() > traceAux.size())
-        			optimalTrace = traceAux;
-        	}
-        }
-        
-        this.leaveStandBy(); //Despertamos al drone
+    	if(state != FINISH_GOAL){
+    		System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxx");
+    		JSONObject content = null;
+    		AgentID id = null;
+
+    		try {
+    			content = new JSONObject(msg.getContent());
+    		} catch (JSONException e) {
+    			throw new NotUnderstoodException(ErrorLibrary.NotUnderstood);
+    		}
+
+    		try {
+    			id = new AgentID(content.getString(JSONKeyLibrary.DroneID));
+    		} catch (JSONException e) {
+    			throw new FailureException(ErrorLibrary.FailureInformationAccess);
+    		}      
+
+    		Trace t =  askForDroneTrace(id); // pregunto la traza del drone que ha finalizado para ver si es mejor que la optima 
+    		// hasta el momento.
+    		otherTracesDrones.put(id.toString(), t);
+
+    		if(optimalTrace == null){
+
+    			optimalTrace = t;
+    		}else{
+
+    			for(Trace traceAux: otherTracesDrones.values()){ // Me quedo con la traza mas corta de todas
+    				if(optimalTrace.size() > traceAux.size())
+    					optimalTrace = traceAux;
+    			}
+    		}
+
+    		this.leaveStandBy(); //Despertamos al drone
+    	}
     }
     
     protected void onYourMovementsInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException{
@@ -2757,6 +2737,9 @@ public class Drone extends SuperAgent {
             
             try{
                     switch(subject){
+                    case SubjectLibrary.StragglerNotification:
+                    	heStragglerReceive(msg);
+                    	break;
                     case SubjectLibrary.BatteryLeft:
                             int batteryLeft = onBatteryQueried(msg);
                             if(batteryLeft < 0|| batteryLeft > 75){
@@ -3012,13 +2995,17 @@ public class Drone extends SuperAgent {
                                     movimientosLibres[i+j*3]=surroundings[i+j*3];
                             }
             
-            if(state == FORCE_EXPLORATION ){;
+            if(state == FORCE_EXPLORATION ){
             	for(int i=0; i<movimientosLibres.length; i++){
             		if(movimientosLibres[i] == Map.VISITADO)
             			movimientosLibres[i] = Map.LIBRE; 
             	}
             	movimientosLibres = blockMovement(movimientosLibres, movingBlock);
+            	int lastMove = trace.get(trace.size()-1).getMove();
+            	movimientosLibres = blockMovement(movimientosLibres, (lastMove+2)%4);
             }
+            
+            
             
             return movimientosLibres;
     }

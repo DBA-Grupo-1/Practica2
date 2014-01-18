@@ -60,6 +60,13 @@ public class GPSLocation {
 		return positionX + ", " + positionY;
 	}
 	
+	/**
+	 * Compara este GPSLocation con otro para ver si son iguales.
+	 * 
+	 * @param other El otro objeto GPSLocation con el que comparar
+	 * @return True si son iguales, false en caso contrario
+	 * @author Alberto
+	 */
 	@Override
 	public boolean equals(Object other){
 		GPSLocation otherLoc = (GPSLocation) other;

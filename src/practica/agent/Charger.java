@@ -152,7 +152,7 @@ public class Charger extends SuperAgent {
 						} catch (JSONException e) {  
 							JSONObject content = new JSONObject();
 							try {
-								content.put("Error", ErrorLibrary.BadlyStructuredContent);
+								content.put(JSONKeyLibrary.Error, ErrorLibrary.BadlyStructuredContent);
 							} catch (JSONException e1) {
 								e1.printStackTrace();
 							}

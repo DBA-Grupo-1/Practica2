@@ -21,7 +21,8 @@ public class Launcher {
 	
 	private AgentID id_satelite, id_charger;
 	private Satellite satellite;
-	private Drone drone1, drone2;
+	private Drone drone1, drone2, drone3;
+	private static Drone[] drones;
 	private Visualizer visualizer;
 	private Map map;
 	private Charger charger;
@@ -34,8 +35,9 @@ public class Launcher {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		droneAmount = 2;
+		droneAmount = 5;
 		droneIDs = new AgentID [droneAmount];
+		drones = new Drone[droneAmount];
 		DOMConfigurator.configure("src/Configuration/loggin.xml"); // ERR
         Logger logger = Logger.getLogger(Launcher.class);
         
@@ -46,10 +48,10 @@ public class Launcher {
         
         launcher.id_satelite = new AgentID("Satelite");  
         launcher.id_charger = new AgentID("Charger");
-		launcher.visualizer = new Visualizer(launcher);
+		//launcher.visualizer = new Visualizer(launcher);
 		
 		//Comentar la línea anterior y descomentar esta para lanzar sin visualizador.
-		//launcher.launchWithoutVisualizer();
+		launcher.launchWithoutVisualizer();
 	}
 	
 	/**
@@ -104,19 +106,20 @@ public class Launcher {
         try{
             System.out.println("Main: Creando agentes");
             //PARTE CONFLICTIVA
-        	map = ImgMapConverter.imgToMap("src/maps/MeetingPoint1.png");
+        	map = ImgMapConverter.imgToMap("src/maps/MeetingPoint2.png");
     		ImgMapConverter.mapToImg("src/maps/pruebaoriginal.png", map);
     		//(Ismael) modificada la función Satellite para que acepte una identida de cargador
         	satellite = new Satellite(id_satelite,id_charger, map, droneAmount);
         	charger = new Charger(id_charger, 500*droneAmount, id_satelite);
-        	drone1 = new Drone(new AgentID("Drone1"), map.getWidth(), map.getHeigh(), id_satelite, id_charger);
-        	droneIDs[0] = drone1.getAid();
-        	drone2 = new Drone(new AgentID("Drone2"), map.getWidth(), map.getHeigh(), id_satelite, id_charger);
-        	droneIDs[1] = drone2.getAid();
+        	for(int i=0; i<droneAmount; i++){
+            	drones[i] = new Drone(new AgentID("Drone" + i), map.getWidth(), map.getHeigh(), id_satelite, id_charger);
+            	droneIDs[i] = drones[i].getAid();	
+        	}
         	System.out.println("MAIN : Iniciando agentes...");
             satellite.start();
-            drone1.start();
-            drone2.start();
+            for(int i=0; i<droneAmount; i++){
+            	drones[i].start();	
+        	}
             charger.start();
         }catch(Exception e){
         	System.err.println("Main: Error al crear los agentes");

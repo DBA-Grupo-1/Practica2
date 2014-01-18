@@ -4,6 +4,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import practica.gui.Log;
+import practica.lib.JSONKeyLibrary;
 import practica.lib.SubjectLibrary;
 import es.upv.dsic.gti_ia.architecture.FIPAException;
 import es.upv.dsic.gti_ia.core.ACLMessage;
@@ -79,7 +80,7 @@ public class SuperAgent extends SingleAgent {
 		String subject = "";
 		
 		try {
-			content.put("error",fe.getMessage());
+			content.put(JSONKeyLibrary.Error,fe.getMessage());
 			subject = new JSONObject(msgOrig.getContent()).getString("Subject");
 			content.put("Subject", subject);
 		} catch (JSONException e) {
