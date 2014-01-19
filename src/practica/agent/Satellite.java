@@ -1039,9 +1039,6 @@ public class Satellite extends SuperAgent {
 						}
 					}
 
-
-
-
 					// Se pide la bateria restante que le queda al cargador
 					batteryInCharger = askBattery();
 					if (usingVisualizer)

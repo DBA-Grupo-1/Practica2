@@ -299,6 +299,7 @@ public class Drone extends SuperAgent {
                             sendDecision(decision);
                             updateTrace(decision);
                             postUpdateTrace();
+                    		System.out.println("Y despues de put es state = " + state);
                     }
             }while(decision != END_FAIL && decision != END_SUCCESS);
             
@@ -364,6 +365,9 @@ public class Drone extends SuperAgent {
     	boolean entrandoEsq = !preEsq && postEsq; //Antes no estaba esquivando y ahora sí
     	boolean saliendoEsq = preEsq && !postEsq; //Antes estaba esquivando y ya no
     	int decision = trace.get(trace.size()-1).getMove(); 
+    	
+    	if(enter_force)
+    		enter_force = false;
     	
     	if(decision == Drone.ENTER_LAGGING){ 
     		state = LAGGING;
@@ -690,7 +694,7 @@ public class Drone extends SuperAgent {
             		e.printStackTrace();
             	}
 
-            	System.out.println("\n" + this.getAid().toString() + " is thinking...");
+            	System.out.println("\n" + this.getAid().toString() + " is thinking in state " + state);
 
             	if(state == SLEEPING || state == LAGGING){	
             		sendRequestOutput();
@@ -699,6 +703,7 @@ public class Drone extends SuperAgent {
             		getStatus();
 
             		preBehavioursSetUp();
+            		System.out.println("Ahora es state = " + state);
             		tempDecision = checkBehaviours();
             	}
             }while(tempDecision == RETHINK);
@@ -734,13 +739,24 @@ public class Drone extends SuperAgent {
     	
     	if(this.getAid().toString().equals((drone_selected.toString()))){
     		behavior = mode;
-			if(behavior == SCOUT){
+    		switch(behavior){
+    		case SCOUT:
+    		case FREE:
 				state = EXPLORE_MAP;
-			}else if(behavior == FOLLOWER || behavior == SCOUT_IMPROVER){
+				break;
+    		case SCOUT_IMPROVER:
+				indexPosition = getInitialPosition();
 				state = GO_TO_POINT_TRACE;
-				if(behavior == SCOUT_IMPROVER)
-					indexPosition = getInitialPosition();
-			}
+				break;
+    		case FOLLOWER:
+    			if(state == LAGGING){
+					state = UNDO_TRACE;
+				}else{
+					state = GO_TO_POINT_TRACE;
+				}
+    			break;
+    		default: break;
+    		}
 			System.out.println("SALGO!!!!!!!!!!!!!!!!!!!: " + behavior);
     	}else{
     		this.enterStandBy();
@@ -833,12 +849,13 @@ public class Drone extends SuperAgent {
     			break;
     		case UNDO_TRACE:
     			
-    			if(otherSizeOfTheObstacle.getPosInicial().equals(new GPSLocation(posX, posY)))
+    			if(otherSizeOfTheObstacle.getPosInicial().equals(new GPSLocation(posX, posY))){
     				state = FOLLOW_TRACE;
+    				currentPositionTracking = optimalTrace.getIndex(otherSizeOfTheObstacle.getPosInicial());
+    			}
     				
     			break;
     		case FORCE_EXPLORATION:
-				enter_force = false;
     		case EXPLORE_MAP:
     			posiOX= (posX + (Math.cos(angle) * distance));
     			posiOY= (posY + (Math.sin(angle)*distance));
@@ -904,11 +921,15 @@ public class Drone extends SuperAgent {
      * @return Decision tomada. Debe ser END_FAIL o NO_DEC
      */
     private int checkEndCondition(List<Pair> listaMovimientos, Object[] object) {
+    	if(state != UNDO_TRACE && state != FOLLOW_TRACE){
     		for(Pair pair : listaMovimientos)
     			if(pair.getThird())
     				return NO_DEC;
     		
             return END_FAIL;
+    	}else{
+    		return NO_DEC;
+    	}
     }
 
     /**
@@ -947,9 +968,9 @@ public class Drone extends SuperAgent {
     	if(state == UNDO_TRACE){
     		GPSLocation actual = new GPSLocation(posX, posY);
     		
-    		currentPositionTracking = optimalTrace.getIndex(actual);
+    		currentPositionTracking = trace.getIndex(actual);
     		
-    		return (optimalTrace.get(currentPositionTracking-1).getMove() + 2)%4;	
+    		return (trace.get(currentPositionTracking-1).getMove() + 2)%4;	
     	}
     	
     	return NO_DEC;
