@@ -73,6 +73,7 @@ public class Visualizer extends JFrame {
 	private Log [] logs;
 	private JPanel infoPanel;
 	private JLabel [] droneNamesLabels;
+	private JLabel [] droneUsedBattery;
 	private JPanel chargerBatteryPanel;
 	private JLabel labelChargerName;
 	private JLabel labelChargerBattery;
@@ -118,6 +119,7 @@ public class Visualizer extends JFrame {
 		initialize();
 		launcher = l;
 		setBounds(100, 100, 535, 590);
+		//setBounds(100, 100, 800, 600);
 		buildLogArray();
 		setVisible(true);	
 	}
@@ -129,22 +131,35 @@ public class Visualizer extends JFrame {
 	private void buildInfoPanel(){
 		//Cambio las columnas en función del número de drones.
 		GridLayout infoPanelLayout = (GridLayout) infoPanel.getLayout();
-		infoPanelLayout.setColumns(droneIDs.length);
+		infoPanelLayout.setColumns(droneIDs.length + 1);
 		
 		
 		//Creo las etiquetas
 		droneNamesLabels = new JLabel [droneIDs.length];
+		droneUsedBattery = new JLabel [droneIDs.length];		
 		
 		for (int i = 0; i < droneIDs.length; i++){
 			droneNamesLabels [i] = new JLabel (droneIDs[i].name);
+			droneUsedBattery [i] = new JLabel ("0");
 			int backGround = ImgMapConverter.getDroneColor()[i];
-			System.out.println(backGround);
 			droneNamesLabels [i].setForeground(new Color (backGround));
+			droneUsedBattery [i].setForeground(new Color (backGround));
+			droneNamesLabels [i].setHorizontalAlignment(SwingConstants.CENTER);
+			droneUsedBattery [i].setHorizontalAlignment(SwingConstants.CENTER);
 		}
 		
 		//Las posiciono
+		
+		infoPanel.add(new JLabel("Drone names"));
+		
 		for (int i = 0; i < droneIDs.length; i++){
 			infoPanel.add(droneNamesLabels[i]);
+		}
+		
+		infoPanel.add(new JLabel("Used battery"));
+		
+		for (int i = 0; i < droneIDs.length; i++){
+			infoPanel.add(droneUsedBattery[i]);
 		}
 	}
 	
@@ -183,6 +198,27 @@ public class Visualizer extends JFrame {
 	 */
 	public void setChargetBattery (int newBattery){
 		labelChargerBattery.setText(String.valueOf(newBattery));
+	}
+	
+	/**
+	 * Actualiza la batería usada del drone
+	 * @author Daniel
+	 * @param drone ID del drone
+	 */
+	public void addUsedBattery (AgentID drone){
+		//Busco el drone
+		int index = -1;
+		for (int i = 0; i < droneIDs.length; i++){
+			if (droneIDs[i].toString().equals(drone.toString()))
+				index = i;
+		}
+		
+		//Actualizo la etiqueta
+		if (index != -1){
+			int previousBattery = Integer.parseInt(droneUsedBattery[index].getText());
+			previousBattery -= 1;
+			droneUsedBattery[index].setText(String.valueOf(previousBattery));
+		}
 	}
 	
 	/**
@@ -312,18 +348,18 @@ public class Visualizer extends JFrame {
 		btnLaunchExplorer = new JButton("Launch");
 		btnLaunchExplorer.setVisible(false);
 		btnLaunchExplorer.addActionListener(new BtnLaunchExplorerActionListener());
-		btnLaunchExplorer.setBounds(10, 528, 112, 23);
+		btnLaunchExplorer.setBounds(10, 522, 85, 29);
 		getContentPane().add(btnLaunchExplorer);
 		{
 			infoPanel = new JPanel();
-			infoPanel.setBounds(134, 522, 376, 29);
+			infoPanel.setBounds(98, 522, 484, 29);
 			getContentPane().add(infoPanel);
-			infoPanel.setLayout(new GridLayout(1, 6, 0, 0));
+			infoPanel.setLayout(new GridLayout(2, 6, 0, 0));
 		}
 		{
 			chargerBatteryPanel = new JPanel();
 			chargerBatteryPanel.setVisible(false);
-			chargerBatteryPanel.setBounds(520, 522, 254, 29);
+			chargerBatteryPanel.setBounds(594, 522, 180, 29);
 			getContentPane().add(chargerBatteryPanel);
 			chargerBatteryPanel.setLayout(new GridLayout(0, 2, 0, 0));
 			{
