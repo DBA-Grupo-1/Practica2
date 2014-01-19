@@ -1,5 +1,6 @@
 package practica.gui;
 
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.Image;
 import java.awt.event.ActionEvent;
@@ -25,7 +26,9 @@ import practica.agent.Satellite;
 import practica.map.Map;
 import practica.util.ImgMapConverter;
 import es.upv.dsic.gti_ia.core.AgentID;
+
 import java.awt.GridLayout;
+import javax.swing.SwingConstants;
 
 /**
  * Interfaz de usuario.
@@ -52,14 +55,12 @@ public class Visualizer extends JFrame {
 	private JPanel drone3LogPanel;
 	private JPanel drone4LogPanel;
 	private JPanel drone5LogPanel;
-	private JPanel drone6LogPanel;
 	private Log drone1Log;
 	private Log drone2Log;
 	private Log drone3Log;
 	private Log satelliteLog;
 	private Log drone4Log;
 	private Log drone5Log;
-	private Log drone6Log;
 	private Log chargerLog;
 	private JScrollPane satelliteScrollPane;
 	private JScrollPane chargerScrollPane;
@@ -68,12 +69,13 @@ public class Visualizer extends JFrame {
 	private JScrollPane drone3ScrollPane;
 	private JScrollPane drone4ScrollPane;
 	private JScrollPane drone5ScrollPane;
-	private JScrollPane drone6ScrollPane;
 	private AgentID [] droneIDs;
 	private Log [] logs;
 	private JPanel infoPanel;
 	private JLabel [] droneNamesLabels;
-	private JLabel [] droneBatteries;
+	private JPanel chargerBatteryPanel;
+	private JLabel labelChargerName;
+	private JLabel labelChargerBattery;
 	
 	/**
 	 * Setter de satelite.
@@ -115,7 +117,7 @@ public class Visualizer extends JFrame {
 		}
 		initialize();
 		launcher = l;
-		setBounds(100, 100, 800, 600);
+		setBounds(100, 100, 535, 590);
 		buildLogArray();
 		setVisible(true);	
 	}
@@ -129,43 +131,21 @@ public class Visualizer extends JFrame {
 		GridLayout infoPanelLayout = (GridLayout) infoPanel.getLayout();
 		infoPanelLayout.setColumns(droneIDs.length);
 		
+		
 		//Creo las etiquetas
 		droneNamesLabels = new JLabel [droneIDs.length];
-		droneBatteries = new JLabel [droneIDs.length];
 		
 		for (int i = 0; i < droneIDs.length; i++){
 			droneNamesLabels [i] = new JLabel (droneIDs[i].name);
-			droneBatteries [i] = new JLabel ("75");
+			int backGround = ImgMapConverter.getDroneColor()[i];
+			System.out.println(backGround);
+			droneNamesLabels [i].setForeground(new Color (backGround));
 		}
 		
 		//Las posiciono
 		for (int i = 0; i < droneIDs.length; i++){
 			infoPanel.add(droneNamesLabels[i]);
 		}
-		
-		for (int i = 0; i < droneIDs.length; i++){
-			infoPanel.add(droneBatteries[i]);
-		}		
-	}
-	
-	/**
-	 * Cambia la información sobre la batería de un drone
-	 * @param drone ID del drone cuya batería ha cambiado.
-	 * @param newBattery nuevo valor de la batería.
-	 */
-	public void setDroneBattery (AgentID drone, int newBattery){
-		int index = -1;
-
-		//Busco el índice del drone
-		for (int i = 0; i < droneIDs.length; i++){
-			if (droneIDs[i].toString().equals(drone.toString()))
-				index = i;
-		}
-		
-		
-		//Cambio su etiqueta
-		if (index != -1)
-			droneBatteries[index].setText(String.valueOf(newBattery));
 	}
 	
 	/**
@@ -181,7 +161,6 @@ public class Visualizer extends JFrame {
 		logs[4] = drone3Log;
 		logs[5] = drone4Log;
 		logs[6] = drone5Log;
-		logs[7] = drone6Log;
 	}
 	
 	/**
@@ -195,6 +174,15 @@ public class Visualizer extends JFrame {
 			tabbedPane.setTitleAt(i + 2, droneIDs[i].name);
 		}
 		
+	}
+	
+	/**
+	 * Actualiza la batería del cargador
+	 * @author Daniel
+	 * @param newBattery nuevo valor de la batería
+	 */
+	public void setChargetBattery (int newBattery){
+		labelChargerBattery.setText(String.valueOf(newBattery));
 	}
 	
 	/**
@@ -216,6 +204,12 @@ public class Visualizer extends JFrame {
 		miniMap = new JLabel("");
 		miniMap.setBounds(10, 40, 500, 500);
 		getContentPane().add(miniMap);
+		
+		btnLoadMap = new JButton("Load map");
+		btnLoadMap.addActionListener(new BtnLoadMapActionListener());
+		btnLoadMap.setEnabled(false);
+		btnLoadMap.setBounds(200, 10, 96, 23);
+		getContentPane().add(btnLoadMap);
 		{
 			tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 			tabbedPane.setFont(new Font("Segoe UI", Font.PLAIN, 12));
@@ -307,31 +301,13 @@ public class Visualizer extends JFrame {
 					drone5LogPanel.add(drone5ScrollPane);
 				}
 			}
-			{
-				drone6LogPanel = new JPanel();
-				tabbedPane.addTab("Drone6", null, drone6LogPanel, null);
-				drone6LogPanel.setLayout(new BoxLayout(drone6LogPanel, BoxLayout.X_AXIS));
-				{
-					drone6Log = new Log();
-				}
-				{
-					drone6ScrollPane = new JScrollPane(drone6Log);
-					drone6LogPanel.add(drone6ScrollPane);
-				}
-			}
 		}
 		
 		satelliteMapIcon = new JLabel("");
 		satelliteMapIcon.setBounds(10, 10, 500, 500);
 		getContentPane().add(satelliteMapIcon);
-		mapSelector.setBounds(10, 11, 112, 20);
+		mapSelector.setBounds(10, 11, 180, 20);
 		getContentPane().add(mapSelector);
-		
-		btnLoadMap = new JButton("Load map");
-		btnLoadMap.addActionListener(new BtnLoadMapActionListener());
-		btnLoadMap.setEnabled(false);
-		btnLoadMap.setBounds(129, 10, 96, 23);
-		getContentPane().add(btnLoadMap);
 		
 		btnLaunchExplorer = new JButton("Launch");
 		btnLaunchExplorer.setVisible(false);
@@ -340,9 +316,26 @@ public class Visualizer extends JFrame {
 		getContentPane().add(btnLaunchExplorer);
 		{
 			infoPanel = new JPanel();
-			infoPanel.setBounds(134, 522, 638, 29);
+			infoPanel.setBounds(134, 522, 376, 29);
 			getContentPane().add(infoPanel);
-			infoPanel.setLayout(new GridLayout(2, 6, 0, 0));
+			infoPanel.setLayout(new GridLayout(1, 6, 0, 0));
+		}
+		{
+			chargerBatteryPanel = new JPanel();
+			chargerBatteryPanel.setVisible(false);
+			chargerBatteryPanel.setBounds(520, 522, 254, 29);
+			getContentPane().add(chargerBatteryPanel);
+			chargerBatteryPanel.setLayout(new GridLayout(0, 2, 0, 0));
+			{
+				labelChargerName = new JLabel("Charger Battery");
+				labelChargerName.setHorizontalAlignment(SwingConstants.CENTER);
+				chargerBatteryPanel.add(labelChargerName);
+			}
+			{
+				labelChargerBattery = new JLabel("1000");
+				labelChargerBattery.setHorizontalAlignment(SwingConstants.CENTER);
+				chargerBatteryPanel.add(labelChargerBattery);
+			}
 		}
 	}
 	
@@ -410,7 +403,10 @@ public class Visualizer extends JFrame {
 	        launcher.launch();			
 			setTabNames();
 			buildInfoPanel();
+			setChargetBattery(droneIDs.length*500);
+			chargerBatteryPanel.setVisible(true);
 			updateMap();
+			setSize(800, 600);
 		}
 	}
 	

@@ -24,14 +24,19 @@ import es.upv.dsic.gti_ia.core.AgentID;
  */
 public abstract class ImgMapConverter {
 	
-	private static final int [] droneColors = {Color.RED.getRGB(), Color.BLUE.getRGB(), Color.MAGENTA.getRGB(), Color.YELLOW.getRGB(), Color.GREEN.getRGB(), Color.ORANGE.getRGB()}; //Colores para los drones 
+	//Colores sacados de http://mindprod.com/jgloss/netscapergb.html
+	private static final Color indigo = new Color (75, 0, 130);
+	private static final Color tomato = new Color (255, 99, 71);
+	private static final Color forestGreen = new Color (34, 139, 34);
+	private static final Color darkFoldenRod = new Color (184, 134, 11);
+	private static final int [] droneColors = {Color.RED.getRGB(), Color.CYAN.getRGB(), darkFoldenRod.getRGB(), forestGreen.getRGB(), indigo.getRGB()}; //Colores para los drones 
 	
 	/**
 	 * Devuelve el array de colores que usa para pintar las trazas.
 	 * @author Daniel
 	 * @return array con los colores en formato RGB.
 	 */
-	public int [] getDroneColor (){
+	public static int [] getDroneColor (){
 		return droneColors;
 	}
 	

@@ -69,7 +69,7 @@ public class Launcher {
             //LLamar a los constructores de los agentes y asignar logs
         	satellite = new Satellite(id_satelite,id_charger, map, droneAmount, visualizer);
         	satellite.setLog(visualizer.getLogs()[0]);
-        	charger = new Charger(id_charger, 500*droneAmount, id_satelite);
+        	charger = new Charger(id_charger, 500*droneAmount, id_satelite, visualizer);
         	charger.setLog(visualizer.getLogs()[1]);
         	for(int i=0; i<droneAmount; i++){
             	drones[i] = new Drone(new AgentID("Drone" + i), map.getWidth(), map.getHeigh(), id_satelite, id_charger);

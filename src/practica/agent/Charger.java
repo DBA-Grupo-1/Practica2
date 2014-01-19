@@ -8,8 +8,10 @@ import java.util.concurrent.LinkedTransferQueue;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import practica.map.Map;
 import practica.gui.Log;
+import practica.gui.Visualizer;
 import practica.lib.ErrorLibrary;
 import practica.lib.JSONKeyLibrary;
 import practica.lib.ProtocolLibrary;
@@ -33,6 +35,8 @@ public class Charger extends SuperAgent {
 	private int battery;
 	private HashMap<String, String> subscribers;
 	private BlockingQueue<ACLMessage> answerQueue;
+	private Visualizer visualizer;
+	private boolean usingVisualizer = false;
 
 	/**
 	 * @author Jahiel
@@ -50,6 +54,21 @@ public class Charger extends SuperAgent {
 		battery = Levelbattery;
 		IDSatellite = satellite;
 		subscribers = new HashMap<String, String>();
+	}
+	
+	/**
+	 * Constructor con visualizador
+	 * @author Daniel
+	 * @param aid ID propia
+	 * @param Levelbattery batería con la que empieza
+	 * @param satellite ID del satélite
+	 * @param v Visualizador de la aplicación
+	 * @throws Exception si hay fallo al asignarle su ID
+	 */
+	public Charger(AgentID aid, int Levelbattery, AgentID satellite, Visualizer v) throws Exception{
+		this(aid, Levelbattery, satellite);
+		visualizer = v;
+		usingVisualizer = true;
 	}
 
 	/**
@@ -406,6 +425,9 @@ public class Charger extends SuperAgent {
 			
 			givenBattery = requestedBattery;	
 			battery -= givenBattery; 
+			//Actualizar el visualizador
+			if (usingVisualizer)
+				visualizer.setChargetBattery(battery);
 			System.out.println("BATERIA CONCEDIDA: " + givenBattery);
 
 			JSONObject sendContent = new JSONObject();
