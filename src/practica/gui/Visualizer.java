@@ -25,6 +25,7 @@ import practica.agent.Satellite;
 import practica.map.Map;
 import practica.util.ImgMapConverter;
 import es.upv.dsic.gti_ia.core.AgentID;
+import java.awt.GridLayout;
 
 /**
  * Interfaz de usuario.
@@ -37,7 +38,6 @@ public class Visualizer extends JFrame {
 	private JComboBox mapSelector;
 	private JButton btnLoadMap;
 	private JButton btnLaunchExplorer;
-	private JButton btnLaunchAll;
 	private JLabel miniMap;
 	private JLabel satelliteMapIcon;
 	private Map mapToLoad;
@@ -60,7 +60,6 @@ public class Visualizer extends JFrame {
 	private Log drone4Log;
 	private Log drone5Log;
 	private Log drone6Log;
-	private JButton buttonTest;
 	private Log chargerLog;
 	private JScrollPane satelliteScrollPane;
 	private JScrollPane chargerScrollPane;
@@ -70,8 +69,11 @@ public class Visualizer extends JFrame {
 	private JScrollPane drone4ScrollPane;
 	private JScrollPane drone5ScrollPane;
 	private JScrollPane drone6ScrollPane;
-	private String [] droneNames;
+	private AgentID [] droneIDs;
 	private Log [] logs;
+	private JPanel infoPanel;
+	private JLabel [] droneNamesLabels;
+	private JLabel [] droneBatteries;
 	
 	/**
 	 * Setter de satelite.
@@ -119,6 +121,54 @@ public class Visualizer extends JFrame {
 	}
 	
 	/**
+	 * Construye un panel en la parte de abajo para mostrar información sobre los drones.
+	 * @author Daniel
+	 */
+	private void buildInfoPanel(){
+		//Cambio las columnas en función del número de drones.
+		GridLayout infoPanelLayout = (GridLayout) infoPanel.getLayout();
+		infoPanelLayout.setColumns(droneIDs.length);
+		
+		//Creo las etiquetas
+		droneNamesLabels = new JLabel [droneIDs.length];
+		droneBatteries = new JLabel [droneIDs.length];
+		
+		for (int i = 0; i < droneIDs.length; i++){
+			droneNamesLabels [i] = new JLabel (droneIDs[i].name);
+			droneBatteries [i] = new JLabel ("75");
+		}
+		
+		//Las posiciono
+		for (int i = 0; i < droneIDs.length; i++){
+			infoPanel.add(droneNamesLabels[i]);
+		}
+		
+		for (int i = 0; i < droneIDs.length; i++){
+			infoPanel.add(droneBatteries[i]);
+		}		
+	}
+	
+	/**
+	 * Cambia la información sobre la batería de un drone
+	 * @param drone ID del drone cuya batería ha cambiado.
+	 * @param newBattery nuevo valor de la batería.
+	 */
+	public void setDroneBattery (AgentID drone, int newBattery){
+		int index = -1;
+
+		//Busco el índice del drone
+		for (int i = 0; i < droneIDs.length; i++){
+			if (droneIDs[i].toString().equals(drone.toString()))
+				index = i;
+		}
+		
+		
+		//Cambio su etiqueta
+		if (index != -1)
+			droneBatteries[index].setText(String.valueOf(newBattery));
+	}
+	
+	/**
 	 * Construye un array con los logs para que el Launcher lo pueda consultar y pasárselo a los agentes.
 	 * @author Daniel
 	 */
@@ -139,7 +189,7 @@ public class Visualizer extends JFrame {
 	 * @author Daniel
 	 */
 	private void setTabNames(){
-		AgentID[] droneIDs = Launcher.getDroneIDs();
+		droneIDs = Launcher.getDroneIDs();
 		//Copio los nombres
 		for (int i = 0; i < droneIDs.length; i++){
 			tabbedPane.setTitleAt(i + 2, droneIDs[i].name);
@@ -162,13 +212,6 @@ public class Visualizer extends JFrame {
 		mapSelector = new JComboBox (mapNames);
 		mapSelector.setSelectedIndex(-1);
 		mapSelector.addActionListener(new MapSelectorActionListener());
-		{
-			buttonTest = new JButton("Test");
-			buttonTest.setVisible(false);
-			buttonTest.addActionListener(new ButtonTestActionListener());
-			buttonTest.setBounds(404, 528, 89, 23);
-			getContentPane().add(buttonTest);
-		}
 		
 		miniMap = new JLabel("");
 		miniMap.setBounds(10, 40, 500, 500);
@@ -176,7 +219,7 @@ public class Visualizer extends JFrame {
 		{
 			tabbedPane = new JTabbedPane(JTabbedPane.TOP);
 			tabbedPane.setFont(new Font("Segoe UI", Font.PLAIN, 12));
-			tabbedPane.setBounds(520, 10, 254, 541);
+			tabbedPane.setBounds(520, 10, 254, 500);
 			getContentPane().add(tabbedPane);
 			{
 				satelliteLogPanel = new JPanel();
@@ -290,17 +333,17 @@ public class Visualizer extends JFrame {
 		btnLoadMap.setBounds(129, 10, 96, 23);
 		getContentPane().add(btnLoadMap);
 		
-		btnLaunchExplorer = new JButton("Launch first explorer");
+		btnLaunchExplorer = new JButton("Launch");
 		btnLaunchExplorer.setVisible(false);
 		btnLaunchExplorer.addActionListener(new BtnLaunchExplorerActionListener());
-		btnLaunchExplorer.setBounds(10, 528, 190, 23);
+		btnLaunchExplorer.setBounds(10, 528, 112, 23);
 		getContentPane().add(btnLaunchExplorer);
-		
-		btnLaunchAll = new JButton("Launch all");
-		btnLaunchAll.setVisible(false);
-		btnLaunchAll.addActionListener(new BtnLaunchAllActionListener());
-		btnLaunchAll.setBounds(210, 528, 190, 23);
-		getContentPane().add(btnLaunchAll);
+		{
+			infoPanel = new JPanel();
+			infoPanel.setBounds(134, 522, 638, 29);
+			getContentPane().add(infoPanel);
+			infoPanel.setLayout(new GridLayout(2, 6, 0, 0));
+		}
 	}
 	
 	/**
@@ -318,15 +361,6 @@ public class Visualizer extends JFrame {
 	 */
 	public boolean paused(){
 		return paused;
-	}
-	
-	/**
-	 * Mira si el botón "Find target" está habilitado.
-	 * @author Daniel
-	 * @return true si está deshabilitado (y por lo tanto se pulsó). False si no.
-	 */
-	public boolean isBtnFindTargetEnabled(){
-		return btnLaunchAll.isEnabled();
 	}
 	
 	/**
@@ -375,19 +409,8 @@ public class Visualizer extends JFrame {
 	        mapToLoad = ImgMapConverter.imgToMap("src/maps/" + mapSelector.getSelectedItem().toString());
 	        launcher.launch();			
 			setTabNames();
+			buildInfoPanel();
 			updateMap();
-		}
-	}
-	
-	/**
-	 * ActionListener del botón para lanzar todos los drones.
-	 * @author Daniel
-	 *
-	 */
-	private class BtnLaunchAllActionListener implements ActionListener {
-		public void actionPerformed(ActionEvent arg0) {
-			btnLaunchExplorer.setEnabled(false);
-			btnLaunchAll.setEnabled(false);
 		}
 	}
 	
@@ -399,7 +422,7 @@ public class Visualizer extends JFrame {
 	private class BtnLaunchExplorerActionListener implements ActionListener {
 		public void actionPerformed(ActionEvent e) {
 			switch (btnLaunchExplorer.getText()){
-			case "Launch first explorer" : 
+			case "Launch" : 
 				btnLaunchExplorer.setText("Pause");
 				paused = false;
 				break;
@@ -412,14 +435,6 @@ public class Visualizer extends JFrame {
 				paused = false;
 				break;
 			}
-		}
-	}
-	private class ButtonTestActionListener implements ActionListener {
-		public void actionPerformed(ActionEvent arg0) {
-			satelliteLog.addMessage(Log.SENDED, "Drone4", "Registration", "Register", "Probando el content del mensaje, también pruebo los espacio y que se redimensione bien.");
-			chargerLog.addMessage(Log.RECEIVED, "Drone1", "Registration", "Register", "Probando el content del mensaje, también pruebo los espacio y que se redimensione bien.");
-			
-			//satelliteLog.label.setText("patata");
 		}
 	}
 }

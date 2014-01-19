@@ -24,6 +24,17 @@ import es.upv.dsic.gti_ia.core.AgentID;
  */
 public abstract class ImgMapConverter {
 	
+	private static final int [] droneColors = {Color.RED.getRGB(), Color.BLUE.getRGB(), Color.MAGENTA.getRGB(), Color.YELLOW.getRGB(), Color.GREEN.getRGB(), Color.ORANGE.getRGB()}; //Colores para los drones 
+	
+	/**
+	 * Devuelve el array de colores que usa para pintar las trazas.
+	 * @author Daniel
+	 * @return array con los colores en formato RGB.
+	 */
+	public int [] getDroneColor (){
+		return droneColors;
+	}
+	
 	/**
 	 * Convierte un objeto del tipo BufferedImage a uno del tipo Map traduciendo los valores RGB a los distintos tipos
 	 * de posibles valores.
@@ -150,7 +161,6 @@ public abstract class ImgMapConverter {
 	public static BufferedImage sharedMapToBufferedImage (SharedMap map){
 		int valueRGB; // Para guardar valores "traducidos" a RGB
 		int value; // Para leer los valores del mapa
-		int [] droneColors = {Color.RED.getRGB(), Color.BLUE.getRGB(), Color.MAGENTA.getRGB(), Color.YELLOW.getRGB(), Color.GREEN.getRGB(), Color.ORANGE.getRGB()}; //Colores para los drones 
 		BufferedImage bf = new BufferedImage(map.getWidth(), map.getHeigh(), BufferedImage.TYPE_INT_ARGB);
 		AgentID [] droneIDs = Launcher.getDroneIDs(); //IDs de los drones
 		
