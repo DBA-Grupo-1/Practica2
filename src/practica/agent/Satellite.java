@@ -1086,6 +1086,7 @@ public class Satellite extends SuperAgent {
 								}else
 									pos++;
 							}
+						
 
 							dronesLagger.remove(pos); // lo sacamos de la lista puesto que ya no será rezagado
 						}
