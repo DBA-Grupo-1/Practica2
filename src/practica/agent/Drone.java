@@ -371,6 +371,7 @@ public class Drone extends SuperAgent {
     	
     	if(decision == Drone.ENTER_LAGGING){ 
     		state = LAGGING;
+			currentPositionTracking = trace.size()-1;
     		conflictiveBox.setDangerous(true);
     		Trace subtraza = trace.getSubtrace(conflictiveBox.getPosInicial());
     		conflictiveBox.setLength(subtraza.size());
@@ -852,6 +853,8 @@ public class Drone extends SuperAgent {
     			if(otherSizeOfTheObstacle.getPosInicial().equals(new GPSLocation(posX, posY))){
     				state = FOLLOW_TRACE;
     				currentPositionTracking = optimalTrace.getIndex(otherSizeOfTheObstacle.getPosInicial());
+    			}else{
+    				currentPositionTracking--;
     			}
     				
     			break;
@@ -964,13 +967,8 @@ public class Drone extends SuperAgent {
      * @return Decision tomada
      */
     protected int secondBehaviour(List<Pair> listaMovimientos, Object[] args) {
-
     	if(state == UNDO_TRACE){
-    		GPSLocation actual = new GPSLocation(posX, posY);
-    		
-    		currentPositionTracking = trace.getIndex(actual);
-    		
-    		return (trace.get(currentPositionTracking-1).getMove() + 2)%4;	
+    		return (trace.get(currentPositionTracking).getMove() + 2)%4;	
     	}
     	
     	return NO_DEC;
