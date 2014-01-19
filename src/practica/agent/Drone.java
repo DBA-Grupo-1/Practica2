@@ -153,6 +153,9 @@ public class Drone extends SuperAgent {
         private HashMap<String, Trace> otherTracesDrones;
 
 
+		private boolean enter_force;
+
+
 
         /**
          * Constructor del Drone.
@@ -197,6 +200,8 @@ public class Drone extends SuperAgent {
                 
                 conflictiveBoxReached = false;
                 optimalTrace = null;
+                
+                enter_force = true;
         }
         
         
@@ -355,8 +360,9 @@ public class Drone extends SuperAgent {
     	// Casillas conflictivas
     	boolean entrandoEsq = !preEsq && postEsq; //Antes no estaba esquivando y ahora sí
     	boolean saliendoEsq = preEsq && !postEsq; //Antes estaba esquivando y ya no
+    	int decision = trace.get(trace.size()-1).getMove(); 
     	
-    	if(trace.get(trace.size()-1).getMove() == Drone.ENTER_LAGGING){ 
+    	if(decision == Drone.ENTER_LAGGING){ 
     		state = LAGGING;
     		conflictiveBox.setDangerous(true);
     		Trace subtraza = trace.getSubtrace(conflictiveBox.getPosInicial());
@@ -389,7 +395,7 @@ public class Drone extends SuperAgent {
     	if(state == OBSTACLE_AREA){ 
     		if(!dodging){
     			contSalida++;
-    			if(contSalida >= N_TO_OTHER_OBSTACLE){
+    			if(contSalida >= N_TO_OTHER_OBSTACLE || decision == END_SUCCESS || decision == END_FAIL){
     				if(behavior == SCOUT)
     					state = EXPLORE_MAP;
     				else{
@@ -413,8 +419,10 @@ public class Drone extends SuperAgent {
     		contSalida = 0;
     		posSalidaTemporal = new GPSLocation(posX, posY);
     	}
+    	
+    	if(trace.get(trace.size()-1).getMove() == Drone.END_SUCCESS)
+    		state = FINISH_GOAL;
     }
-
     /**
      * Actualiza la traza del drone con la nueva decision.
      * @author Jonay
@@ -670,29 +678,28 @@ public class Drone extends SuperAgent {
             int tempDecision;
             
             if(goal){
-            		state = FINISH_GOAL;
                     return END_SUCCESS;
             } 
             do{
-                    try {
-                            waitIfStandBy();
-                    } catch (InterruptedException e) {
-                            e.printStackTrace();
-                    }
-                    
-                    System.out.println("\n" + this.getAid().toString() + " is thinking...");
-                    
-                    if(state == SLEEPING){	
-                    	sendRequestOutput();
-                    	tempDecision = RETHINK;
-                    }else{
-                    	getStatus();
-                        
-                    	preBehavioursSetUp();
-                    	tempDecision = checkBehaviours();
-                    }
+            	try {
+            		waitIfStandBy();
+            	} catch (InterruptedException e) {
+            		e.printStackTrace();
+            	}
+
+            	System.out.println("\n" + this.getAid().toString() + " is thinking...");
+
+            	if(state == SLEEPING || state == LAGGING){	
+            		sendRequestOutput();
+            		tempDecision = RETHINK;
+            	}else{
+            		getStatus();
+
+            		preBehavioursSetUp();
+            		tempDecision = checkBehaviours();
+            	}
             }while(tempDecision == RETHINK);
-            
+
             return tempDecision;
     }
     
@@ -811,6 +818,7 @@ public class Drone extends SuperAgent {
     					&& currentConflictiveBox.size() == 1
     					&& currentConflictiveBox.get(0).getLength() > MIN_SIZE_FOR_OBSTACLE_SKIRTING){
     				state = FORCE_EXPLORATION;
+    				enter_force = true;
     				posiOX= (posX + (Math.cos(angle) * distance));
     				posiOY= (posY + (Math.sin(angle)*distance));
     				movingBlock = currentConflictiveBox.get(0).getDecision();  // Se coje la decisión que tomó el otro drone para bloquear
@@ -827,6 +835,7 @@ public class Drone extends SuperAgent {
     				
     			break;
     		case FORCE_EXPLORATION:
+				enter_force = false;
     		case EXPLORE_MAP:
     			posiOX= (posX + (Math.cos(angle) * distance));
     			posiOY= (posY + (Math.sin(angle)*distance));
@@ -892,8 +901,11 @@ public class Drone extends SuperAgent {
      * @return Decision tomada. Debe ser END_FAIL o NO_DEC
      */
     private int checkEndCondition(List<Pair> listaMovimientos, Object object) {
+    		for(Pair pair : listaMovimientos)
+    			if(pair.getThird())
+    				return NO_DEC;
     		
-            return NO_DEC;
+            return END_FAIL;
     }
 
     /**
@@ -964,6 +976,7 @@ public class Drone extends SuperAgent {
     			AgentID id = null;
     			
 				for(int i=0; i<size; i++){
+					System.out.println("LA TRAZA DE " + currentConflictiveBox.get(i).getDroneID().toString() + " MIDE " + currentConflictiveBox.get(i).getLength());
 					if(currentConflictiveBox.get(i).getLength() < minSize && !currentConflictiveBox.get(i).isDangerous()){
 						minSize = currentConflictiveBox.get(i).getLength();
 						id = currentConflictiveBox.get(i).getDroneID();
@@ -971,6 +984,7 @@ public class Drone extends SuperAgent {
 					}
 				}
 
+				System.out.println("HE ELEGIDO LA DE " + id.toString());
 				optimalTrace = otherTracesDrones.get(id.toString()); // Cambio a la traza que me conduce por el camino mas corto para bordear el obstaculo
 				currentPositionTracking = optimalTrace.getIndex( currentConflictiveBox.get(indexMinBox).getPosInicial());
 			}
@@ -2119,13 +2133,13 @@ public class Drone extends SuperAgent {
                     for (int i=0; i < jsArray.length(); i++){
                             surroundings[i] = jsArray.getInt(i);
                     }
-                    
+                    */
                     // Compruebo si se reciben bien los alrededores:
                     System.out.println("Alrededores del Dron: ");
                     System.out.println("|"+surroundings[0]+", "+surroundings[1]+", "+surroundings[2]+"|");
                     System.out.println("|"+surroundings[3]+", "+surroundings[4]+", "+surroundings[5]+"|");
                     System.out.println("|"+surroundings[6]+", "+surroundings[7]+", "+surroundings[8]+"|");
-                        */          
+                        
             } catch (JSONException ex) {
                     System.out.println("numeritos");
                     ex.printStackTrace();
@@ -2801,6 +2815,7 @@ public class Drone extends SuperAgent {
             		System.err.println("Error de argumento");
                     res = treatMessageError(msg, e);
             }catch(RuntimeException e){
+            	e.printStackTrace();
             		System.err.println("Error en ejecución");
                     res = treatRuntimeError(msg, e);
             }
@@ -3000,9 +3015,14 @@ public class Drone extends SuperAgent {
             		if(movimientosLibres[i] == Map.VISITADO)
             			movimientosLibres[i] = Map.LIBRE; 
             	}
-            	movimientosLibres = blockMovement(movimientosLibres, movingBlock);
+            	movimientosLibres = blockMovement(movimientosLibres, movingBlock, true);
             	int lastMove = trace.get(trace.size()-1).getMove();
-            	movimientosLibres = blockMovement(movimientosLibres, (lastMove+2)%4);
+            	if(!enter_force)
+            		movimientosLibres = blockMovement(movimientosLibres, (lastMove+2)%4, false);
+            	System.out.println("Movimientos libres: ");
+                System.out.println("|"+movimientosLibres[0]+", "+movimientosLibres[1]+", "+movimientosLibres[2]+"|");
+                System.out.println("|"+movimientosLibres[3]+", "+movimientosLibres[4]+", "+movimientosLibres[5]+"|");
+                System.out.println("|"+movimientosLibres[6]+", "+movimientosLibres[7]+", "+movimientosLibres[8]+"|");
             }
             
             
@@ -3014,29 +3034,45 @@ public class Drone extends SuperAgent {
      * Se comprueba cual es el movimiento a bloquear y dicha casilla se pone como Visitada para forzar al drone a no dirigirse
      * hacia esa casilla.
      * @author Jahiel
+     * @author Alberto
      */
-    public int[] blockMovement(int mov[], int movement){
-    	int index;
+    public int[] blockMovement(int mov[], int movement, boolean wall){
+    	int index, indexWall1, indexWall2;
     	
     	switch(movement){
     	case NORTE:
     		index = 1;
+    		indexWall1 = 0;
+    		indexWall2 = 2;
     		break;
     	case OESTE:
     		index = 3;
+    		indexWall1 = 0;
+    		indexWall2 = 6;
     		break;
     	case ESTE:
     		index = 5;
+    		indexWall1 = 2;
+    		indexWall2 = 8;
     		break;
     	case SUR:
     		index = 7;
+    		indexWall1 = 6;
+    		indexWall2 = 8;
     		break;
     	default:
-    		index = -1;
+    		index = indexWall1 = indexWall2 = -1;
     		break;
     	}
     	
     	mov[index] = Map.VISITADO;
+    	
+    	if(wall){
+    		if(mov[indexWall1] == Map.LIBRE)
+    			mov[indexWall1] = Map.VISITADO;
+    		if(mov[indexWall2] == Map.LIBRE)
+    			mov[indexWall2] = Map.VISITADO;
+    	}
     	
     	return mov;
     }

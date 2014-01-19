@@ -565,13 +565,13 @@ public class Satellite extends SuperAgent {
 	 * @param msg mensaje a tratar
 	 * @return objeto JSON a mandar.
 	 */
-	public void onStatusQueried(ACLMessage msg) {
+	private void onStatusQueried(ACLMessage msg) {
 		//Si hay visualizador, manda actualizar su mapa.
 		if (usingVisualizer){
 			visualizer.updateMap();
 			//Si no está pulsado "Find Target" y está pulsado "Think Once" hay que habilitar "Think Once". Si "Find Target" está pulsado, no se debe de hacer nada.
-			if (visualizer.isBtnFindTargetEnabled() && !visualizer.paused())
-				visualizer.enableThinkOnce();
+			//if (visualizer.isBtnFindTargetEnabled() && !visualizer.paused())
+				//visualizer.enableThinkOnce();
 		}
 		
 		if (msg.getPerformative().equals("REQUEST")){			
@@ -633,8 +633,10 @@ public class Satellite extends SuperAgent {
 			send(ACLMessage.INFORM, msg.getSender(), ProtocolLibrary.DroneMove, null, msg.getReplyWith(), msg.getConversationId(), content);	
 			
 			//Actualizar mapa del visualizador si lo está usando
-			if (usingVisualizer)
+			if (usingVisualizer){
 				visualizer.updateMap();
+				//visualizer.setDroneBattery(msg.getSender(), findStatus(msg.getSender()).getBattery());
+			}
 			
 			JSONObject o;
 			try {
