@@ -290,6 +290,9 @@ public class Drone extends SuperAgent {
                     postEsq = dodging;
             		//sendInformYourMovement(posX, posY, decision); // activar si hay Subs. tipo YourMovements
                     
+                    if(battery<=0 && decision!=END_FAIL)
+                    	throw new RuntimeException("Sin Bateria (Drone)");
+                    
                     System.out.println("Decisión tomada: "+decision);
                     //Por si las moscas
                     if(decision != NO_DEC){
@@ -900,7 +903,7 @@ public class Drone extends SuperAgent {
      * @param args Argumentos adicionales
      * @return Decision tomada. Debe ser END_FAIL o NO_DEC
      */
-    private int checkEndCondition(List<Pair> listaMovimientos, Object object) {
+    private int checkEndCondition(List<Pair> listaMovimientos, Object[] object) {
     		for(Pair pair : listaMovimientos)
     			if(pair.getThird())
     				return NO_DEC;
@@ -1083,6 +1086,7 @@ public class Drone extends SuperAgent {
         	
         	if(batteryReceived > 0){
         		battery += batteryReceived;
+                System.out.println("Recibo bateria y ahora tengo: " + battery);
         	}else{
         		return END_FAIL;
         	}
@@ -2076,6 +2080,8 @@ public class Drone extends SuperAgent {
                     distance = aux3.getDouble("dist");
                     angle= (float) aux3.getDouble("alpha");
                     battery= contentValues.getInt("battery");
+                    System.out.println("Mi bateria es: " + battery);
+                    
                     String valor = contentValues.getString("goal");
                     if(valor.equals("No")){
                     	goal=false;
@@ -2213,11 +2219,6 @@ public class Drone extends SuperAgent {
                             send(ACLMessage.REQUEST, chargerID, ProtocolLibrary.Reload, "default", null, buildConversationId(), content);
                     } catch (JSONException e){
                             e.printStackTrace();
-                            //Se recoge la RefuseExcetion y se envia el END_FAIL
-                            if(e.equals(ErrorLibrary.NotBatteryAnymore)){
-                            	//sendDecision(END_FAIL);
-                            	amount= END_FAIL;
-                            }
                     }
             }
     }
@@ -2230,39 +2231,39 @@ public class Drone extends SuperAgent {
      */
     private int onBatteryReceived(ACLMessage msg) {
     	int batteryReceived = 0;
-            if (msg.getPerformativeInt() == ACLMessage.INFORM){
-                    //Se ha producido una recarga
-                    try {
-                            JSONObject content = new JSONObject(msg.getContent());
-                            batteryReceived += content.getInt(JSONKeyLibrary.AmountGiven);
-                    } catch (JSONException e) {
-                            System.err.println("Error JSON al recibir batería");
-                            e.printStackTrace();
-                    }
-            }        
-            //not-understood
-            else if (msg.getPerformativeInt() == ACLMessage.NOT_UNDERSTOOD){
-                    System.out.println("onBatteryReceived: recibido not-understood.");
-            		//Meter mensaje en el log
-                	addMessageToLog(Log.RECEIVED, chargerID, msg.getProtocol(), SubjectLibrary.BatteryRequest, "Not-understood");
-            }
-            //refuse
-            else if (msg.getPerformativeInt() == ACLMessage.REFUSE){
-                    System.out.println("onBatteryReceiver: recibido refuse.");
-                    try {
-                            JSONObject content = new JSONObject(msg.getContent());
-                            String errorReason = content.getString(JSONKeyLibrary.Error);
-                            System.out.println("Batería no recibida. Motivo: " + errorReason);
-                            //TODO: gestionar algunos errores, como el de no más batería.
-                    		//Meter mensaje en el log
-                        	addMessageToLog(Log.RECEIVED, chargerID, msg.getProtocol(), SubjectLibrary.BatteryRequest, errorReason);
-                    } catch (JSONException e) {
-                            System.out.println("Error JSON al gestionar el refuse en la batería");
-                            e.printStackTrace();
-                    }
-            }
-            
-            return batteryReceived;
+    	if (msg.getPerformativeInt() == ACLMessage.INFORM){
+    		//Se ha producido una recarga
+    		try {
+    			JSONObject content = new JSONObject(msg.getContent());
+    			batteryReceived = content.getInt(JSONKeyLibrary.AmountGiven);
+    		} catch (JSONException e) {
+    			System.err.println("Error JSON al recibir batería");
+    			e.printStackTrace();
+    		}
+    	}        
+    	//not-understood
+    	else if (msg.getPerformativeInt() == ACLMessage.NOT_UNDERSTOOD){
+    		System.out.println("onBatteryReceived: recibido not-understood.");
+    		//Meter mensaje en el log
+    		addMessageToLog(Log.RECEIVED, chargerID, msg.getProtocol(), SubjectLibrary.BatteryRequest, "Not-understood");
+    	}
+    	//refuse
+    	else if (msg.getPerformativeInt() == ACLMessage.REFUSE){
+    		System.out.println("onBatteryReceiver: recibido refuse.");
+    		try {
+    			JSONObject content = new JSONObject(msg.getContent());
+    			String errorReason = content.getString(JSONKeyLibrary.Error);
+    			System.out.println("Batería no recibida. Motivo: " + errorReason);
+    			//TODO: gestionar algunos errores, como el de no más batería.
+    			//Meter mensaje en el log
+    			addMessageToLog(Log.RECEIVED, chargerID, msg.getProtocol(), SubjectLibrary.BatteryRequest, errorReason);
+    		} catch (JSONException e) {
+    			System.out.println("Error JSON al gestionar el refuse en la batería");
+    			e.printStackTrace();
+    		}
+    	}
+
+    	return batteryReceived;
     }
     
     
@@ -3025,7 +3026,16 @@ public class Drone extends SuperAgent {
                 System.out.println("|"+movimientosLibres[6]+", "+movimientosLibres[7]+", "+movimientosLibres[8]+"|");
             }
             
+            int[] movs = {5,7,3,1};
+            int libre=0, nobs=0;
+            for(int i=0; i<4; i++)
+            	if(movimientosLibres[movs[i]] == Map.OBSTACULO)
+            		nobs++;
+            	else
+            		libre = i;
             
+            if(nobs == 3)
+            	movimientosLibres[movs[libre]] = Map.LIBRE;
             
             return movimientosLibres;
     }
@@ -3093,22 +3103,4 @@ public class Drone extends SuperAgent {
             practica.util.ImgMapConverter.mapToImg("src/maps/miresultado"+this.getAid().name+".png", droneMap);
             super.finalize();
     }
-
-
-
-/******************************************************************************/
-/* Métodos usados para testear la pedida y respuesta de información del drone. 
- * TODO: Borrar
-*/
-	public void testPedirInformacion(AgentID agentID) {
-		System.out.println("Batería recibida en" + this.getAid().name+" del " +agentID.name+": "+ askForDroneBattery(agentID));
-		System.out.println("El número de pasos que ha dado ha sido: "+askForDroneSteps(agentID));
-		Trace t = askForDroneTrace(agentID);
-		System.out.println("Su traza: "+t.toString(t.DECISION_AND_POSITION));
-	}
-	
-	public void setTrace(Trace t){
-		this.trace = t;
-	}
-/**************************************************************************/
 }

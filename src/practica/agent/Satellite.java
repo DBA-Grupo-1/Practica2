@@ -11,6 +11,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import edu.emory.mathcs.backport.java.util.concurrent.PriorityBlockingQueue;
 import es.upv.dsic.gti_ia.architecture.FIPAException;
+import es.upv.dsic.gti_ia.architecture.FailureException;
 import es.upv.dsic.gti_ia.architecture.NotUnderstoodException;
 import es.upv.dsic.gti_ia.architecture.RefuseException;
 import es.upv.dsic.gti_ia.core.ACLMessage;
@@ -331,6 +332,11 @@ public class Satellite extends SuperAgent {
 		status.put("gonio", angleAndDistance);
 		status.put("battery", droneStatus.getBattery());
 		
+		if(droneStatus.getBattery()<0){
+			System.out.println("Bateria del drone: " + droneStatus.getBattery());
+			throw new RuntimeException("SinBateria (Satelite)");
+		}
+		
 		int[] surroundings = getSurroundings(droneStatus);
 		JSONArray jsArray = new JSONArray(surroundings);
 		status.put("radar", jsArray);
@@ -444,9 +450,7 @@ public class Satellite extends SuperAgent {
 		System.out.println("Agente " + this.getName() + " en ejecución");
 		try{
 		
-		while (!exit) {
-			//Si la cola de mensajes no está vacía, saca un elemento y lo procesa.
-			if (!requestQueue.isEmpty()){				
+		while (!exit) {		
 				try {
 					proccesingMessage = (ACLMessage) requestQueue.take();
 				} catch (InterruptedException e) {
@@ -474,8 +478,7 @@ public class Satellite extends SuperAgent {
 					sendError(fe, proccesingMessage);
 				} catch (JSONException e) {
 					e.printStackTrace();
-				}	
-			}
+				}
 		}
 		}catch(RuntimeException e){
 			e.printStackTrace();
@@ -786,7 +789,7 @@ public class Satellite extends SuperAgent {
 				DroneStatus rechargedDroneStatus = findStatus(rechargedDrone);
 				//Lo actualizo
 				int rechargedAmmount = content.getInt(JSONKeyLibrary.AmountGiven);
-				rechargedDroneStatus.setBattery(rechargedDroneStatus.getBattery() + rechargedAmmount);
+				rechargedDroneStatus.setBattery(rechargedAmmount);
 				
 				//Meter mensaje en el log
 				//String contentString = rechargedDrone.name + " was recharged " + String.valueOf(rechargedAmmount);
@@ -796,7 +799,7 @@ public class Satellite extends SuperAgent {
 				e.printStackTrace();
 			}
 		}
-		else throw new RuntimeException("onReload - Perforbehavior = mode;mativa no inform.");
+		else throw new RuntimeException("onReload - Performativa no inform.");
 	}
 	/**
 	 * @author Ismael
@@ -1041,13 +1044,14 @@ public class Satellite extends SuperAgent {
 
 					// Se pide la bateria restante que le queda al cargador
 					batteryInCharger = askBattery();
+					if (usingVisualizer)
+						visualizer.setChargetBattery(batteryInCharger);
 				
 
 					// Se comprueba si pueden llegar todos los drones.
 					int batteryInDrones = dronesWithoutLeaving.size() * 75; // Se calcula cuanto bateria tienen los drones que quedan por salir
 
 					if( (sizeTrace - batteryInDrones) <= batteryInCharger){
-						System.out.println("SALLLLLLLLL FOLLOWER MADAFAKAR: " + (sizeTrace - batteryInDrones));
 						index = findNerestDrone(true);
 						behavior = Drone.FOLLOWER;
 					}else{
@@ -1074,13 +1078,14 @@ public class Satellite extends SuperAgent {
 							int pos = 0; // posición del drone rezagado elegido
 
 							for(AgentID id: dronesLagger){
-								if(droneStuses[index].getId().equals(id)){
+								if(droneStuses[index].getId().toString().equals(id.toString())){
 									for(ConflictiveBox box: conflictiveList){
-										if(box.isDangerous() && box.getDroneID().equals(id)){
-											if( (box.getLength() + optimalTrace.getSubtrace(box.getPosInicial()).size()) > batteryInCharger)
-												behavior = Drone.FREE;
+										if(box.isDangerous() && box.getDroneID().toString().equals(id.toString()) 
+												&& (box.getLength() + optimalTrace.getSubtrace(box.getPosInicial()).size()) > batteryInCharger){
+											behavior = Drone.FREE;
 										}
 									}
+									break;
 								}else
 									pos++;
 							}
@@ -1363,7 +1368,7 @@ public class Satellite extends SuperAgent {
 		
 		} catch (RuntimeException e) {
 			// TODO Auto-generated catch block
-			sendError(new FIPAException("Error"),msg);
+			sendError(new FailureException("Error"),msg);
 			e.printStackTrace();
 		}	
 		

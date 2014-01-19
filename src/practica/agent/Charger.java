@@ -96,7 +96,7 @@ public class Charger extends SuperAgent {
 		//Se mira el asunto del mensaje.
 		try{
 			content = new JSONObject(msg.getContent());
-			subject = content.getString("Subject");
+			subject = content.getString(JSONKeyLibrary.Subject);
 		}
 		catch (JSONException e){
 			e.printStackTrace();
@@ -426,18 +426,21 @@ public class Charger extends SuperAgent {
 			givenBattery = requestedBattery;	
 			battery -= givenBattery; 
 			//Actualizar el visualizador
-			if (usingVisualizer)
-				visualizer.setChargetBattery(battery);
-			System.out.println("BATERIA CONCEDIDA: " + givenBattery);
+			//if (usingVisualizer)
+				//visualizer.setChargetBattery(battery);
 
 			JSONObject sendContent = new JSONObject();
+			
+			//Le mando la información al satélite
 			sendContent.put (JSONKeyLibrary.AmountGiven, givenBattery);
 			sendContent.put (JSONKeyLibrary.Subject, SubjectLibrary.BatteryRequest);
-			send (ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), sendContent);
-
-			//Le mando la información al satélite
 			sendContent.put (JSONKeyLibrary.DroneID, msg.getSender().toString());
 			send (ACLMessage.INFORM, IDSatellite, msg.getProtocol(), null, null, buildConversationId(), sendContent);
+			
+			//Y ahora al drone
+			sendContent.remove(JSONKeyLibrary.DroneID);
+			send (ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), sendContent);
+
 			
 			//Meter mensaje en el log
 			//addMessageToLog(Log.SENDED, msg.getSender(), msg.getProtocol(), SubjectLibrary.BatteryRequest, String.valueOf(givenBattery));

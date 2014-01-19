@@ -125,8 +125,8 @@ public class TestJonay {
     		t1.add(c3);
     		
     		Thread.sleep(1000);
-    		drone2.setTrace(t1);
-    		drone1.testPedirInformacion(drone2.getAid());
+    		//drone2.setTrace(t1);
+    		//drone1.testPedirInformacion(drone2.getAid());
             
         }catch(Exception e){
         	System.err.println("Main: Error al crear los agentes");
