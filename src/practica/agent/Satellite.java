@@ -103,7 +103,7 @@ public class Satellite extends SuperAgent {
 		//Calcular la posición del objetivo.
 		//Se suman todas las posiciones que contienen un objetivo y se halla la media.
 		float horizontalPositions = 0, verticalPositions = 0, adjacentSquares=0;
-		for(int i = 0; i < mapOriginal.getHeigh(); i ++)
+		for(int i = 0; i < mapOriginal.getHeight(); i ++)
 		    for(int j = 0; j < mapOriginal.getWidth(); j ++){
 		        if(mapOriginal.getValue(j,i) == Map.OBJETIVO){
 		            horizontalPositions += j;
@@ -1031,7 +1031,7 @@ public class Satellite extends SuperAgent {
 
 					//Se calcula cuanto gastan de bateria en rescatar a un rezagado (cuanto se gasta en retroceder y en llegar al goal)
 
-					ArrayList<ConflictiveBox> conflictiveList = new ArrayList<ConflictiveBox>();
+					List<ConflictiveBox> conflictiveList = mapSeguimiento.getAllConflictiveBoxes();
 
 					for(ConflictiveBox box: conflictiveList){
 						if(box.isDangerous()){
@@ -1087,7 +1087,23 @@ public class Satellite extends SuperAgent {
 									pos++;
 							}
 						
-
+							/*
+							AgentID chosen = droneStuses[index].getId();
+						
+							for(ConflictiveBox box: conflictiveList){
+								if(box.isDangerous() && box.getDroneID().toString().equals(chosen.toString()) 
+										&& (box.getLength() + optimalTrace.getSubtrace(box.getPosInicial()).size()) > batteryInCharger){
+									behavior = Drone.FREE;
+								}
+							}
+							
+							pos = 0;
+							for(AgentID id: dronesLagger)
+								if(id.toString().equals(chosen.toString())
+										break;
+								else
+									pos++;
+								*/
 							dronesLagger.remove(pos); // lo sacamos de la lista puesto que ya no será rezagado
 						}
 					}
@@ -1209,13 +1225,13 @@ public class Satellite extends SuperAgent {
 		    		addMessageToLog(Log.SENDED, msg.getSender(), msg.getProtocol(), subject, "");	
 					try{
 						res.put(JSONKeyLibrary.Subject, "MapOriginal");
-						res.put("Height", mapOriginal.getHeigh());
+						res.put("Height", mapOriginal.getHeight());
 						res.put("Width",mapOriginal.getWidth());
 						JSONArray aux = new JSONArray();
-						if(mapOriginal.getHeigh()==0||mapOriginal.getWidth()==0){
+						if(mapOriginal.getHeight()==0||mapOriginal.getWidth()==0){
 							throw new RuntimeException("Fallo: Mapa no existe");
 						}
-						for(int i=0;i<mapOriginal.getHeigh();i++){
+						for(int i=0;i<mapOriginal.getHeight();i++){
 							for(int j=0;i<mapOriginal.getWidth();j++){
 								if(mapOriginal.getValue(i,j)<-1||mapOriginal.getValue(i, j)>5){
 									throw new RuntimeException("Fallo: valor erroneo en mapa");
@@ -1238,13 +1254,13 @@ public class Satellite extends SuperAgent {
 		    		addMessageToLog(Log.SENDED, msg.getSender(), msg.getProtocol(), subject, "");	
 					try{
 						res.put(JSONKeyLibrary.Subject, "MapGlobal");
-						res.put("Height", mapSeguimiento.getHeigh());
+						res.put("Height", mapSeguimiento.getHeight());
 						res.put("Width",mapSeguimiento.getWidth());
 						JSONArray aux = new JSONArray();
-						if(mapSeguimiento.getHeigh()==0||mapSeguimiento.getWidth()==0){
+						if(mapSeguimiento.getHeight()==0||mapSeguimiento.getWidth()==0){
 							throw new RuntimeException("Fallo: Mapa no existente");
 						}
-						for(int i=0;i<mapSeguimiento.getHeigh();i++){
+						for(int i=0;i<mapSeguimiento.getHeight();i++){
 							for(int j=0;j<mapSeguimiento.getWidth();j++){
 								if(mapSeguimiento.getValue(i,j)<-1||mapSeguimiento.getValue(i, j)>5){
 									throw new RuntimeException("Fallo: valor erroneo en mapa");

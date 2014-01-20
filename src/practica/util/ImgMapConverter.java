@@ -56,7 +56,7 @@ public abstract class ImgMapConverter {
 		Map map = new Map (bf.getHeight(), bf.getWidth());
 		
 		//Lo Relleno
-		for (int i = 0; i < map.getHeigh(); i++)
+		for (int i = 0; i < map.getHeight(); i++)
 			for (int j = 0; j < map.getWidth(); j++){
 				valueRGB = bf.getRGB(i, j);
 				
@@ -108,10 +108,10 @@ public abstract class ImgMapConverter {
 		int valueRGB; // Para guardar valores "traducidos" a RGB
 		int value; // Para leer los valores del mapa
 		
-		BufferedImage bf = new BufferedImage(map.getWidth(), map.getHeigh(), BufferedImage.TYPE_INT_ARGB);
+		BufferedImage bf = new BufferedImage(map.getWidth(), map.getHeight(), BufferedImage.TYPE_INT_ARGB);
 
 		// Creo los colores de la imagen según los valores del mapa
-		for (int i = 0; i < map.getHeigh(); i++)
+		for (int i = 0; i < map.getHeight(); i++)
 			for (int j = 0; j < map.getWidth(); j++){
 				value = map.getValue(i, j);
 				
@@ -166,11 +166,11 @@ public abstract class ImgMapConverter {
 	public static BufferedImage sharedMapToBufferedImage (SharedMap map){
 		int valueRGB; // Para guardar valores "traducidos" a RGB
 		int value; // Para leer los valores del mapa
-		BufferedImage bf = new BufferedImage(map.getWidth(), map.getHeigh(), BufferedImage.TYPE_INT_ARGB);
+		BufferedImage bf = new BufferedImage(map.getWidth(), map.getHeight(), BufferedImage.TYPE_INT_ARGB);
 		AgentID [] droneIDs = Launcher.getDroneIDs(); //IDs de los drones
 		
 		// Creo los colores de la imagen según los valores del mapa
-		for (int i = 0; i < map.getHeigh(); i++)
+		for (int i = 0; i < map.getHeight(); i++)
 			for (int j = 0; j < map.getWidth(); j++){
 				value = map.getValue(i, j);
 				switch (value){

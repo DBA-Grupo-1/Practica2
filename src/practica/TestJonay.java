@@ -67,9 +67,9 @@ public class TestJonay {
         	map = visualizer.getMapToLoad();
         	satellite = new Satellite(id_satelite,id_charger, map, droneAmount, visualizer);
         	charger = new Charger(id_charger, 500*droneAmount, id_satelite);
-        	drone1 = new Drone(new AgentID("Drone1"), map.getWidth(), map.getHeigh(), id_satelite, id_charger);
+        	drone1 = new Drone(new AgentID("Drone1"), map.getWidth(), map.getHeight(), id_satelite, id_charger);
         	droneIDs[0] = drone1.getAid();
-        	drone2 = new Drone(new AgentID("Drone2"), map.getWidth(), map.getHeigh(), id_satelite, id_charger);
+        	drone2 = new Drone(new AgentID("Drone2"), map.getWidth(), map.getHeight(), id_satelite, id_charger);
         	droneIDs[1] = drone2.getAid();
         	System.out.println("MAIN : Iniciando agentes...");
         	visualizer.setSatelite(satellite);
@@ -97,9 +97,9 @@ public class TestJonay {
     		//(Ismael) modificada la función Satellite para que acepte una identida de cargador
         	satellite = new Satellite(id_satelite,id_charger, map, droneAmount);
         	charger = new Charger(id_charger, 500*droneAmount, id_satelite);
-        	drone1 = new Drone(new AgentID("Drone1"), map.getWidth(), map.getHeigh(), id_satelite, id_charger);
+        	drone1 = new Drone(new AgentID("Drone1"), map.getWidth(), map.getHeight(), id_satelite, id_charger);
         	droneIDs[0] = drone1.getAid();
-        	drone2 = new Drone(new AgentID("Drone2"), map.getWidth(), map.getHeigh(), id_satelite, id_charger);
+        	drone2 = new Drone(new AgentID("Drone2"), map.getWidth(), map.getHeight(), id_satelite, id_charger);
         	droneIDs[1] = drone2.getAid();
         	System.out.println("MAIN : Iniciando agentes...");
             satellite.start();

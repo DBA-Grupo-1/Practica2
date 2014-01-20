@@ -72,7 +72,7 @@ public class Launcher {
         	charger = new Charger(id_charger, 500*droneAmount, id_satelite, visualizer);
         	charger.setLog(visualizer.getLogs()[1]);
         	for(int i=0; i<droneAmount; i++){
-            	drones[i] = new Drone(new AgentID("Drone" + i), map.getWidth(), map.getHeigh(), id_satelite, id_charger);
+            	drones[i] = new Drone(new AgentID("Drone" + i), map.getWidth(), map.getHeight(), id_satelite, id_charger);
             	droneIDs[i] = drones[i].getAid();	
             	drones[i].setLog(visualizer.getLogs()[i+2]);
         	}
@@ -108,7 +108,7 @@ public class Launcher {
         	satellite = new Satellite(id_satelite,id_charger, map, droneAmount);
         	charger = new Charger(id_charger, 500*droneAmount, id_satelite);
         	for(int i=0; i<droneAmount; i++){
-            	drones[i] = new Drone(new AgentID("Drone" + i), map.getWidth(), map.getHeigh(), id_satelite, id_charger);
+            	drones[i] = new Drone(new AgentID("Drone" + i), map.getWidth(), map.getHeight(), id_satelite, id_charger);
             	droneIDs[i] = drones[i].getAid();	
         	}
         	System.out.println("MAIN : Iniciando agentes...");

@@ -2,7 +2,7 @@ package practica.map;
 
 public class Map {
 	private int matrix[][];
-	private int heigh;
+	private int height;
 	private int width;
 	public final static int LIBRE = 0;
 	public final static int OBSTACULO = 1;
@@ -16,7 +16,7 @@ public class Map {
 	 */
 	public Map(int heigh, int width) {
 		matrix = new int[heigh][width];
-		this.heigh = heigh;
+		this.height = heigh;
 		this.width = width;
 
 		// Por defecto todo está libre
@@ -31,12 +31,12 @@ public class Map {
 	 */
 	public Map(Map map) {
 		// Inicialización de componentes
-		matrix = new int[map.getHeigh()][map.getWidth()];
-		heigh = map.getHeigh();
+		matrix = new int[map.getHeight()][map.getWidth()];
+		height = map.getHeight();
 		width = map.getWidth();
 
 		// Copia de valores
-		for (int i = 0; i < heigh; i++)
+		for (int i = 0; i < height; i++)
 			for (int j = 0; j < width; j++)
 				matrix[i][j] = map.getValue(j, i);
 	}
@@ -45,8 +45,8 @@ public class Map {
 	 * Getter de la altura
 	 * @return Altura del mapa
 	 */
-	public int getHeigh() {
-		return heigh;
+	public int getHeight() {
+		return height;
 	}
 
 	/**
@@ -65,7 +65,7 @@ public class Map {
 	 */
 	public int getValue(int x, int y) {
 		// Añadida una comprobación: si la x o la y están fuera de los límites del mapa, devolver OBSTACULO
-		if (x < 0 || y < 0 || x >= this.getWidth() || y >= this.getHeigh()) {
+		if (x < 0 || y < 0 || x >= this.getWidth() || y >= this.getHeight()) {
 			return OBSTACULO;
 		} else {
 			return matrix[y][x];
@@ -80,7 +80,7 @@ public class Map {
 	 * @throws Exception Lanza una excepción si los valores x o y no son correctos
 	 */
 	public void setValue(int x, int y, int value) throws Exception {
-		if(x < 0 || x >= this.width || y < 0 || y >= this.heigh){
+		if(x < 0 || x >= this.width || y < 0 || y >= this.height){
 			throw new Exception("La posición ("+x+", "+y+") no se encuentra dentro de los límites del mapa");
 		}
 		matrix[y][x] = value;

@@ -1,6 +1,7 @@
 package practica.map;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import practica.util.ConflictiveBox;
 import es.upv.dsic.gti_ia.core.AgentID;
@@ -34,7 +35,7 @@ public class SharedMap extends Map{
 	 */
 	public SharedMap(Map other) {
 		super(other);
-		initialize(other.getHeigh(),other.getWidth());
+		initialize(other.getHeight(),other.getWidth());
 	}
 	
 	/**
@@ -62,10 +63,10 @@ public class SharedMap extends Map{
 	 * @author jonay
 	 */
 	public SharedMap(SharedMap other) {
-		super(other.getHeigh(), other.getWidth());
+		super(other.getHeight(), other.getWidth());
 		int width, heigh;
 		width = other.getWidth();
-		heigh = other.getHeigh();
+		heigh = other.getHeight();
 		sharedSquares = new SharedSquare[heigh][width];
 		SharedSquare otherSS[][] = other.getSharedSquares();
 		
@@ -164,6 +165,22 @@ public class SharedMap extends Map{
 	 */
 	public ArrayList<ConflictiveBox> getConflictiveBoxes (int x, int y){
 		return sharedSquares[y][x].getConflictiveBoxes();
+	}
+	
+	/**
+	 * Devuelve todas las secciones conflictivas del mapa
+	 * @return Lista con todas las casillas conflictivas
+	 * @author Alberto
+	 */
+	public List<ConflictiveBox> getAllConflictiveBoxes(){
+		int width = getWidth(), height = getHeight();
+		List<ConflictiveBox> res = new ArrayList<ConflictiveBox>();
+		
+		for(int i=0; i<height; i++)
+			for(int j=0; j<width; j++)
+				res.addAll(getConflictiveBoxes(i,j));
+				
+		return res;
 	}
 	
 	
