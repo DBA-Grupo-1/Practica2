@@ -4,25 +4,13 @@ package practica.agent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import edu.emory.mathcs.backport.java.util.concurrent.PriorityBlockingQueue;
-import es.upv.dsic.gti_ia.architecture.FIPAException;
-import es.upv.dsic.gti_ia.architecture.FailureException;
-import es.upv.dsic.gti_ia.architecture.NotUnderstoodException;
-import es.upv.dsic.gti_ia.architecture.RefuseException;
-import es.upv.dsic.gti_ia.core.ACLMessage;
-import es.upv.dsic.gti_ia.core.AgentID;
-import es.upv.dsic.gti_ia.core.SingleAgent;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import com.google.gson.Gson;
 
 import practica.gui.Log;
 import practica.gui.Visualizer;
@@ -34,10 +22,18 @@ import practica.map.Map;
 import practica.map.SharedMap;
 import practica.trace.Trace;
 import practica.util.ConflictiveBox;
+import practica.util.DroneStatus;
 import practica.util.GPSLocation;
 import practica.util.ImgMapConverter;
-import practica.util.MessageQueue;
-import practica.util.DroneStatus;
+
+import com.google.gson.Gson;
+
+import es.upv.dsic.gti_ia.architecture.FIPAException;
+import es.upv.dsic.gti_ia.architecture.FailureException;
+import es.upv.dsic.gti_ia.architecture.NotUnderstoodException;
+import es.upv.dsic.gti_ia.architecture.RefuseException;
+import es.upv.dsic.gti_ia.core.ACLMessage;
+import es.upv.dsic.gti_ia.core.AgentID;
 
 public class Satellite extends SuperAgent {
 	private final int  LIMIT_DRONES_SCOUT = 1,
