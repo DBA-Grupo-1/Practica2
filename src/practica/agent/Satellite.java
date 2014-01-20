@@ -997,6 +997,35 @@ public class Satellite extends SuperAgent {
 	   		
 	   	return i-1; 
 	}
+	
+	/**
+	 * 
+	 * @param optimalTrace
+	 * @return
+	 * @author Jahiel
+	 * @author Alberto
+	 */
+	private int findNearestDrone(Trace optimalTrace){
+		int dist = 99999;
+		int distAux;
+		int droneSelected = -1;
+		int posInic = getInitialPosition(optimalTrace);
+		
+		for(int i=0; i<droneStuses.length; ++i){
+			ConflictiveBox box = findDangerousConflictiveBox(droneStuses[i].getId());
+			if(box==null){
+				distAux = optimalTrace.getSubtrace(optimalTrace.getLocation(posInic)).size() + Math.abs(optimalTrace.get(posInic).getLocation().getPositionX() - droneStuses[i].getLocation().getPositionX());
+			}else{
+				distAux = box.getLength() + optimalTrace.getSubtrace(box.getPosInicial()).size();
+			}
+			if( (distAux < dist) && !droneStuses[i].isGoalReached() ){
+				dist = distAux;
+				droneSelected = i;
+			}
+		}
+		
+		return droneSelected;
+	}
 	      	
 	/**
 	 * Se devuelve el indice del drone mas cerca del objetivo. Si el parametro rescueStragglers es False entonces solo se tienen
@@ -1007,34 +1036,20 @@ public class Satellite extends SuperAgent {
 	 * @param rescueStragglers
 	 * @return
 	 */
-	public int findNerestDrone(boolean rescueStragglers){
+	public int findAbsoluteNearestDrone(){
 		int dist = 99999;
-		int distXAux, distYAux, distAux;
+		int distXAux;
 		int droneSelected = -1;
 		
-		if(rescueStragglers){
-			for(int i=0; i<droneStuses.length; ++i){
-				distXAux = (int) Math.abs(goalPosX - droneStuses[i].getLocation().getPositionX());
-				distYAux = (int) Math.abs(goalPosY - droneStuses[i].getLocation().getPositionY());
-				distAux = distXAux + distYAux;
-				
-				if( (distAux < dist) && !droneStuses[i].isGoalReached() ){
-					dist = distAux;
-					droneSelected = i;
-				}
-			}
-		}else{
-			for(int i=0; i<droneStuses.length; ++i){
-				distXAux = (int) Math.abs(goalPosX - droneStuses[i].getLocation().getPositionX());
-				if( (droneStuses[i].getLocation().getPositionY() == 0) && ( distXAux < dist) && !droneStuses[i].isGoalReached() ){
-					dist = distXAux;
-					droneSelected = i;
-				}
+		for(int i=0; i<droneStuses.length; ++i){
+			distXAux = (int) Math.abs(goalPosX - droneStuses[i].getLocation().getPositionX());
+			if( (droneStuses[i].getLocation().getPositionY() == 0) && ( distXAux < dist) && !droneStuses[i].isGoalReached() ){
+				dist = distXAux;
+				droneSelected = i;
 			}
 		}
 		
 		return droneSelected;
-		
 	}
 	
 	/**
@@ -1110,7 +1125,7 @@ public class Satellite extends SuperAgent {
 					int batteryInDrones = dronesWithoutLeaving.size() * 75; // Se calcula cuanto bateria tienen los drones que quedan por salir
 
 					if( (sizeTrace - batteryInDrones) <= batteryInCharger){
-						index = findNerestDrone(true);
+						index = findNearestDrone(optimalTrace);
 						behavior = Drone.FOLLOWER;
 					}else{
 						// Se selecciona el drone mas cercano dependiendo de los drones que hayan salido
@@ -1124,10 +1139,11 @@ public class Satellite extends SuperAgent {
 							droneScout_Improber++;
 						}else{
 							behavior = Drone.FOLLOWER;
-							rescueStragglers = true;
+							if(!dronesLagger.isEmpty())
+								rescueStragglers = true;
 						}
-
-						index = findNerestDrone(rescueStragglers);
+						
+						index = rescueStragglers ? findNearestDrone(optimalTrace) : findAbsoluteNearestDrone();
 
 						// Si el drone elegido es rezagado comprobamos si no hay bateria para que de la vuelta y siga la traza y se le asigna
 						// el modo libre.
@@ -1171,7 +1187,7 @@ public class Satellite extends SuperAgent {
 				}else{
 					behavior = Drone.SCOUT;
 					droneScout++;
-					index = findNerestDrone(false);
+					index = findAbsoluteNearestDrone();
 				}
 				
 				JSONObject contentSelected = new JSONObject();
@@ -1630,5 +1646,25 @@ public class Satellite extends SuperAgent {
 				e.printStackTrace();
 			}
 		
+	}
+	
+	/**
+	 * Busca la casilla conflictiva que representa la zona obstaculo en la que se quedo rezagado un drone.
+	 * @author Jahiel
+	 * @author Alberto
+	 * @param id Identificador del drone que quedo rezagado
+	 * @return Casilla conflictiva asociada. Null si no existe.
+	 */
+	private ConflictiveBox findDangerousConflictiveBox(AgentID id){
+		ConflictiveBox res = null;
+		List<ConflictiveBox> conflictiveList = mapSeguimiento.getAllConflictiveBoxes();
+		
+		for(ConflictiveBox box: conflictiveList){
+			if(box.isDangerous() && box.getDroneID().toString().equals(id.toString())){
+				res = box;
+			}
+		}
+		
+		return res;
 	}
 }
