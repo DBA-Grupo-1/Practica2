@@ -176,8 +176,8 @@ public class SharedMap extends Map{
 		int width = getWidth(), height = getHeight();
 		List<ConflictiveBox> res = new ArrayList<ConflictiveBox>();
 		
-		for(int i=0; i<height; i++)
-			for(int j=0; j<width; j++)
+		for(int i=0; i<width; i++)
+			for(int j=0; j<height; j++)
 				res.addAll(getConflictiveBoxes(i,j));
 				
 		return res;
