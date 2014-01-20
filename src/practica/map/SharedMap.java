@@ -169,7 +169,7 @@ public class SharedMap extends Map{
 	/**
 	 * Devuelve todas las secciones conflictivas del mapa.
 	 * @author Jonay
-	 * @return Lista de todas las casillas conflictivas
+	 * @return Lista de todas las casillas conflictivas.
 	 */
 	public ArrayList<ConflictiveBox> getConflictiveBoxes (){
 		ArrayList<ConflictiveBox> confBoxes = new ArrayList<ConflictiveBox>();
