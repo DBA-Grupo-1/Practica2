@@ -500,7 +500,7 @@ public class Satellite extends SuperAgent {
 					case ProtocolLibrary.Information : onInformation (proccesingMessage); break;
 					case ProtocolLibrary.DroneMove : onDroneMoved(proccesingMessage); break;
 					case ProtocolLibrary.Subscribe : onSubscribe(proccesingMessage);break;
-					case ProtocolLibrary.Finalize : onFinalize(proccesingMessage); break;
+					//case ProtocolLibrary.Finalize : onFinalize(); break;
 					case ProtocolLibrary.Reload : onReload(proccesingMessage); break;
 					case ProtocolLibrary.Scout: onStart(proccesingMessage); break;
 					case ProtocolLibrary.Notification : onNotification(proccesingMessage);break;
@@ -708,7 +708,15 @@ public class Satellite extends SuperAgent {
 				if(o.getInt(JSONKeyLibrary.Decision) == Drone.END_SUCCESS){
 					findStatus(droneID).setGoalReached(true);
 					countDronesReachedGoal++;
+					
 					sendInformSubscribeFinalize(msg);
+					finalize++;
+					if(finalize==this.maxDrones){
+						onFinalize();
+					}
+				}else if(o.getInt(JSONKeyLibrary.Decision) == Drone.END_FAIL){
+					onFinalize();
+					
 				}else
 					sendInformSubscribeAllMovement(msg, currentPosition, o.getInt(JSONKeyLibrary.Decision));
 			} catch (JSONException e) {
@@ -947,8 +955,7 @@ public class Satellite extends SuperAgent {
 				//Meter mensaje en el log
 				addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), SubjectLibrary.Straggler, "");
 						
-				listOfDrones = getDronesNoGoal();
-				listOfDrones.remove(msg.getSender());
+				
 				res.put(JSONKeyLibrary.Subject, SubjectLibrary.Straggler);
 				
 				send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Scout,"default",null,buildConversationId(), res);
@@ -957,16 +964,8 @@ public class Satellite extends SuperAgent {
 				
 				dronesLagger.add(msg.getSender());
 				
-				res.remove(JSONKeyLibrary.Subject);
-				res.put(JSONKeyLibrary.Subject, SubjectLibrary.StragglerNotification);
-				res.put(JSONKeyLibrary.Straggler, msg.getSender().toString());
+				sendInformSubscribeFinalize(msg);
 				
-				for(int i=0;i<listOfDrones.size();i++){
-					System.out.println("MANDANDO STRAGGLER NOT a " + listOfDrones.get(i).toString());
-					send(ACLMessage.INFORM,listOfDrones.get(i),ProtocolLibrary.Scout,"default",null,buildConversationId(), res);
-					//Meter mensaje en el log
-					addMessageToLog(Log.SENDED, listOfDrones.get(i), msg.getProtocol(), SubjectLibrary.StragglerNotification, "Straggler: " + msg.getSender().name);	
-				}
 			break;
 			
 			default:
@@ -1058,7 +1057,7 @@ public class Satellite extends SuperAgent {
 	 * @param msg
 	 */
 	public void onStartDrone(ACLMessage msg) throws FIPAException{
-		
+		boolean find = false;
 		try{
 			//Meter mensaje en el log
 			addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), SubjectLibrary.Start, "");
@@ -1159,6 +1158,7 @@ public class Satellite extends SuperAgent {
 											behavior = Drone.FREE;
 										}
 									}
+									find=true;
 									break;
 								}else
 									pos++;
@@ -1176,12 +1176,14 @@ public class Satellite extends SuperAgent {
 							
 							pos = 0;
 							for(AgentID id: dronesLagger)
-								if(id.toString().equals(chosen.toString())
+								if(id.toString().equals(chosen.toString());
+										
 										break;
 								else
 									pos++;
 								*/
-							dronesLagger.remove(pos); // lo sacamos de la lista puesto que ya no será rezagado
+							if(find)
+								dronesLagger.remove(pos); // lo sacamos de la lista puesto que ya no será rezagado
 						}
 					}
 				}else{
@@ -1597,31 +1599,13 @@ public class Satellite extends SuperAgent {
 	 * Protocolo de finalizacion
 	 * @param msg
 	 */
-	public void onFinalize (ACLMessage msg){
+	public void onFinalize (){
 		//Meter mensaje en el log
-		addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), SubjectLibrary.End , "");	
+		addMessageToLog(Log.RECEIVED, this.getAid(), ProtocolLibrary.Finalize, SubjectLibrary.End , "");	
 		try{
 			JSONObject res = new JSONObject();
 
-			if(!msg.getPerformative().equals(ACLMessage.REQUEST)){
-				throw new RuntimeException("Performativa erronea al finalizar");
-			}
-			else{
-			
-				finalize++;
-				/* Lo dejo por si acaso a mi me parece correcto pero si dices que el drone se pone solico en standby no es necesario (pa Dani)
-				if(finalize!=maxDrones){
-					res.put(JSONKeyLibrary.Subject,ProtocolLibrary.Finalize);
-					res.put("Content", "wait");
-					send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Finalize,"default",null,buildConversationId(), res);
-				}
-				else
-					*/
-				
-				
-					if(finalize==maxDrones){
-					//System.out.println("Finalizando");
-					
+						
 						res.put(JSONKeyLibrary.Subject, SubjectLibrary.End);
 						res.put("Content","End" );
 						for(int i=0;i<maxDrones;i++){
@@ -1631,20 +1615,17 @@ public class Satellite extends SuperAgent {
 						}
 						send(ACLMessage.INFORM,cargador,ProtocolLibrary.Finalize,"default",null,buildConversationId(), res);
 						//Meter mensaje en el log
-						addMessageToLog(Log.SENDED, cargador, ProtocolLibrary.Finalize, SubjectLibrary.End , "End");	
-				}					
+						addMessageToLog(Log.SENDED, cargador, ProtocolLibrary.Finalize, SubjectLibrary.End , "End");
+						System.out.println("FINALIZADO SATELITE ");
+								
 				
-			}
-		/**
-		 * Realizar esta llamada solo cuando un drone finalize porque a llegado a la meta
-		 * 
-		 * @author Jahiel
-		 */
-		
-			
 			}catch(JSONException e){
 				e.printStackTrace();
 			}
+		
+		
+			
+			
 		
 	}
 	

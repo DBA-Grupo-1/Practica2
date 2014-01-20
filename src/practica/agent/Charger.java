@@ -37,6 +37,7 @@ public class Charger extends SuperAgent {
 	private BlockingQueue<ACLMessage> answerQueue;
 	private Visualizer visualizer;
 	private boolean usingVisualizer = false;
+	private boolean exit = false;
 
 	/**
 	 * @author Jahiel
@@ -120,7 +121,8 @@ public class Charger extends SuperAgent {
 			assignedQueue=answerQueue;
 			break;
 		case SubjectLibrary.End:
-			finalize(); //hago la llamada a finalize puesto que el ejecute es un while(true) si fuera una variable la pondria a false;
+			assignedQueue=requestQueue;
+			
 			break;
 		default:
 			try {
@@ -155,7 +157,7 @@ public class Charger extends SuperAgent {
 	public void execute(){ 
 		ACLMessage msg = null;
 
-		while (true){
+		while (!exit){
 			try {
 				msg = (ACLMessage) requestQueue.take();
 			} catch (InterruptedException e) {
@@ -165,6 +167,10 @@ public class Charger extends SuperAgent {
 			if(msg != null){
 				switch (msg.getProtocol()){
 					/********************RELOAD***********************/
+					case ProtocolLibrary.Finalize:
+						exit=true;
+					break;
+					
 					case ProtocolLibrary.Reload:
 						try {
 							onReload(msg);
@@ -277,6 +283,7 @@ public class Charger extends SuperAgent {
 									}
 		
 								break;
+								
 							}
 					} catch(FIPAException fe){
 						sendError(fe, msg);
@@ -299,6 +306,7 @@ public class Charger extends SuperAgent {
 			}//FIN IF
 
 		}//FIN WHILE
+		System.out.println("CARGADOR FINALIZA");
 	}
 
 	/**
@@ -563,4 +571,5 @@ public class Charger extends SuperAgent {
 	private void onDroneBatteryInform(ACLMessage msg){
 		// TODO
 	}
+	
 }
