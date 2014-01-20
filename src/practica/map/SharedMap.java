@@ -166,6 +166,21 @@ public class SharedMap extends Map{
 		return sharedSquares[y][x].getConflictiveBoxes();
 	}
 	
+	/**
+	 * Devuelve todas las secciones conflictivas del mapa
+	 * @author Jonay
+	 * @return lista de todas las casillas conflictivas
+	 */
+	public ArrayList<ConflictiveBox> getConflictiveBoxes (){
+		ArrayList<ConflictiveBox> confBoxes = new ArrayList<ConflictiveBox>();
+		for(int x=0; x<getWidth(); x++){
+			for(int y=0; y<getHeigh(); y++){
+				confBoxes.addAll(sharedSquares[y][x].getConflictiveBoxes()); // Añade todos los ConflictiveBox de cada casilla
+			}
+		}
+		
+		return confBoxes;
+	}
 	
 	/**
 	 * Comprueba si una casilla es conflictiva.
