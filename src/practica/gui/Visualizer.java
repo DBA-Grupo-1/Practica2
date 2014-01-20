@@ -33,7 +33,7 @@ import javax.swing.SwingConstants;
 /**
  * Interfaz de usuario.
  * @author Daniel
- *
+ * @author Jonay
  */
 public class Visualizer extends JFrame {
 	private static final long serialVersionUID = 1L;
@@ -44,6 +44,7 @@ public class Visualizer extends JFrame {
 	private JLabel miniMap;
 	private JLabel satelliteMapIcon;
 	private Map mapToLoad;
+	private String selectedMapName;
 	private Launcher launcher;
 	
 	private Satellite satellite;
@@ -94,6 +95,15 @@ public class Visualizer extends JFrame {
 	 */
 	public Map getMapToLoad(){
 		return mapToLoad;
+	}
+	
+	/**
+	 * Getter del nombre del mapa
+	 * @author Jonay
+	 * @return el nombre del mapa
+	 */
+	public String getMapName(){
+		return selectedMapName;
 	}
 	
 	/**
@@ -404,12 +414,13 @@ public class Visualizer extends JFrame {
 	/**
 	 * ActionListener del selector de mapas
 	 * @author Daniel
-	 *
+	 * @author Jonay
 	 */
 	private class MapSelectorActionListener implements ActionListener {
 		public void actionPerformed(ActionEvent arg0) {
 			btnLoadMap.setEnabled(true);
-			ImageIcon mapIcon = new ImageIcon(Visualizer.class.getResource("/maps/" + mapSelector.getSelectedItem().toString()));
+			selectedMapName = mapSelector.getSelectedItem().toString();
+			ImageIcon mapIcon = new ImageIcon(Visualizer.class.getResource("/maps/" + selectedMapName));
 			//Me creo una imagen a partir de la del icono
 			Image img = mapIcon.getImage();
 			//Me creo otra reescalándola.
