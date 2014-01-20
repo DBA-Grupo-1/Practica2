@@ -1131,7 +1131,7 @@ public class Satellite extends SuperAgent {
 						// Se selecciona el drone mas cercano dependiendo de los drones que hayan salido
 
 						boolean rescueStragglers = false;  // variable que determina si se rescatan o no a los rezagados
-
+ 
 						if(droneScout < LIMIT_DRONES_SCOUT)
 							behavior = Drone.SCOUT;
 						else if(droneScout_Improber < LIMIT_DRONES_SCOUTIMPROBER){
