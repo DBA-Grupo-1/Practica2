@@ -10,46 +10,46 @@ package practica.util;
 public class Pair{
 	private float first;
 	private int second;
-	private boolean t;
+	private boolean third;
 
 	/**
 	 * @author Ismael
 	 * Constructor
-	 * @param a
-	 * @param b
-	 * @param c
+	 * @param first
+	 * @param second
+	 * @param third
 	 */
-	public Pair(float a,int b, boolean c){
-		this.first = a;
-		this.second = b;
-		this.t=c;
+	public Pair(float first,int second, boolean third){
+		this.first = first;
+		this.second = second;
+		this.third=third;
 
 	}
 	/**
 	 * @author Ismael
 	 * Introduce un valor en el primer elemento 
-	 * @param i
+	 * @param newFirst
 	 */
-	public void setFirst(int i){
-		first =i;
+	public void setFirst(int newFirst){
+		first =newFirst;
 	}
 	
 	/**
 	 * @author Ismael 
 	 * Introduce un valor en el segundo elemento
-	 * @param i
+	 * @param newSecond
 	 */
-	public void setSecond(int i){
-		second =i;
+	public void setSecond(int newSecond){
+		second =newSecond;
 	}
 	
 	/**
-	 * @author
+	 * @author Ismael
 	 * Introduce un valor en el tercer elemento
-	 * @param i
+	 * @param newThird
 	 */
-	public void setThird(boolean i){
-		t =i;
+	public void setThird(boolean newThird){
+		third =newThird;
 	}
 	/**
 	 * @author Ismael
@@ -72,9 +72,9 @@ public class Pair{
 	/**
 	 * @author Ismael
 	 * Devuelve el valor del tercer elemento
-	 * @return t
+	 * @return third
 	 */
 	public boolean getThird(){
-		return t;
+		return third;
 	}
 }

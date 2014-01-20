@@ -85,5 +85,4 @@ public class Map {
 		}
 		matrix[y][x] = value;
 	}
-
 }

@@ -163,6 +163,12 @@ public abstract class ImgMapConverter {
 		}
 	}
 	
+	/**
+	 * Crea un objeto de tipo BufferedImage a partir de un mapa compartido.
+	 * @author Daniel
+	 * @param map Mapa compartido
+	 * @return BufferedImage a partir de los datos del mapa.
+	 */
 	public static BufferedImage sharedMapToBufferedImage (SharedMap map){
 		int valueRGB; // Para guardar valores "traducidos" a RGB
 		int value; // Para leer los valores del mapa

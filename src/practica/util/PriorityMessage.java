@@ -3,10 +3,10 @@ package practica.util;
 import es.upv.dsic.gti_ia.core.ACLMessage;
 
 public class PriorityMessage extends ACLMessage implements Comparable<PriorityMessage>{
-	public static final int CRITICAL = 0,
-			HIGH = 1,
-			AVERAGE = 2,
-			LOW = 3;
+	public static final int CRITICAL = 0;
+	public static final int	HIGH = 1;
+	public static final int	AVERAGE = 2;
+	public static final int	LOW = 3;
 	private int priority;
 
 	public PriorityMessage(){

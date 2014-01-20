@@ -9,12 +9,11 @@ import es.upv.dsic.gti_ia.core.AgentID;
  *
  */
 public class DroneStatus {
-
-	private int battery;
-	private AgentID id;
-	private String name;
-	private boolean goalReached;
-	private GPSLocation location;
+	private int battery; 			//Batería del drone, entre 0 y 75.
+	private AgentID id; 			//ID del drone.
+	private String name; 			//Nombre del drone.
+	private boolean goalReached; 	//true si ha llegado al objetivo, false si no.
+	private GPSLocation location; 	//Posición en el mapa del drone.
 	
 	/**
 	 * Constructor por defecto, pone la batería en 75.
