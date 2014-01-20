@@ -171,6 +171,7 @@ public class SharedMap extends Map{
 	 * Devuelve todas las secciones conflictivas del mapa
 	 * @return Lista con todas las casillas conflictivas
 	 * @author Alberto
+	 * @author Jonay
 	 */
 	public List<ConflictiveBox> getAllConflictiveBoxes(){
 		int width = getWidth(), height = getHeight();

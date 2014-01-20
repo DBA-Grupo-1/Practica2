@@ -7,7 +7,7 @@ package practica.util;
  * Clase Par para tratar los datos como un todo (mas tarde modificado a una tupla de 3 elementos) para contol de distancia al objetivo
  * si esta en meta o no, y second (que por desgracia ya no me acuerdo)
  */
-public class Pair{
+public class Movement{
 	private float first;
 	private int second;
 	private boolean third;
@@ -19,7 +19,7 @@ public class Pair{
 	 * @param second
 	 * @param third
 	 */
-	public Pair(float first,int second, boolean third){
+	public Movement(float first,int second, boolean third){
 		this.first = first;
 		this.second = second;
 		this.third=third;
@@ -30,7 +30,7 @@ public class Pair{
 	 * Introduce un valor en el primer elemento 
 	 * @param newFirst
 	 */
-	public void setFirst(int newFirst){
+	public void setDistance(int newFirst){
 		first =newFirst;
 	}
 	
@@ -39,7 +39,7 @@ public class Pair{
 	 * Introduce un valor en el segundo elemento
 	 * @param newSecond
 	 */
-	public void setSecond(int newSecond){
+	public void setMove(int newSecond){
 		second =newSecond;
 	}
 	
@@ -48,7 +48,7 @@ public class Pair{
 	 * Introduce un valor en el tercer elemento
 	 * @param newThird
 	 */
-	public void setThird(boolean newThird){
+	public void setValid(boolean newThird){
 		third =newThird;
 	}
 	/**
@@ -56,7 +56,7 @@ public class Pair{
 	 * devuelve el valor del primer elemento
 	 * @return first
 	 */
-	public float getFirst(){
+	public float getDistance(){
 		return first;
 	}
 	
@@ -65,7 +65,7 @@ public class Pair{
 	 * Devuelve el valor del segundo elemento
 	 * @return second
 	 */
-	public int getSecond(){
+	public int getMove(){
 		return second;
 	}
 	
@@ -74,7 +74,7 @@ public class Pair{
 	 * Devuelve el valor del tercer elemento
 	 * @return third
 	 */
-	public boolean getThird(){
+	public boolean isValid(){
 		return third;
 	}
 }

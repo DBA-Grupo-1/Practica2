@@ -25,7 +25,7 @@ import practica.trace.Choice;
 import practica.trace.Trace;
 import practica.util.ConflictiveBox;
 import practica.util.GPSLocation;
-import practica.util.Pair;
+import practica.util.Movement;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -881,7 +881,7 @@ public class Drone extends SuperAgent {
      * @return Decision tomada
      */
     protected int checkBehaviours(){
-            List<Pair> listaMovimientos;
+            List<Movement> listaMovimientos;
             int tempDecision;
             
          
@@ -923,10 +923,10 @@ public class Drone extends SuperAgent {
      * @param args Argumentos adicionales
      * @return Decision tomada. Debe ser END_FAIL o NO_DEC
      */
-    private int checkEndCondition(List<Pair> listaMovimientos, Object[] object) {
+    private int checkEndCondition(List<Movement> listaMovimientos, Object[] object) {
     	if(state != UNDO_TRACE && state != FOLLOW_TRACE){
-    		for(Pair pair : listaMovimientos)
-    			if(pair.getThird())
+    		for(Movement movement : listaMovimientos)
+    			if(movement.isValid())
     				return NO_DEC;
     		
             return END_FAIL;
@@ -944,7 +944,7 @@ public class Drone extends SuperAgent {
      * @param args Argumentos adicionales
      * @return Decision tomada
      */
-    protected int firstBehaviour(List<Pair> listaMovimientos, Object[] args) {
+    protected int firstBehaviour(List<Movement> listaMovimientos, Object[] args) {
     	
     	if((state == OBSTACLE_AREA) && (behavior == SCOUT_IMPROVER)){
     		Trace subTrace = trace.getSubtrace(conflictiveBox.getPosInicial());
@@ -966,7 +966,7 @@ public class Drone extends SuperAgent {
      * @param args Argumentos adicionales
      * @return Decision tomada
      */
-    protected int secondBehaviour(List<Pair> listaMovimientos, Object[] args) {
+    protected int secondBehaviour(List<Movement> listaMovimientos, Object[] args) {
     	if(state == UNDO_TRACE){
     		return (trace.get(currentPositionTracking).getMove() + 2)%4;	
     	}
@@ -989,7 +989,7 @@ public class Drone extends SuperAgent {
      * @param args Argumentos adicionales
      * @return Decision tomada
      */
-    protected int thirdBehaviour(List<Pair> listaMovimientos, Object[] args) {
+    protected int thirdBehaviour(List<Movement> listaMovimientos, Object[] args) {
     	 
     	if(state == FOLLOW_TRACE){
     		if(conflictiveBoxReached && behavior == FOLLOWER){
@@ -1025,13 +1025,13 @@ public class Drone extends SuperAgent {
      * @param args Argumentos adicionales
      * @return Decision tomada
      */
-    protected int fourthBehaviour(List<Pair> listaMovimientos, Object[] args) {
+    protected int fourthBehaviour(List<Movement> listaMovimientos, Object[] args) {
     	if(dodging){
             //Buscamos el mejor movimiento en la lista y comprobamos si es posible
             boolean betterIsPosible = false;
             for(int i=0; i<4; i++)
-                    if(listaMovimientos.get(i).getSecond() == betterMoveBeforeDodging)
-                            betterIsPosible = listaMovimientos.get(i).getThird(); 
+                    if(listaMovimientos.get(i).getMove() == betterMoveBeforeDodging)
+                            betterIsPosible = listaMovimientos.get(i).isValid(); 
 
             
             //Si es posible lo realizamos y salimos del modo esquivando
@@ -1046,17 +1046,17 @@ public class Drone extends SuperAgent {
             //Comprobamos si estamos esquivando y podemos hacer un movimiento que nos deje cerca de un obstaculo
 
             //Al lado de un obstaculo (en un movimiento)
-            for(Pair pair: listaMovimientos){
-            	int move = pair.getSecond();
-            	if(pair.getThird() && (getCorner(move, (move+1)%4) == Map.OBSTACULO || getCorner(move, (move+3)%4) == Map.OBSTACULO))
+            for(Movement movement: listaMovimientos){
+            	int move = movement.getMove();
+            	if(movement.isValid() && (getCorner(move, (move+1)%4) == Map.OBSTACULO || getCorner(move, (move+3)%4) == Map.OBSTACULO))
             		return move;
             }
 
             //Al lado de un obstaculo (en dos movimientos)
             int [] validMovs=getValidMovements();
-            for(Pair pair: listaMovimientos){
-            	int move = pair.getSecond();
-            	if(pair.getThird() && (validMovs[(move+1)%4] == Map.OBSTACULO || validMovs[(move+3)%4] == Map.OBSTACULO))
+            for(Movement movement: listaMovimientos){
+            	int move = movement.getMove();
+            	if(movement.isValid() && (validMovs[(move+1)%4] == Map.OBSTACULO || validMovs[(move+3)%4] == Map.OBSTACULO))
             		return move;
             }
             
@@ -1066,13 +1066,13 @@ public class Drone extends SuperAgent {
             //Comprobamos si no podemos hacer el mejor movimiento debido a un obstaculo
             //En ese caso pasamos al modo esquivar
             int [] validMov=getValidMovements();
-            if(!listaMovimientos.get(0).getThird() && validMov[listaMovimientos.get(0).getSecond()]==Map.OBSTACULO){
+            if(!listaMovimientos.get(0).isValid() && validMov[listaMovimientos.get(0).getMove()]==Map.OBSTACULO){
                     dodging=true;
                     
-                    if(state == FORCE_EXPLORATION && listaMovimientos.get(0).getSecond()==movingBlock)
+                    if(state == FORCE_EXPLORATION && listaMovimientos.get(0).getMove()==movingBlock)
                     	state=OBSTACLE_AREA;
                     
-                    betterMoveBeforeDodging=listaMovimientos.get(0).getSecond();
+                    betterMoveBeforeDodging=listaMovimientos.get(0).getMove();
             }
             
             return NO_DEC;
@@ -1090,7 +1090,7 @@ public class Drone extends SuperAgent {
      * @param args Argumentos adicionales
      * @return Decision tomada
      */
-    protected int criticalBehaviour(List<Pair> listaMovimientos, Object[] args) {
+    protected int criticalBehaviour(List<Movement> listaMovimientos, Object[] args) {
             //Si no le queda batería el drone la pide y se queda en standby.
     	int amount=1;
     	if (battery == 0){
@@ -1121,10 +1121,10 @@ public class Drone extends SuperAgent {
      * @param args Argumentos adicionales
      * @return Decision tomada.
      */
-    protected int basicBehaviour(List<Pair> listaMovimientos, Object[] args) {
+    protected int basicBehaviour(List<Movement> listaMovimientos, Object[] args) {
             //Si podemos hacer el mejor movimiento lo hacemos
-            if(listaMovimientos.get(0).getThird()){
-                    return listaMovimientos.get(0).getSecond();
+            if(listaMovimientos.get(0).isValid()){
+                    return listaMovimientos.get(0).getMove();
             }
 
             int second=-1, third=-1;
@@ -1132,9 +1132,9 @@ public class Drone extends SuperAgent {
             //Si un movimiento es posible entonces hemos encontrado uno mejor que los que encontrasemos antes
             //Desplazamos los valores encontrados antes (siempre se queda en second el mejor posible y en third el segundo mejor posible)
             for(int i=3; i>=0; i--){
-                    if(listaMovimientos.get(i).getThird()){
+                    if(listaMovimientos.get(i).isValid()){
                             third = second;
-                            second = listaMovimientos.get(i).getSecond();
+                            second = listaMovimientos.get(i).getMove();
                     }
             }
 
@@ -1148,10 +1148,10 @@ public class Drone extends SuperAgent {
             
             float distSecond=0, distThird=0;
             for(int i=0; i<4; i++){
-                    if(listaMovimientos.get(i).getSecond() == second)
-                            distSecond = listaMovimientos.get(i).getFirst();
-                    if(listaMovimientos.get(i).getSecond() == third)
-                            distThird = listaMovimientos.get(i).getFirst(); 
+                    if(listaMovimientos.get(i).getMove() == second)
+                            distSecond = listaMovimientos.get(i).getDistance();
+                    if(listaMovimientos.get(i).getMove() == third)
+                            distThird = listaMovimientos.get(i).getDistance(); 
             }
             
             //Ahora comprobamos si existe empate entre ambos (distancias parecidas).
@@ -1187,7 +1187,7 @@ public class Drone extends SuperAgent {
      * @param tieargs Argumentos adicionales
      * @return Decision tomada o NO_DEC si no ha podido resolver el empate
      */
-    protected int tieResolution(List<Pair> listaMovimientos, Object[] tieargs) {
+    protected int tieResolution(List<Movement> listaMovimientos, Object[] tieargs) {
             return NO_DEC;
     }
 
@@ -1202,11 +1202,11 @@ public class Drone extends SuperAgent {
      * @return List de Movement ordenado.
      * 
      * @see Drone#freeSquaresConditions()
-     * @see Drone#sortMovements(List<Pair>)
+     * @see Drone#sortMovements(List<Movement>)
      */
-    protected List<Pair> getMovementList() {
+    protected List<Movement> getMovementList() {
 
-            ArrayList<Pair> mispares=new ArrayList<Pair>();
+            ArrayList<Movement> mispares=new ArrayList<Movement>();
             boolean[] basicond;
 
           
@@ -1217,16 +1217,16 @@ public class Drone extends SuperAgent {
             
             //Creamos el array con todos los movimientos, incluyendo la distancia al objetivo, el movimiento en si, y si es valido o no
             calculoDist= (float) Math.sqrt(Math.pow((posiOX-(posX+1)),2)+Math.pow((posiOY-posY), 2));
-            mispares.add(new Pair(calculoDist,ESTE,basicond[ESTE]));
+            mispares.add(new Movement(calculoDist,ESTE,basicond[ESTE]));
             
             calculoDist=(float) Math.sqrt(Math.pow((posiOX-posX),2)+Math.pow((posiOY-(posY+1)), 2));
-            mispares.add(new Pair(calculoDist,SUR,basicond[SUR]));
+            mispares.add(new Movement(calculoDist,SUR,basicond[SUR]));
             
             calculoDist=(float) Math.sqrt(Math.pow((posiOX-(posX-1)),2)+Math.pow((posiOY-posY), 2));
-            mispares.add(new Pair(calculoDist,OESTE,basicond[OESTE]));
+            mispares.add(new Movement(calculoDist,OESTE,basicond[OESTE]));
             
             calculoDist=(float) Math.sqrt(Math.pow((posiOX-posX),2)+Math.pow((posiOY-(posY-1)), 2));
-            mispares.add(new Pair(calculoDist,NORTE,basicond[NORTE]));
+            mispares.add(new Movement(calculoDist,NORTE,basicond[NORTE]));
     
             return sortMovements(mispares);
     }
@@ -1266,14 +1266,14 @@ public class Drone extends SuperAgent {
      * @param lista List de Movement a ordenar.
      * @return List de Movement ordenado.
      */
-    protected List<Pair> sortMovements(List<Pair> lista){
-            List<Pair> ordenados=new ArrayList<Pair>(lista);
-            Collections.sort(ordenados, new Comparator<Pair>(){
-                    public int compare(Pair p1, Pair p2){
-                            if(p1.getFirst()<p2.getFirst()){
+    protected List<Movement> sortMovements(List<Movement> lista){
+            List<Movement> ordenados=new ArrayList<Movement>(lista);
+            Collections.sort(ordenados, new Comparator<Movement>(){
+                    public int compare(Movement p1, Movement p2){
+                            if(p1.getDistance()<p2.getDistance()){
                                     return -1;
                             }else{
-                                    if(p1.getFirst()>p2.getFirst()){
+                                    if(p1.getDistance()>p2.getDistance()){
                                             return 1;
                                     }else{
                                             return 0;
