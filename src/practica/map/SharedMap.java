@@ -167,7 +167,7 @@ public class SharedMap extends Map{
 	}
 	
 	/**
-	 * Devuelve todas las secciones conflictivas del mapa
+	 * Devuelve todas las secciones conflictivas del mapa.
 	 * @author Jonay
 	 * @return Lista de todas las casillas conflictivas
 	 */
