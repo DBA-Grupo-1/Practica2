@@ -2,7 +2,11 @@ package practica.util;
 
 import es.upv.dsic.gti_ia.core.ACLMessage;
 
-// Cola de mensajes asíncrona
+/**
+ * Cola de mensajes asíncrona
+ * @author Luis Castillo
+ */
+
 public class MessageQueue {
    private ACLMessage queue []; // Cola de mensajes
    private int size;            // Número de elementos en la cola

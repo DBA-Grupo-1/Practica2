@@ -11,15 +11,14 @@ import practica.util.GPSLocation;
 /**
  * Camino que recorre un drone.
  * @author Daniel
- *
  */
 
 public class Trace extends LinkedList<Choice>{
 	
-	public static final int DECISION_ONLY = 0;
-	public static final int DECISION_ONLY_READABLE = 1;
-	public static final int POSITION_ONLY = 2;
-	public static final int DECISION_AND_POSITION = 3;
+	public static final int DECISION_ONLY = 0;				//Imprime solo las decisiones en un bloque de texto.
+	public static final int DECISION_ONLY_READABLE = 1;		//Imprime solo las decisiones en un formato legible.
+	public static final int POSITION_ONLY = 2;				//Imprime solo las posiciones en un formato legible.
+	public static final int DECISION_AND_POSITION = 3;		//Imprime las posiciones y las decisiones en un formato legible.
 	
 	/**
 	 * Constructor vacío, crea una traza sin elementos.
@@ -133,12 +132,14 @@ public class Trace extends LinkedList<Choice>{
 		String resultado = "";
 		switch (mode){
 			case DECISION_ONLY:
+				//Imprimir solo las decisiones en un bloque de texto.
 				for (int i = 0; i < size(); i++){
 					resultado += get(i).toString();
 				}
 				break;
 		
 			case DECISION_ONLY_READABLE:
+				//Imprimir solo las decisiones en un formato legible.
 				for (int i = 0; i < size(); i++){
 					resultado += get(i).toString();
 					if (i != size() - 1)
@@ -147,6 +148,7 @@ public class Trace extends LinkedList<Choice>{
 				break;
 				
 			case POSITION_ONLY:
+				//Imprimir solo las posiciones en un formato legible.
 				for (int i = 0; i < size(); i++){
 					resultado += ("{" + get(i).getLocation().getPositionX() + ", " + get(i).getLocation().getPositionY() + "}");
 					if (i != size() - 1)
@@ -155,6 +157,7 @@ public class Trace extends LinkedList<Choice>{
 				break;
 				
 			case DECISION_AND_POSITION: 
+				//Imprimir las posiciones y las decisiones en un formato legible.
 				for (int i = 0; i < size(); i++){
 					resultado += ("{" + get(i).getLocation().getPositionX() + ", " + get(i).getLocation().getPositionY() + "}");
 					resultado += (" - " + get(i).toString());

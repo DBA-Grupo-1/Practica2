@@ -18,6 +18,7 @@ public class ConflictiveBox {
 	
 	/**
 	 * Constructor con el ID del drone responsable de la casilla
+	 * @author Jonay
 	 * @param id el ID del drone
 	 */
 	public ConflictiveBox(AgentID id){
@@ -45,7 +46,7 @@ public class ConflictiveBox {
 	/**
 	 * Devuelve si la elección de esta casilla es peligrosa (te puedes quedar rezagado)
 	 * @author Jonay
-	 * @return si es peligrosa
+	 * @return true si es peligrosa, fale si no
 	 */
 	public boolean isDangerous() {
 		return dangerous;
@@ -54,7 +55,7 @@ public class ConflictiveBox {
 	/**
 	 * Setter para indicar si es o no peligrosa
 	 * @author Jonay
-	 * @param dangerous
+	 * @param dangerous true si es peligrosa, false si no.
 	 */
 	public void setDangerous(boolean dangerous) {
 		this.dangerous = dangerous;
