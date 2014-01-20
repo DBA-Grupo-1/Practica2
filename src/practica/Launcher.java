@@ -1,5 +1,12 @@
 package practica;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+
 import org.apache.log4j.Logger;
 import org.apache.log4j.xml.DOMConfigurator;
 
@@ -25,13 +32,16 @@ public class Launcher {
 	private static Drone[] drones;
 	private Visualizer visualizer;
 	private Map map;
+	private String mapName;
 	private Charger charger;
 	private static int droneAmount;
 	private static AgentID[] droneIDs;
+	private static String directorio;
 	
 	/**
 	 * @author Jahiel
 	 * @author Daniel
+	 * @author Jonay
 	 * @param args
 	 */
 	public static void main(String[] args) {
@@ -40,6 +50,11 @@ public class Launcher {
 		drones = new Drone[droneAmount];
 		DOMConfigurator.configure("src/Configuration/loggin.xml"); // ERR
         Logger logger = Logger.getLogger(Launcher.class);
+        
+//        directorio = System.getProperty("java.class.path");
+//        File dir = new File(directorio);
+//        directorio= dir.getParent();
+        directorio = System.getProperty("user.dir");
         
         // QPID
         AgentsConnection.connect("localhost",5672, "test", "guest", "guest", false);
@@ -58,16 +73,20 @@ public class Launcher {
 	 * Crea y lanza los agentes cuando el visualizador se lo diga.
 	 * @author Daniel
 	 * @author Alberto
-	 * @author Ismaels
+	 * @author Ismael
+	 * @author Jonay
 	 */
 	public void launch(){
         try{
             System.out.println("Main: Creando agentes");
             //Cargar el mapa del visualizador
         	map = visualizer.getMapToLoad();
+        	mapName = visualizer.getMapName();
+        	
+        	int tipoComienzo = fileChecker(); // Se ajusta el orden de los drones según lo guardado en ficheros
         	
             //LLamar a los constructores de los agentes y asignar logs
-        	satellite = new Satellite(id_satelite,id_charger, map, droneAmount, visualizer);
+        	satellite = new Satellite(id_satelite,id_charger, map, droneAmount, visualizer, tipoComienzo);
         	satellite.setLog(visualizer.getLogs()[0]);
         	charger = new Charger(id_charger, 500*droneAmount, id_satelite, visualizer);
         	charger.setLog(visualizer.getLogs()[1]);
@@ -94,6 +113,49 @@ public class Launcher {
 	}
 	
 	/**
+	 * Hace las comprobaciones de ficheros para ver el orden en el que toca comenzar en este mapa
+	 * @author Jonay
+	 * @return el tipo de comienzo
+	 */
+	private int fileChecker() {
+		int tipoComienzo = -1;
+		String texto = "";
+		try{
+			// declaramos la variable archivo como un objeto File y le asignamos una ruta donde se creará
+			File archivo = new File (directorio+"/"+mapName + ".dba");
+			System.out.println(directorio);
+			
+			if(archivo.exists()){ // Si el archivo existe leemos su contenido
+				BufferedReader br = new BufferedReader(new FileReader(archivo));
+				
+				texto = br.readLine();
+				tipoComienzo = Integer.parseInt(texto);
+				br.close();
+				
+				// Sobreescribimos para cambiar el orden de comienzo la próxima vez que se lea el fichero
+				String aEscribir = "" + (tipoComienzo+1)%5;
+				
+				BufferedWriter bw = new BufferedWriter(new FileWriter(archivo));
+				bw.write(aEscribir);
+				bw.close(); // Muy importante, cerramos el archivo
+				
+			} else { // Si el archivo no existe lo creamos y lo inicializamos
+				tipoComienzo = 0; // Inicializamos el comienzo a la primera vez
+				
+				BufferedWriter bw = new BufferedWriter(new FileWriter(archivo));
+				bw.write("1");  // Lo ponemos a 1 porque el tipoComienzo 0 es el que vamos a usar ahora
+				bw.close(); // Muy importante, cerramos el archivo
+				
+			}
+			
+		}catch (IOException ioe){
+			ioe.printStackTrace();
+		}
+		
+		return tipoComienzo;
+	}
+
+	/**
 	 * @author Daniel
 	 * @author Alberto
 	 * @author Ismael
@@ -104,7 +166,7 @@ public class Launcher {
             //PARTE CONFLICTIVA
         	map = ImgMapConverter.imgToMap("src/maps/MeetingPoint2.png");
     		ImgMapConverter.mapToImg("src/maps/pruebaoriginal.png", map);
-    		//(Ismael) modificada la función Satellite para que acepte una identida de cargador
+    		//(Ismael) modificada la función Satellite para que acepte una identidad de cargador
         	satellite = new Satellite(id_satelite,id_charger, map, droneAmount);
         	charger = new Charger(id_charger, 500*droneAmount, id_satelite);
         	for(int i=0; i<droneAmount; i++){

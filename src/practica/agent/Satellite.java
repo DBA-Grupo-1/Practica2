@@ -63,13 +63,11 @@ public class Satellite extends SuperAgent {
 	private int countDronesReachedGoal;
 	private int droneScout, droneScout_Improber;    //Contador de exploradores y exploradores mejoradores
 	private ArrayList<AgentID> dronesLagger;
+	private int tipoComienzo;
 	
 	/**
 	 * Constructor
-	 * @author Jahiel
-	 * @author Dani
-	 * FIXME otros autores añadiros.
-	 * @author Ismael (añadida variable charger)
+	 * @author Jonay
 	 * @param sat ID del satélite.
 	 * @param charger ID del cargador.
 	 * @param mapa mapa que se usará.
@@ -77,6 +75,24 @@ public class Satellite extends SuperAgent {
 	 * @throws Exception
 	 */
 	public Satellite(AgentID sat,AgentID charger, Map map, int maxDrones) throws Exception{
+		//Inicialización de atributos.
+		this(sat,charger,map,maxDrones,-1); // Llamada al constructor principal con el parámetro que falta
+	}
+	
+	/**
+	 * Constructor
+	 * @author Jahiel
+	 * @author Dani
+	 * FIXME otros autores añadiros.
+	 * @author Ismael (añadida variable charger)
+	 * @author Jonay
+	 * @param sat ID del satélite.
+	 * @param charger ID del cargador.
+	 * @param mapa mapa que se usará.
+	 * @param maxDrones número máximo de drones que aceptará el satélite.
+	 * @throws Exception
+	 */
+	public Satellite(AgentID sat,AgentID charger, Map map, int maxDrones, int tipoComienzo) throws Exception{
 		//Inicialización de atributos.
 		super(sat);
 		countDronesReachedGoal=0;
@@ -120,12 +136,30 @@ public class Satellite extends SuperAgent {
 		posXIniciales = new ArrayList<Integer>();
 		for(int i=0; i<maxDrones; i++)
 			posXIniciales.add(new Integer(i*5));
+		
+		this.tipoComienzo = tipoComienzo;
+	}
+
+	/**
+	 * Constructor con un visualizador
+	 * @param sat 			ID del satélite.
+	 * @param charger		ID del cargador.
+	 * @param mapa 			mapa que se usará.
+	 * @param maxDrones 	número máximo de drones que aceptará el satélite.
+	 * @param v 			visualizador.
+	 * @throws Exception
+	 */
+	public Satellite(AgentID sat,AgentID charger, Map mapa, int maxDrones, Visualizer v, int tipoComienzo) throws Exception{
+		this (sat,charger, mapa, maxDrones, tipoComienzo);		
+		visualizer = v;
+		usingVisualizer = true;
 	}
 	
 	/**
 	 * Constructor con un visualizador
 	 * @author Dani
 	 * @author Ismael (añadida variable charger al constructor)
+	 * @author Jonay
 	 * @param sat 			ID del satélite.
 	 * @param charger		ID del cargador.
 	 * @param mapa 			mapa que se usará.
@@ -134,7 +168,7 @@ public class Satellite extends SuperAgent {
 	 * @throws Exception
 	 */
 	public Satellite(AgentID sat,AgentID charger, Map mapa, int maxDrones, Visualizer v) throws Exception{
-		this (sat,charger, mapa, maxDrones);		
+		this (sat,charger, mapa, maxDrones, -1);		
 		visualizer = v;
 		usingVisualizer = true;
 	}
@@ -493,6 +527,9 @@ public class Satellite extends SuperAgent {
 	public void finalize() {
 		System.out.println("Agente " + this.getName() + " ha finalizado");
 		ImgMapConverter.mapToImg("src/maps/resutado.png", mapSeguimiento);
+		if(tipoComienzo != -1){
+			
+		}
 	}
 
 	/**
@@ -521,9 +558,17 @@ public class Satellite extends SuperAgent {
 			//Meter mensaje en el log
 			addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), SubjectLibrary.Register, "");
 			drones[connectedDrones] = msg.getSender();
-			Random r=new Random();
-			int randomPos = r.nextInt(posXIniciales.size());
-			GPSLocation location = new GPSLocation(posXIniciales.get(randomPos).intValue(), 0);
+			GPSLocation location;
+			
+			if(tipoComienzo == -1){ // Comienzo de drones no especificado, se pone aleatorio
+				Random r=new Random();
+				int randomPos = r.nextInt(posXIniciales.size());
+				location = new GPSLocation(posXIniciales.get(randomPos).intValue(), 0);
+			} else { // Se obtiene posición de comienzo según se le haya indicado
+				int indice = obtenerPosicion(drones[connectedDrones].name);
+				location = new GPSLocation(posXIniciales.get(indice).intValue(),0);
+			}
+			
 			droneStuses[connectedDrones] = new DroneStatus(msg.getSender(), drones[connectedDrones].name, location);
 			connectedDrones ++;
 
@@ -558,6 +603,22 @@ public class Satellite extends SuperAgent {
 	}
 	
 	
+	private int obtenerPosicion(String name) {
+		if(name.equals("Drone0")){
+			return tipoComienzo;
+		} else if (name.equals("Drone1")){
+			return (tipoComienzo +1)%5;
+		} else if (name.equals("Drone2")){
+			return (tipoComienzo +2)%5;
+		} else if (name.equals("Drone3")){
+			return (tipoComienzo +3)%5;
+		} else  if ((name.equals("Drone4"))){
+			return (tipoComienzo +4)%5;
+		}
+		
+		return 0; // Aquí no debería llegar si hay 5 drones
+	}
+
 	/**
 	 * Rutina de tratamiento de un mensaje con el protocolo "SendMeMyStatus".
 	 * Los posibles mensajes que se mandan son:
