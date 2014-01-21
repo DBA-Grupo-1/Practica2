@@ -204,10 +204,10 @@ public class Satellite extends SuperAgent {
 		}
 		
 		try {
-			System.out.println(msg.getPerformative() + " " + msg.getContent());
+			//System.out.println(msg.getPerformative() + " " + msg.getContent());
 			
 			queue.put(msg);
-			System.out.println("mensaje recibido!");	
+			//System.out.println("mensaje recibido!");	
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}	
@@ -363,7 +363,7 @@ public class Satellite extends SuperAgent {
 		status.put("battery", droneStatus.getBattery());
 		
 		if(droneStatus.getBattery()<0){
-			System.out.println("Bateria del drone: " + droneStatus.getBattery());
+			//System.out.println("Bateria del drone: " + droneStatus.getBattery());
 			throw new RuntimeException("SinBateria (Satelite)");
 		}
 		
@@ -377,7 +377,7 @@ public class Satellite extends SuperAgent {
 			String conflictiveData = new Gson().toJson(mapSeguimiento.getSharedSquare(gps.getPositionX(), gps.getPositionY()).getConflictiveBoxes());
 			//Lo añado
 			status.put(JSONKeyLibrary.ConflictiveBox, conflictiveData);
-			System.out.println("ZZZ AÑADIENDO CASILLA CONFLICTIVA AL STATUS pos" + status.toString());
+			//System.out.println("ZZZ AÑADIENDO CASILLA CONFLICTIVA AL STATUS pos" + status.toString());
 		}
 
 		return status;
@@ -477,17 +477,17 @@ public class Satellite extends SuperAgent {
 	@Override
 	protected void execute() {
 		ACLMessage proccesingMessage = null;
-		System.out.println("Agente " + this.getName() + " en ejecución");
+		//System.out.println("Agente " + this.getName() + " en ejecución");
 		try{
 		
 		while (!exit) {		
 				try {
 					proccesingMessage = (ACLMessage) requestQueue.take();
 				} catch (InterruptedException e) {
-					System.out.println("¡Cola vacía!");
+					//System.out.println("¡Cola vacía!");
 					e.printStackTrace();
 				}
-				System.out.println("Procesando mensaje: protocolo " + proccesingMessage.getProtocol());
+				//System.out.println("Procesando mensaje: protocolo " + proccesingMessage.getProtocol());
 				
 				try{
 					switch (proccesingMessage.getProtocol()){
@@ -521,7 +521,7 @@ public class Satellite extends SuperAgent {
 	 * @author Jahiel
 	 */
 	public void finalize() {
-		System.out.println("Agente " + this.getName() + " ha finalizado");
+		//System.out.println("Agente " + this.getName() + " ha finalizado");
 		ImgMapConverter.mapToImg("src/maps/resutado.png", mapSeguimiento);
 		if(tipoComienzo != -1){
 			
@@ -550,7 +550,7 @@ public class Satellite extends SuperAgent {
 	 */
 	public void onRegister (ACLMessage msg){
 		try{
-			System.out.println("Recibido registro de: " + msg.getSender().toString());
+			//System.out.println("Recibido registro de: " + msg.getSender().toString());
 			//Meter mensaje en el log
 			addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), SubjectLibrary.Register, "");
 			drones[connectedDrones] = msg.getSender();
@@ -640,7 +640,7 @@ public class Satellite extends SuperAgent {
 			try {				
 				//Mando el status en formato JSON del drone que me lo solicitó.
 				send(ACLMessage.INFORM, msg.getSender(), "SendMeMyStatus", null, msg.getInReplyTo(), msg.getConversationId(), createJSONStatus(findStatus(msg.getSender())));
-				System.out.println("Mensaje mandado con su status.");
+				//System.out.println("Mensaje mandado con su status.");
 			} catch (JSONException e) {
 				//Si hubo error al crear el objeto JSOn se manda un error.
 				e.printStackTrace();
@@ -803,7 +803,7 @@ public class Satellite extends SuperAgent {
 
 		for(String name: this.subscriptions.get(SubjectLibrary.AllMovements).keySet()){
 			send(ACLMessage.INFORM, new AgentID(name), ProtocolLibrary.Subscribe, null, null,  this.subscriptions.get(SubjectLibrary.AllMovements).get(name), contentSub);
-			System.out.println("informado drone"+name);
+			//System.out.println("informado drone"+name);
 			//Meter mensaje en el log
 			//TODO si se llega a hacer, es un mensaje un poco complejo.
 		}
@@ -860,7 +860,7 @@ public class Satellite extends SuperAgent {
 				//String contentString = rechargedDrone.name + " was recharged " + String.valueOf(rechargedAmmount);
 				//addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), SubjectLibrary.BatteryRequest, contentString);	
 			} catch (JSONException e) {
-				System.out.println("onReload - Error en JSON");
+				//System.out.println("onReload - Error en JSON");
 				e.printStackTrace();
 			}
 		}
@@ -1073,7 +1073,7 @@ public class Satellite extends SuperAgent {
 
 				for(int i=0; i<droneStuses.length; i++){
 					if(droneStuses[i].isGoalReached()){
-						System.out.println("PIDIENDO TRAZA A: " + droneStuses[i].getId().toString());
+						//System.out.println("PIDIENDO TRAZA A: " + droneStuses[i].getId().toString());
 						traceAux = askForDroneTrace(droneStuses[i].getId());
 						if(optimalTrace == null)
 							optimalTrace = traceAux; 
@@ -1355,7 +1355,7 @@ public class Satellite extends SuperAgent {
 				case SubjectLibrary.IdAgent:	    		
 		    		//Meter mensaje en el log
 		    		addMessageToLog(Log.SENDED, msg.getSender(), msg.getProtocol(), subject, "");	
-					System.out.println("Satelite recibe mensaje ");
+					//System.out.println("Satelite recibe mensaje ");
 					try{
 						
 						res.put(JSONKeyLibrary.Subject,"IdAgent");
@@ -1366,7 +1366,7 @@ public class Satellite extends SuperAgent {
 							throw new RuntimeException("Fallo: Status agente no existe");
 						}
 						else{
-							System.out.println("SATELITE MUESTRA MENSAAAJEEEE " +status.getId());
+							//System.out.println("SATELITE MUESTRA MENSAAAJEEEE " +status.getId());
 							res.put("name",status.getName());
 							res.put("ID",status.getId());
 							
@@ -1383,7 +1383,7 @@ public class Satellite extends SuperAgent {
 		    		//Meter mensaje en el log
 		    		addMessageToLog(Log.SENDED, msg.getSender(), msg.getProtocol(), subject, "");	
 					try{
-						System.out.println("ESTOY EN POSITION");
+						//System.out.println("ESTOY EN POSITION");
 						res.put(JSONKeyLibrary.Subject,SubjectLibrary.Position);
 						JSONObject aux = new JSONObject();
 						AgentID id = msg.getSender();
@@ -1395,7 +1395,7 @@ public class Satellite extends SuperAgent {
 						aux.put("x",status.getLocation().getPositionX());
 						aux.put("y", status.getLocation().getPositionY());
 						res.put("Posi", aux);
-						System.out.println("Envio informacion");
+						//System.out.println("Envio informacion");
 						send(ACLMessage.INFORM,msg.getSender(),ProtocolLibrary.Information,null,null,buildConversationId(), res);   		
 			    		//Meter mensaje en el log
 			    		addMessageToLog(Log.SENDED, msg.getSender(), msg.getProtocol(), subject, n.toString());	
@@ -1433,7 +1433,7 @@ public class Satellite extends SuperAgent {
 					try{
 						res.put(JSONKeyLibrary.Subject,"DroneBattery");
 						AgentID id =new AgentID(content.getString("AgentID"));
-						System.out.println(id);
+						//System.out.println(id);
 						DroneStatus status = findStatus(id);
 						int bat=status.getBattery();
 						if(bat<0||bat>75){
@@ -1473,17 +1473,18 @@ public class Satellite extends SuperAgent {
 	private void onNotification(ACLMessage msg) throws JSONException {
 		JSONObject content = new JSONObject(msg.getContent());
 		String subject = content.getString(JSONKeyLibrary.Subject);
-		//JSONObject res = new JSONObject();
 		
 		switch(subject){
 			case SubjectLibrary.ConflictInform:
 				String confJSON = content.getString(JSONKeyLibrary.ConflictBox);
 				Gson gson = new Gson();
 				ConflictiveBox cb = gson.fromJson(confJSON, ConflictiveBox.class);
-				System.out.println("ZZZ RECIBIENDO CASILLA CONFLICTIVA pos: " + cb.getPosInicial().getPositionX() + ", " + cb.getPosInicial().getPositionY());
+				//System.out.println("ZZZ RECIBIENDO CASILLA CONFLICTIVA pos: " + cb.getPosInicial().getPositionX() + ", " + cb.getPosInicial().getPositionY());
 				mapSeguimiento.addConflictiveBox(cb);
-				System.out.println("ZZZ AÑADIENDO CASILLA CONFLICTIVA pos: " + cb.getPosInicial().getPositionX() + ", " + cb.getPosInicial().getPositionY());//Meter mensaje en el log
-				//addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), subject, cb.toString());	
+				//System.out.println("ZZZ AÑADIENDO CASILLA CONFLICTIVA pos: " + cb.getPosInicial().getPositionX() + ", " + cb.getPosInicial().getPositionY());
+				
+				//Meter mensaje en el log				
+				addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), subject, cb.toString());	
 				break;
 			default: 
 				sendError(new NotUnderstoodException("Subject no encontrado"), msg);
@@ -1611,7 +1612,7 @@ public class Satellite extends SuperAgent {
 				send(ACLMessage.INFORM,cargador,ProtocolLibrary.Finalize,"default",null,buildConversationId(), res);
 				//Meter mensaje en el log
 				addMessageToLog(Log.SENDED, cargador, ProtocolLibrary.Finalize, SubjectLibrary.End , "End");
-				System.out.println("FINALIZADO SATELITE ");
+				//System.out.println("FINALIZADO SATELITE ");
 				
 				if (usingVisualizer)
 					visualizer.finalize(droneStuses);

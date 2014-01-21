@@ -306,7 +306,7 @@ public class Charger extends SuperAgent {
 			}//FIN IF
 
 		}//FIN WHILE
-		System.out.println("CARGADOR FINALIZA");
+		//System.out.println("CARGADOR FINALIZA");
 	}
 
 	/**

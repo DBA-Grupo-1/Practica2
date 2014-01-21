@@ -268,7 +268,6 @@ public class Visualizer extends JFrame {
 
 		//Actualizo la etiqueta si ha pasado el intervalo de actualización
 		int previousBattery = Integer.parseInt(labelChargerBattery.getText());
-		System.out.println(chargerBattery + "      " + previousBattery);
 		if (chargerBattery <= (previousBattery - UPDATE_INTERVAL))
 			labelChargerBattery.setText(String.valueOf(chargerBattery));
 	}

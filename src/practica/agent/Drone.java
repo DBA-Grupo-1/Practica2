@@ -293,13 +293,13 @@ public class Drone extends SuperAgent {
                     if(battery<=0 && decision!=END_FAIL)
                     	throw new RuntimeException("Sin Bateria (Drone)");
                     
-                    System.out.println("Decisión tomada: "+decision);
+                    //System.out.println("Decisión tomada: "+decision);
                     //Por si las moscas
                     if(decision != NO_DEC){
                             sendDecision(decision);
                             updateTrace(decision);
                             postUpdateTrace();
-                    		System.out.println("Y despues de put es state = " + state);
+                    		//System.out.println("Y despues de put es state = " + state);
                     }
             }while(decision != END_FAIL && decision != END_SUCCESS);
             
@@ -357,8 +357,8 @@ public class Drone extends SuperAgent {
     		indexPosition = index+1; 
     		
     	}
-    	System.out.println("  LERA LERA STATE "+state);
-    	System.out.println(" LERA LERA INDICE "+index);
+    	//System.out.println("  LERA LERA STATE "+state);
+    	//System.out.println(" LERA LERA INDICE "+index);
     }
     
     /**
@@ -735,7 +735,7 @@ public class Drone extends SuperAgent {
             		e.printStackTrace();
             	}
 
-            	System.out.println("\n" + this.getAid().toString() + " is thinking in state " + state);
+            	//System.out.println("\n" + this.getAid().toString() + " is thinking in state " + state);
 
             	if(state == SLEEPING || state == LAGGING){	
             		sendRequestOutput();
@@ -744,7 +744,7 @@ public class Drone extends SuperAgent {
             		getStatus();
 
             		preBehavioursSetUp();
-            		System.out.println("Ahora es state = " + state);
+            		//System.out.println("Ahora es state = " + state);
             		tempDecision = checkBehaviours();
             	}
             }while(tempDecision == RETHINK);
@@ -798,7 +798,7 @@ public class Drone extends SuperAgent {
     			break;
     		default: break;
     		}
-			System.out.println("SALGO!!!!!!!!!!!!!!!!!!!: " + behavior);
+			//System.out.println("SALGO!!!!!!!!!!!!!!!!!!!: " + behavior);
     	}else{
     		this.enterStandBy();
     	}
@@ -1041,7 +1041,7 @@ public class Drone extends SuperAgent {
     			AgentID id = null;
     			
 				for(int i=0; i<size; i++){
-					System.out.println("LA TRAZA DE " + currentConflictiveBox.get(i).getDroneID().toString() + " MIDE " + currentConflictiveBox.get(i).getLength());
+					//System.out.println("LA TRAZA DE " + currentConflictiveBox.get(i).getDroneID().toString() + " MIDE " + currentConflictiveBox.get(i).getLength());
 					if(currentConflictiveBox.get(i).getLength() < minSize && !currentConflictiveBox.get(i).isDangerous()){
 						minSize = currentConflictiveBox.get(i).getLength();
 						id = currentConflictiveBox.get(i).getDroneID();
@@ -1049,7 +1049,7 @@ public class Drone extends SuperAgent {
 					}
 				}
 
-				System.out.println("HE ELEGIDO LA DE " + id.toString());
+				//System.out.println("HE ELEGIDO LA DE " + id.toString());
 				optimalTrace = otherTracesDrones.get(id.toString()); // Cambio a la traza que me conduce por el camino mas corto para bordear el obstaculo
 				currentPositionTracking = optimalTrace.getIndex( currentConflictiveBox.get(indexMinBox).getPosInicial());
 			}
@@ -1148,7 +1148,7 @@ public class Drone extends SuperAgent {
         	
         	if(batteryReceived > 0){
         		battery += batteryReceived;
-                System.out.println("Recibo bateria y ahora tengo: " + battery);
+                //System.out.println("Recibo bateria y ahora tengo: " + battery);
         	}else{
         		return END_FAIL;
         	}
@@ -1466,7 +1466,7 @@ public class Drone extends SuperAgent {
 				if(msg.getPerformativeInt()!= ACLMessage.INFORM){
 					throw new RuntimeException("Error en la recepcion del tipo de mensaje");
 				}
-				System.out.println("Finalizado "+ this.getAid());
+				//System.out.println("Finalizado "+ this.getAid());
 			
 			} catch (InterruptedException e) {
 				e.printStackTrace();
@@ -1814,7 +1814,7 @@ public class Drone extends SuperAgent {
             default: 
                     throw new RuntimeException("Fallo en cojer respuesta del satelite");
             }
-            System.out.println("Estoy en el receptor " + id);
+            //System.out.println("Estoy en el receptor " + id);
             return id;
     }
     /**
@@ -1912,7 +1912,7 @@ public class Drone extends SuperAgent {
     		JSONObject content;
     		int pos[] =new int[2];
             ACLMessage msg=null;
-            System.out.println("llego al receive");
+            //System.out.println("llego al receive");
             try {
 				msg=answerQueue.take();
 			} catch (InterruptedException e1) {
@@ -2133,7 +2133,7 @@ public class Drone extends SuperAgent {
                     distance = aux3.getDouble("dist");
                     angle= (float) aux3.getDouble("alpha");
                     battery= contentValues.getInt("battery");
-                    System.out.println("Mi bateria es: " + battery);
+                    //System.out.println("Mi bateria es: " + battery);
                     
                     String valor = contentValues.getString("goal");
                     if(valor.equals("No")){
@@ -2194,13 +2194,13 @@ public class Drone extends SuperAgent {
                     }
                     */
                     // Compruebo si se reciben bien los alrededores:
-                    System.out.println("Alrededores del Dron: ");
-                    System.out.println("|"+surroundings[0]+", "+surroundings[1]+", "+surroundings[2]+"|");
-                    System.out.println("|"+surroundings[3]+", "+surroundings[4]+", "+surroundings[5]+"|");
-                    System.out.println("|"+surroundings[6]+", "+surroundings[7]+", "+surroundings[8]+"|");
+                    //System.out.println("Alrededores del Dron: ");
+                    //System.out.println("|"+surroundings[0]+", "+surroundings[1]+", "+surroundings[2]+"|");
+                    //System.out.println("|"+surroundings[3]+", "+surroundings[4]+", "+surroundings[5]+"|");
+                    //System.out.println("|"+surroundings[6]+", "+surroundings[7]+", "+surroundings[8]+"|");
                         
             } catch (JSONException ex) {
-                    System.out.println("numeritos");
+                    //System.out.println("numeritos");
                     ex.printStackTrace();
                     Logger.getLogger(Drone.class.getName()).log(Level.SEVERE, null, ex);
             } catch (Exception e) {
@@ -2296,22 +2296,22 @@ public class Drone extends SuperAgent {
     	}        
     	//not-understood
     	else if (msg.getPerformativeInt() == ACLMessage.NOT_UNDERSTOOD){
-    		System.out.println("onBatteryReceived: recibido not-understood.");
+    		//System.out.println("onBatteryReceived: recibido not-understood.");
     		//Meter mensaje en el log
     		addMessageToLog(Log.RECEIVED, chargerID, msg.getProtocol(), SubjectLibrary.BatteryRequest, "Not-understood");
     	}
     	//refuse
     	else if (msg.getPerformativeInt() == ACLMessage.REFUSE){
-    		System.out.println("onBatteryReceiver: recibido refuse.");
+    		//System.out.println("onBatteryReceiver: recibido refuse.");
     		try {
     			JSONObject content = new JSONObject(msg.getContent());
     			String errorReason = content.getString(JSONKeyLibrary.Error);
-    			System.out.println("Batería no recibida. Motivo: " + errorReason);
+    			//System.out.println("Batería no recibida. Motivo: " + errorReason);
     			//TODO: gestionar algunos errores, como el de no más batería.
     			//Meter mensaje en el log
     			addMessageToLog(Log.RECEIVED, chargerID, msg.getProtocol(), SubjectLibrary.BatteryRequest, errorReason);
     		} catch (JSONException e) {
-    			System.out.println("Error JSON al gestionar el refuse en la batería");
+    			//System.out.println("Error JSON al gestionar el refuse en la batería");
     			e.printStackTrace();
     		}
     	}
@@ -2605,7 +2605,7 @@ public class Drone extends SuperAgent {
             if(subscribers.containsKey(msg.getSender().toString())){
                         throw new RefuseException(ErrorLibrary.AlreadySubscribed);
             }else{ /*if(teammates.length != 2){      // Esta comprobación pienso que tambien hay que hacerla al mandar la petición.
-            	System.out.println("REFUSE 2  !!!!!!");
+            	//System.out.println("REFUSE 2  !!!!!!");
             	
                     throw new RefuseException(ErrorLibrary.MissingAgents);
             }else{*/
@@ -2646,7 +2646,7 @@ public class Drone extends SuperAgent {
      */
     protected void onDroneChargedInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException {
             // TODO Auto-generated method stub
-    	System.out.println("Informado de CHARGER");
+    	//System.out.println("Informado de CHARGER");
             
     }
 
@@ -2660,7 +2660,7 @@ public class Drone extends SuperAgent {
      */
     protected void onDroneReachedGoalInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException {
     	if(state != FINISH_GOAL){
-    		System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxx");
+    		//System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxx");
     		JSONObject content = null;
     		AgentID id = null;
 
@@ -2697,17 +2697,17 @@ public class Drone extends SuperAgent {
     
     protected void onYourMovementsInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException{
             // TODO
-    	System.out.println("Informado de YOURMOVEMENTs");
+    	//System.out.println("Informado de YOURMOVEMENTs");
     }
 
     protected void onAllMovementsInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException{
             // TODO
-    	System.out.println("Informado de ALLMOVEMENT");
+    	//System.out.println("Informado de ALLMOVEMENT");
     }
     
     protected void onConflictiveSectionsInform(ACLMessage msg)throws IllegalArgumentException, RuntimeException, FIPAException{
             // TODO
-    	System.out.println("Informado de CONFLICTIVE");
+    	//System.out.println("Informado de CONFLICTIVE");
     }
     
     
@@ -2759,7 +2759,7 @@ public class Drone extends SuperAgent {
                             teammates = new AgentID[n];
                             for(int i=0; i<n; i++){
                                     teammates[i] = new AgentID(idsArray.getString(i));
-                                    System.out.println(teammates[i]);
+                                    //System.out.println(teammates[i]);
                             }
                     }catch(JSONException e){
                             e.printStackTrace();
@@ -3073,10 +3073,10 @@ public class Drone extends SuperAgent {
             	int lastMove = trace.get(trace.size()-1).getMove();
             	if(!enter_force)
             		movimientosLibres = blockMovement(movimientosLibres, (lastMove+2)%4, false);
-            	System.out.println("Movimientos libres: ");
-                System.out.println("|"+movimientosLibres[0]+", "+movimientosLibres[1]+", "+movimientosLibres[2]+"|");
-                System.out.println("|"+movimientosLibres[3]+", "+movimientosLibres[4]+", "+movimientosLibres[5]+"|");
-                System.out.println("|"+movimientosLibres[6]+", "+movimientosLibres[7]+", "+movimientosLibres[8]+"|");
+            	//System.out.println("Movimientos libres: ");
+                //System.out.println("|"+movimientosLibres[0]+", "+movimientosLibres[1]+", "+movimientosLibres[2]+"|");
+                //System.out.println("|"+movimientosLibres[3]+", "+movimientosLibres[4]+", "+movimientosLibres[5]+"|");
+                //System.out.println("|"+movimientosLibres[6]+", "+movimientosLibres[7]+", "+movimientosLibres[8]+"|");
             }
             
             int[] movs = {5,7,3,1};
@@ -3152,7 +3152,7 @@ public class Drone extends SuperAgent {
      */
     @Override
     public void finalize() {
-            System.out.println("Agente " + this.getName() + " ha finalizado");
+            //System.out.println("Agente " + this.getName() + " ha finalizado");
             practica.util.ImgMapConverter.mapToImg("src/maps/miresultado"+this.getAid().name+".png", droneMap);
             dispatcher.interrupt();
             super.finalize();
