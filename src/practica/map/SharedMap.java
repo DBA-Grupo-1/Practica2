@@ -10,11 +10,11 @@ import es.upv.dsic.gti_ia.core.AgentID;
  * Esta clase crea un mapa que podrá guardar las casillas por donde ha pasado cada uno de los drones,
  * así como marcar casillas con malas decisiones.
  * 
- * @author jonay
+ * @author Jonay
  * @author Daniel
  */
 public class SharedMap extends Map{
-	private SharedSquare sharedSquares[][];
+	private SharedSquare sharedSquares[][];	//Matriz de casillas que forma el mapa compartido.
 
 	/**
 	 * Constructor de SharedMap en el que se inicializan las casillas como vacías 

@@ -1,9 +1,13 @@
 package practica.map;
 
+/**
+ * Estructura de datos que contiene el mapa por donde se mueve el drone.
+ * @author Daniel
+ */ 
 public class Map {
-	private int matrix[][];
-	private int height;
-	private int width;
+	private int matrix[][];		//Estructura de datos donde se guardan los datos del mapa.
+	private int height;			//Altura del mapa.
+	private int width;			//Anchura del mapa.
 	public final static int LIBRE = 0;
 	public final static int OBSTACULO = 1;
 	public final static int VISITADO = 2;
@@ -11,6 +15,7 @@ public class Map {
 
 	/**
 	 * Constructor por defecto. Todas las celdas se rellenan con el valor LIBRE.
+	 * @author Daniel
 	 * @param heigh 	Altura del mapa
 	 * @param width 	Anchura del mapa
 	 */
@@ -27,6 +32,7 @@ public class Map {
 
 	/**
 	 * Constructor por copia.
+	 * @author Daniel
 	 * @param map 	Mapa original a copiar.
 	 */
 	public Map(Map map) {
@@ -43,6 +49,7 @@ public class Map {
 
 	/**
 	 * Getter de la altura
+	 * @author Daniel
 	 * @return Altura del mapa
 	 */
 	public int getHeight() {
@@ -51,6 +58,7 @@ public class Map {
 
 	/**
 	 * Getter de la anchura.
+	 * @author Daniel
 	 * @return Anchura del mapa
 	 */
 	public int getWidth() {
@@ -59,12 +67,12 @@ public class Map {
 
 	/**
 	 * Getter del valor de una celda.
-	 * @param x 	Columna.
-	 * @param y 	Fila.
+	 * @author Daniel
+	 * @param x Columna.
+	 * @param y Fila.
 	 * @return Valor de la celda en la posición x,y.
 	 */
 	public int getValue(int x, int y) {
-		// Añadida una comprobación: si la x o la y están fuera de los límites del mapa, devolver OBSTACULO
 		if (x < 0 || y < 0 || x >= this.getWidth() || y >= this.getHeight()) {
 			return OBSTACULO;
 		} else {
@@ -74,6 +82,7 @@ public class Map {
 
 	/**
 	 * Setter del valor de una celda
+	 * @author Daniel
 	 * @param x 	Columna.
 	 * @param y 	Fila.
 	 * @param value Valor nuevo de la celda.

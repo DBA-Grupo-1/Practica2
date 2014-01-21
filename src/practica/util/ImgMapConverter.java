@@ -26,10 +26,25 @@ public abstract class ImgMapConverter {
 	
 	//Colores sacados de http://mindprod.com/jgloss/netscapergb.html
 	private static final Color indigo = new Color (75, 0, 130);
+	@SuppressWarnings("unused")
+	private static final Color darkSlateBlue = new Color (72, 61, 139);
+	@SuppressWarnings("unused")
 	private static final Color tomato = new Color (255, 99, 71);
 	private static final Color forestGreen = new Color (34, 139, 34);
-	private static final Color darkFoldenRod = new Color (184, 134, 11);
-	private static final int [] droneColors = {Color.RED.getRGB(), Color.CYAN.getRGB(), darkFoldenRod.getRGB(), forestGreen.getRGB(), indigo.getRGB()}; //Colores para los drones 
+	private static final Color yellowGreen = new Color (154, 205, 50);
+	private static final Color darkGoldenRod = new Color (184, 134, 11);
+	@SuppressWarnings("unused")
+	private static final Color khaki = new Color (240, 230, 140);
+	@SuppressWarnings("unused")
+	private static final Color skyBlue = new Color (135, 206, 235);
+	private static final Color darkGray = new Color (169, 169, 169);
+	private static final Color lightblue = new Color (173, 216, 230);
+	@SuppressWarnings("unused")
+	private static final Color crimson = new Color (220, 20, 60);
+	private static final Color darkred = new Color (138, 0, 0);
+	private static final int [] droneColors = {Color.RED.getRGB(), Color.CYAN.getRGB(), darkGoldenRod.getRGB(), forestGreen.getRGB(), indigo.getRGB()}; //Colores para los drones.
+	private static final int [] droneBackColors = {darkred.getRGB(), lightblue.getRGB(), Color.ORANGE.getRGB(), yellowGreen.getRGB(), darkGray.getRGB()}; //Colores para cuando un drone retroceda su traza.
+
 	
 	/**
 	 * Devuelve el array de colores que usa para pintar las trazas.
@@ -38,6 +53,15 @@ public abstract class ImgMapConverter {
 	 */
 	public static int [] getDroneColor (){
 		return droneColors;
+	}
+	
+	/**
+	 * Devuelve el array de colores que usa para pintar los dobles recorridos de las trazas.
+	 * @author Daniel
+	 * @return array con los colores en formato RGB.
+	 */
+	public static int [] getDroneBackColor (){
+		return droneBackColors;
 	}
 	
 	/**
@@ -174,7 +198,6 @@ public abstract class ImgMapConverter {
 		int value; // Para leer los valores del mapa
 		BufferedImage bf = new BufferedImage(map.getWidth(), map.getHeight(), BufferedImage.TYPE_INT_ARGB);
 		AgentID [] droneIDs = Launcher.getDroneIDs(); //IDs de los drones
-		
 		// Creo los colores de la imagen según los valores del mapa
 		for (int i = 0; i < map.getHeight(); i++)
 			for (int j = 0; j < map.getWidth(); j++){
@@ -191,9 +214,13 @@ public abstract class ImgMapConverter {
 						
 						for (int k = 0; k < droneIDs.length; k++){
 							if (id.toString().equals(droneIDs[k].toString())){
-								valueRGB = droneColors[k];
+								valueRGB = droneColors[k];							
+								if (map.getSharedSquare(i, j).getTimesVisited().get(id.toString()) == 2)
+									valueRGB = droneBackColors[k];
 							}
-						}						
+						}		
+						
+						
 						break; 
 					default : valueRGB = -1; break; //Por si acaso.
 				}

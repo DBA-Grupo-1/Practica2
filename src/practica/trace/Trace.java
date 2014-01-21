@@ -1,9 +1,6 @@
 package practica.trace;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Queue;
 
 import practica.lib.ErrorLibrary;
 import practica.util.GPSLocation;
@@ -13,8 +10,9 @@ import practica.util.GPSLocation;
  * @author Daniel
  */
 
-public class Trace extends LinkedList<Choice>{
-	
+public class Trace extends LinkedList<Choice>{	
+
+	private static final long serialVersionUID = 1L;
 	public static final int DECISION_ONLY = 0;				//Imprime solo las decisiones en un bloque de texto.
 	public static final int DECISION_ONLY_READABLE = 1;		//Imprime solo las decisiones en un formato legible.
 	public static final int POSITION_ONLY = 2;				//Imprime solo las posiciones en un formato legible.

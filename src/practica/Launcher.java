@@ -18,25 +18,25 @@ import es.upv.dsic.gti_ia.core.AgentID;
 import es.upv.dsic.gti_ia.core.AgentsConnection;
 
 /**
+ * Lanzador de la aplicación
  * @author Jonay
  * @author Daniel
  * @author Alberto
  * @author Ismael
- *
  */
 public class Launcher {
 	
-	private AgentID id_satelite, id_charger;
-	private Satellite satellite;
-	private Drone drone1, drone2, drone3;
-	private static Drone[] drones;
-	private Visualizer visualizer;
-	private Map map;
-	private String mapName;
-	private Charger charger;
-	private static int droneAmount;
-	private static AgentID[] droneIDs;
-	private static String directorio;
+	private AgentID id_satelite; 		//ID del satélite.
+	private AgentID id_charger;			//ID del cargador.
+	private Satellite satellite;		//Satélite
+	private Charger charger;			//Cargador
+	private static Drone[] drones;		//Array de Drones
+	private Visualizer visualizer;		//Visualizador
+	private Map map;					//Mapa que recorrerán los drones
+	private String mapName;				//Nombre del mapa
+	private static int droneAmount;		//Número de drones que se lanzarán
+	private static AgentID[] droneIDs;	//Vector de IDs de los drones para pasárselo al visualizador
+	private static String directorio;	//Directorio de trabajo 
 	
 	/**
 	 * @author Jahiel
@@ -49,11 +49,9 @@ public class Launcher {
 		droneIDs = new AgentID [droneAmount];
 		drones = new Drone[droneAmount];
 		DOMConfigurator.configure("src/Configuration/loggin.xml"); // ERR
-        Logger logger = Logger.getLogger(Launcher.class);
+        @SuppressWarnings("unused")
+		Logger logger = Logger.getLogger(Launcher.class);
         
-//        directorio = System.getProperty("java.class.path");
-//        File dir = new File(directorio);
-//        directorio= dir.getParent();
         directorio = System.getProperty("user.dir");
         
         // QPID
@@ -156,6 +154,7 @@ public class Launcher {
 	}
 
 	/**
+	 * Lanza la ejecución sin visualizador
 	 * @author Daniel
 	 * @author Alberto
 	 * @author Ismael
@@ -163,10 +162,8 @@ public class Launcher {
 	public void launchWithoutVisualizer(){
         try{
             System.out.println("Main: Creando agentes");
-            //PARTE CONFLICTIVA
         	map = ImgMapConverter.imgToMap("src/maps/MeetingPoint2.png");
     		ImgMapConverter.mapToImg("src/maps/pruebaoriginal.png", map);
-    		//(Ismael) modificada la función Satellite para que acepte una identidad de cargador
         	satellite = new Satellite(id_satelite,id_charger, map, droneAmount);
         	charger = new Charger(id_charger, 500*droneAmount, id_satelite);
         	for(int i=0; i<droneAmount; i++){
@@ -188,6 +185,7 @@ public class Launcher {
 		
 	/**
 	 * Getter de droneIDs.
+	 * @author Daniel
 	 * @return la lista con todos los IDs de los drones.
 	 */
 	public static AgentID[] getDroneIDs (){

@@ -5,7 +5,6 @@ import org.json.JSONObject;
 
 import practica.gui.Log;
 import practica.lib.JSONKeyLibrary;
-import practica.lib.SubjectLibrary;
 import es.upv.dsic.gti_ia.architecture.FIPAException;
 import es.upv.dsic.gti_ia.core.ACLMessage;
 import es.upv.dsic.gti_ia.core.AgentID;
@@ -17,8 +16,8 @@ import es.upv.dsic.gti_ia.core.SingleAgent;
  *
  */
 public class SuperAgent extends SingleAgent {
-	private int conversationCounter;
-	private Log log;
+	private int conversationCounter;	//Contador de conversaciones
+	private Log log;					//Log de mensajes
 
 	/**
 	 * Constructor
@@ -123,6 +122,7 @@ public class SuperAgent extends SingleAgent {
 	
 	/**
 	 * Encapsulación del método addMessage del log para controlar que no sea nulo, para poder realizar una ejecución sin la interfaz.
+	 * @author Daniel
 	 * @param type RECEIVED si el mensaje se ha recibido, SENDED si se ha enviado.
 	 * @param name nombre del receptor o remitente del mensaje.
 	 * @param protocol protocolo del mensaje.
@@ -136,6 +136,7 @@ public class SuperAgent extends SingleAgent {
 	
 	/**
 	 * Encapsulación del método addMessage del log para controlar que no sea nulo, para poder realizar una ejecución sin la interfaz.
+	 * @author Daniel
 	 * @param type RECEIVED si el mensaje se ha recibido, SENDED si se ha enviado.
 	 * @param aid ID del agente receptor o remitente del mensaje.
 	 * @param protocol protocolo del mensaje.

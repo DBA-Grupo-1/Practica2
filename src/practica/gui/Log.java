@@ -1,14 +1,10 @@
 package practica.gui;
 
-import javax.swing.JLabel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
+import java.awt.Font;
+
 import javax.swing.JTextPane;
 
-import com.sun.xml.internal.messaging.saaj.packaging.mime.internet.ContentType;
-
 import practica.lib.ErrorLibrary;
-import java.awt.Font;
 
 /**
  * Clase que almacena un log de mensajes en formato HTML.
@@ -16,12 +12,12 @@ import java.awt.Font;
  *
  */
 public class Log extends JTextPane{
-	private static JTextPane label;
-	private String log;
-	private String body;
-	private String htmlStart;
-	private String htmlEnd;
-	private int messageCount;
+	private static final long serialVersionUID = 1L;
+	private String log;								//Página HTML con la lista de mensajes.
+	private String body;							//Cuerpo de la página.
+	private String htmlStart;						//Etiquetas de principio de la página (<html> y <body>).
+	private String htmlEnd;							//Etiquetas de fin de la página (</html> y </body>).
+	private int messageCount;						//Contador de mensajes, para reiniciar el log al llegar al máximo.
 	public static final int RECEIVED = 0;
 	public static final int SENDED = 1;
 	private static final int MAX_MESSAGES = 200;
