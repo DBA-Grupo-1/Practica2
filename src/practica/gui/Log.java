@@ -86,5 +86,6 @@ public class Log extends JTextPane{
 		
 		//Actualizar etiqueta
 		setText(log);
+		setCaretPosition(getDocument().getLength());
 		}
 }

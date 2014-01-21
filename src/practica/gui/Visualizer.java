@@ -6,6 +6,7 @@ import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.util.ArrayList;
 
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
@@ -13,6 +14,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
@@ -25,6 +27,7 @@ import practica.Launcher;
 import practica.agent.Satellite;
 import practica.map.Map;
 import practica.util.ImgMapConverter;
+import practica.util.DroneStatus;
 import es.upv.dsic.gti_ia.core.AgentID;
 
 import java.awt.GridLayout;
@@ -185,6 +188,47 @@ public class Visualizer extends JFrame {
 		for (int i = 0; i < droneIDs.length; i++){
 			infoPanel.add(labelDroneUsedBattery[i]);
 		}
+	}
+	
+	public void finalize(DroneStatus [] statuses){
+		String congratulations = "Contratulations to ";
+		String condolences = "Sorry for ";
+		String finalMessage = "";
+		ArrayList <String> reachedNames = new ArrayList <String> ();
+		ArrayList <String> notReachedNames = new ArrayList <String> ();
+		
+		//Relleno los arrays.
+		for (int i = 0; i < statuses.length; i++){
+			if (statuses[i].isGoalReached())
+				reachedNames.add(statuses[i].getName());
+			else
+				notReachedNames.add(statuses[i].getName());
+		}
+		
+		//Construyo felicitaciones.
+		for (int i = 0; i < reachedNames.size(); i++){
+			if (i != reachedNames.size() - 1)
+				congratulations += (reachedNames.get(i) + ", ");
+			else 
+				congratulations += (" and " + reachedNames.get(i) + "!!");
+		}
+		
+		//Construyo condolencias.
+		for (int i = 0; i < notReachedNames.size(); i++){
+			if (i != notReachedNames.size() - 1)
+				condolences += (notReachedNames.get(i) + ", ");
+			else 
+				condolences += (" and " + notReachedNames.get(i) + ".");
+		}	
+		
+		//Construyo el mensaje que se mostrará
+		if (!reachedNames.isEmpty())
+			finalMessage += (congratulations + "\n");
+		if (!notReachedNames.isEmpty())
+			finalMessage += condolences;
+		
+		//Lanzo el mensaje
+		JOptionPane.showMessageDialog(null, finalMessage, "Results", JOptionPane.DEFAULT_OPTION);
 	}
 	
 	/**

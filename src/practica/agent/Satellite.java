@@ -1600,20 +1600,21 @@ public class Satellite extends SuperAgent {
 		addMessageToLog(Log.RECEIVED, this.getAid(), ProtocolLibrary.Finalize, SubjectLibrary.End , "");	
 		try{
 			JSONObject res = new JSONObject();
-
 						
-						res.put(JSONKeyLibrary.Subject, SubjectLibrary.End);
-						res.put("Content","End" );
-						for(int i=0;i<maxDrones;i++){
-							send(ACLMessage.INFORM,droneStuses[i].getId(),ProtocolLibrary.Finalize,"default",null,buildConversationId(), res);
-							//Meter mensaje en el log
-							addMessageToLog(Log.SENDED, droneStuses[i].getId(), ProtocolLibrary.Finalize, SubjectLibrary.End , "End");	
-						}
-						send(ACLMessage.INFORM,cargador,ProtocolLibrary.Finalize,"default",null,buildConversationId(), res);
-						//Meter mensaje en el log
-						addMessageToLog(Log.SENDED, cargador, ProtocolLibrary.Finalize, SubjectLibrary.End , "End");
-						System.out.println("FINALIZADO SATELITE ");
-								
+				res.put(JSONKeyLibrary.Subject, SubjectLibrary.End);
+				res.put("Content","End" );
+				for(int i=0;i<maxDrones;i++){
+					send(ACLMessage.INFORM,droneStuses[i].getId(),ProtocolLibrary.Finalize,"default",null,buildConversationId(), res);
+					//Meter mensaje en el log
+					addMessageToLog(Log.SENDED, droneStuses[i].getId(), ProtocolLibrary.Finalize, SubjectLibrary.End , "End");	
+				}
+				send(ACLMessage.INFORM,cargador,ProtocolLibrary.Finalize,"default",null,buildConversationId(), res);
+				//Meter mensaje en el log
+				addMessageToLog(Log.SENDED, cargador, ProtocolLibrary.Finalize, SubjectLibrary.End , "End");
+				System.out.println("FINALIZADO SATELITE ");
+				
+				if (usingVisualizer)
+					visualizer.finalize(droneStuses);
 				
 			}catch(JSONException e){
 				e.printStackTrace();
