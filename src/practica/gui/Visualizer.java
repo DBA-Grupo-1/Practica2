@@ -209,8 +209,12 @@ public class Visualizer extends JFrame {
 		for (int i = 0; i < reachedNames.size(); i++){
 			if (i != reachedNames.size() - 1)
 				congratulations += (reachedNames.get(i) + ", ");
-			else 
-				congratulations += (" and " + reachedNames.get(i) + "!!");
+			else {
+				if (reachedNames.size() > 1)
+					congratulations += "and ";
+				congratulations += (reachedNames.get(i) + "!!");
+			}
+			
 		}
 		
 		//Construyo condolencias.
@@ -218,7 +222,9 @@ public class Visualizer extends JFrame {
 			if (i != notReachedNames.size() - 1)
 				condolences += (notReachedNames.get(i) + ", ");
 			else 
-				condolences += (" and " + notReachedNames.get(i) + ".");
+				if (notReachedNames.size() > 1)
+					condolences += "and ";
+				condolences += (notReachedNames.get(i) + ".");
 		}	
 		
 		//Construyo el mensaje que se mostrará

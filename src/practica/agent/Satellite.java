@@ -415,34 +415,34 @@ public class Satellite extends SuperAgent {
 		String decisionString = ""; //Para guardar el log.
 		
 		switch (decision) {
-			case Drone.ESTE: // Este
+			case Drone.DECISION_EAST: // Este
 				x = gps.getPositionX() + 1;
 				y = gps.getPositionY();
 				decisionString = "East";
 				break;
 	
-			case Drone.SUR: // Sur
+			case Drone.DECISION_SOUTH: // Sur
 				x = gps.getPositionX();
 				y = gps.getPositionY() + 1;
 				decisionString = "South";
 				break;
 	
-			case Drone.OESTE: // Oeste
+			case Drone.DECISION_WEST: // Oeste
 				x = gps.getPositionX() - 1;
 				y = gps.getPositionY();
 				decisionString = "West";
 				break;
 	
-			case Drone.NORTE: // Norte
+			case Drone.DECISION_NORTH: // Norte
 				x = gps.getPositionX();
 				y = gps.getPositionY() - 1;
 				decisionString = "North";
 				break;
-			case Drone.END_SUCCESS:
+			case Drone.DECISION_END_SUCCESS:
         		//Meter mensaje en el log
             	addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), SubjectLibrary.IMoved, "Success! ^_^ ");
 				return true;
-			case Drone.END_FAIL:
+			case Drone.DECISION_END_FAIL:
         		//Meter mensaje en el log
             	addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), SubjectLibrary.IMoved, "Fail u_u");
 				return true;
@@ -452,7 +452,7 @@ public class Satellite extends SuperAgent {
 		
 		//Actualizar status
 		//Si se movió, consumir una unidad de batería.
-		if (decision == Drone.ESTE || decision == Drone.SUR || decision == Drone.OESTE || decision == Drone.NORTE)
+		if (decision == Drone.DECISION_EAST || decision == Drone.DECISION_SOUTH || decision == Drone.DECISION_WEST || decision == Drone.DECISION_NORTH)
 			droneStatus.setBattery(droneStatus.getBattery() - 1);
 
 		try {
@@ -701,7 +701,7 @@ public class Satellite extends SuperAgent {
 			JSONObject o;
 			try {
 				o = new JSONObject(msg.getContent());
-				if(o.getInt(JSONKeyLibrary.Decision) == Drone.END_SUCCESS){
+				if(o.getInt(JSONKeyLibrary.Decision) == Drone.DECISION_END_SUCCESS){
 					findStatus(droneID).setGoalReached(true);
 					countDronesReachedGoal++;
 					
@@ -710,7 +710,7 @@ public class Satellite extends SuperAgent {
 					if(finalize==this.maxDrones){
 						onFinalize();
 					}
-				}else if(o.getInt(JSONKeyLibrary.Decision) == Drone.END_FAIL){
+				}else if(o.getInt(JSONKeyLibrary.Decision) == Drone.DECISION_END_FAIL){
 					onFinalize();
 					
 				}else
