@@ -68,10 +68,10 @@ public class SuperAgent extends SingleAgent {
 	}	
 	
 	/**
-	 * Manda un mensaje de error en base a una excepción y a un mensaje
+	 * Manda un mensaje de error en base a una excepción y a un mensaje.
 	 * @author Alberto
-	 * @param fe excepción a tratar
-	 * @param msgOrig mensaje que originó la excepción.
+	 * @param fe Excepción lanzada durante el tratamiento del mensaje.
+	 * @param msgOrig Mensaje original recibido.
 	 */
 	protected void sendError(FIPAException fe, ACLMessage msgOrig) {
 		ACLMessage msgError = fe.getACLMessage();
@@ -102,12 +102,11 @@ public class SuperAgent extends SingleAgent {
 	 * @author Alberto
 	 * @return Conversation id formado segun el patron acordado
 	 */
-	protected String buildConversationId() {
+	protected synchronized String buildConversationId() {
 		String res;
-		synchronized(this){
-			res = this.getAid().toString()+"#"+conversationCounter;
-			conversationCounter++;
-		}
+		res = this.getAid().toString()+"#"+conversationCounter;
+		conversationCounter++;
+
 		return res;
 	}
 	

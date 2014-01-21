@@ -82,7 +82,6 @@ public class Drone extends SuperAgent {
 	private static final int MIN_SIZE_FOR_OBSTACLE_SKIRTING = 40; //Distancia a partir de la cual empieza a considerar dos zonas obstáculos consecutivas como una sola. 
 
 
-	private final int LIMIT_MOVEMENTS;			//¿?
 	protected boolean goal;						//Si el drone ha llegado o no al objetivo.
 	private int decision;						//Decisión tomada por el drone.
 	private int state;							//Estado del drone.
@@ -158,8 +157,6 @@ public class Drone extends SuperAgent {
 		super(aid);
 		surroundings = new int[9];
 		droneMap = new Map(mapWidth, mapHeight);
-		
-		LIMIT_MOVEMENTS = mapWidth + mapHeight;
 
 		this.sateliteID = sateliteID;
 		chargerID = charger;
@@ -629,7 +626,8 @@ public class Drone extends SuperAgent {
 	 *    preBehavioursSetUp
 	 *    checkBehaviours
 	 *  until !RETHINK
-	 *  @author jahiel
+	 *  @author Alberto
+	 *  @author Jahiel
 	 * @return Decision tomada.
 	 */
 	protected int think(){
@@ -826,6 +824,7 @@ public class Drone extends SuperAgent {
 	 * - secondBehaviour
 	 * - thirdBehaviour
 	 * - basicBehaviour
+	 * @author Alberto
 	 * @return Decision tomada
 	 */
 	protected int checkBehaviours(){
@@ -865,6 +864,7 @@ public class Drone extends SuperAgent {
 	 * Comprueba si el drone debe terminar su ejecucion. Es llamado antes de criticalBehaviour.
 	 * Nota: la comprobacion de que se ha alcanzado el objetivo se comprueba en el think, separado de los comportamientos. En esta funcion se deben comprobar
 	 * las condiciones de parada en otros casos.
+	 * @author Alberto
 	 * @param listaMovimientos Lista de movimientos a analizar
 	 * @param args Argumentos adicionales
 	 * @return Decision tomada. Debe ser END_FAIL o NO_DEC
@@ -1058,6 +1058,7 @@ public class Drone extends SuperAgent {
 	/**
 	 * Comportamiento básico del agente. Es el ultimo en ejecutarse. Debe devolver una decision distinta de NO_DEC.
 	 * 
+	 * @author Alberto
 	 * @param listaMovimientos Lista de movimientos a analizar
 	 * @param args Argumentos adicionales
 	 * @return Decision tomada.
@@ -1140,6 +1141,7 @@ public class Drone extends SuperAgent {
 	 * - Si se desea cambiar la condicion de movimiento libre sobreescribir la funcion freeSquaresConditions.
 	 * - Si se desea cambiar el proceso de ordenacion sobreescribir la funcion sortMovements.
 	 *  
+	 * @author Alberto
 	 * @return List de Movement ordenado.
 	 * 
 	 * @see Drone#freeSquaresConditions()
@@ -1174,6 +1176,7 @@ public class Drone extends SuperAgent {
 
 	/**
 	 * Evalua las condiciones de movimiento libre para los cuatro movimientos.
+	 * @author Alberto
 	 * @return Array con cuatro booleanos. Los campos corresponden a la condicion de movimiento libre de ESTE, SUR, OESTE y NORTE (en ese orden.
 	 */
 	protected boolean[] freeSquaresConditions(){
@@ -1204,17 +1207,18 @@ public class Drone extends SuperAgent {
 	/**
 	 * Ordena una lista de movimientos
 	 * 
+	 * @author Alberto
 	 * @param lista List de Movement a ordenar.
 	 * @return List de Movement ordenado.
 	 */
 	protected List<Movement> sortMovements(List<Movement> lista){
 		List<Movement> ordenados=new ArrayList<Movement>(lista);
 		Collections.sort(ordenados, new Comparator<Movement>(){
-			public int compare(Movement p1, Movement p2){
-				if(p1.getDistance()<p2.getDistance()){
+			public int compare(Movement mov1, Movement mov2){
+				if(mov1.getDistance()<mov2.getDistance()){
 					return -1;
 				}else{
-					if(p1.getDistance()>p2.getDistance()){
+					if(mov1.getDistance()>mov2.getDistance()){
 						return 1;
 					}else{
 						return 0;
@@ -1476,8 +1480,7 @@ public class Drone extends SuperAgent {
 	 * @author Alberto
 	 * @return Bateria total restante.
 	 */
-	@SuppressWarnings("unused")
-	private int askBattery(){
+	protected int askBattery(){
 		JSONObject requestContent = new JSONObject();
 		ACLMessage answer=null;
 		int resultado = -1;
@@ -2660,38 +2663,11 @@ public class Drone extends SuperAgent {
 
 	/************************************************************************************************************************/
 	/************************************************************************************************************************/
-	/************************************************************************************************************************/
-
-
-	/**
-	 * Se comprueba si el movimiento realizado por el Drone a mejorado la distancia absoluta con 
-	 * respecto a la baliza:
-	 *  - Si la mejora se almacena esa nueva distancia minima alcanzada por el drone.
-	 *  - En caso contraria se comprueba que no se halla alcanzado el tope de movimientos permitidos
-	 *  sin mejorar la distancia. Si se supera el tope de movimientos se finaliza la ejecución sin
-	 *  haber encontrado solución al problema.
-	 * @param distance Distancia absoluta a la que se encuentra el drone con respecto a la baliza.
-	 * @return Se devuelve True si se debe finalizar y False en caso contrario.
-	 */
-	@SuppressWarnings("unused")
-	private boolean stop(float distance){
-
-		if(distance < distanceMin){
-			distanceMin = distance;
-			counterStop = 0;
-			return false;
-		}else
-			counterStop++;
-
-		if(counterStop >= LIMIT_MOVEMENTS)
-			return true;
-		else
-			return false;
-
-	}        
+	/************************************************************************************************************************/     
 
 	/**
 	 * Calcula la esquina que rodean dos posiciones.
+	 * @author Alberto
 	 * @param mov1 Movimiento que nos dejaria en la primera posición 
 	 * @param mov2 Movimiento que nos dejaria en la segunda posición
 	 * @return Valor del surrounding para esa esquina
@@ -2750,6 +2726,7 @@ public class Drone extends SuperAgent {
 
 	/**
 	 * Método para obtener un array con los valores combinados de surroundings y el mapa
+	 * @author Alberto
 	 * @author Jahiel
 	 * @return Un array con lo que hay en las posiciones de alrededor. Los valores posibles son LIBRE, OBSTACULO y VISITADO
 	 */
