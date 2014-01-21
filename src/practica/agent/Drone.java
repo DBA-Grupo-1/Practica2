@@ -158,7 +158,7 @@ public class Drone extends SuperAgent {
 		super(aid);
 		surroundings = new int[9];
 		droneMap = new Map(mapWidth, mapHeight);
-		//Ahora el limite depende del tamaño del mapa
+		
 		LIMIT_MOVEMENTS = mapWidth + mapHeight;
 
 		this.sateliteID = sateliteID;
@@ -189,19 +189,6 @@ public class Drone extends SuperAgent {
 
 		enter_force = true;
 	}
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 	/************************************************************************************************************************************
 	 ******** Modo StandBy **************************************************************************************************************
@@ -274,13 +261,11 @@ public class Drone extends SuperAgent {
 				preEsq = dodging;// Guarda si estaba esquivando desde antes de calcular su nueva decisión
 				decision = think();
 				postEsq = dodging;
-				//sendInformYourMovement(posX, posY, decision); // activar si hay Subs. tipo YourMovements
 
 				if(battery<=0 && decision!=DECISION_END_FAIL)
 					throw new RuntimeException("Sin Bateria (Drone)");
 
 				//System.out.println("Decisión tomada: "+decision);
-				//Por si las moscas
 				if(decision != NO_DECISION){
 					sendDecision(decision);
 					updateTrace(decision);
@@ -288,18 +273,6 @@ public class Drone extends SuperAgent {
 					//System.out.println("Y despues de put es state = " + state);
 				}
 			}while(decision != DECISION_END_FAIL && decision != DECISION_END_SUCCESS);
-
-
-			/*  if(decision == END_SUCCESS){
-            	this.enterStandBy();
-
-            	try {
-                    waitIfStandBy();
-            	} catch (InterruptedException e) {
-                    e.printStackTrace();
-            	}
-
-            }*/
 
 			practica.util.ImgMapConverter.mapToImg("src/maps/miresultado"+this.getAid().name+".png", droneMap);
 			onFinalize();
@@ -319,17 +292,12 @@ public class Drone extends SuperAgent {
 		int index = -1;
 
 		for(int i=0; i<subTrace.size(); i++){
-			//distTemp = Math.abs(subTrace.getLocation(i).getPositionX() - posX) + 
-			//	Math.abs(subTrace.getLocation(i).getPositionY() - posY);
 			distTemp = Math.sqrt(Math.pow((subTrace.getLocation(i).getPositionX() - posX), 2) + Math.pow((subTrace.getLocation(i).getPositionY() - posY), 2));
 			if(distTemp < dist){
 				dist = distTemp;
 				index = i;
 			}
 		}
-
-		//subTrace = optimalTrace.getSubtrace(posTemp);
-		//dist = dist + subTrace.size();
 
 		if(distance <= dist){
 			state = EXPLORE_MAP;
@@ -340,13 +308,12 @@ public class Drone extends SuperAgent {
 			indexPosition = index+1; 
 
 		}
-		//System.out.println("  LERA LERA STATE "+state);
-		//System.out.println(" LERA LERA INDICE "+index);
 	}
 
 	/**
 	 * Actualiza la traza del drone con la nueva decision.
 	 * @author Jonay
+	 * @author Jahiel
 	 */
 	protected void postUpdateTrace() {
 		// Casillas conflictivas
@@ -368,17 +335,7 @@ public class Drone extends SuperAgent {
 			iStraggler();
 			iStragglerReceive();
 		}
-
-		/**
-		 * if(!zonaObstaculo && entrandoEsq)
-		 * 
-		 * Actualizo codigo nuevo apartir de aqui:
-		 *  - Sustituyo la variable zona_obstaculo por los estados correspondientes:
-		 *    zona_Obstaculo = true -> state = Obstacle_Area
-		 *    zona_Obstaculo = false -> state = EXPLORE_MAP
-		 *    
-		 * @author Jahiel
-		 */
+		
 		if((state == EXPLORE_MAP || state == FORCE_EXPLORATION) && (behavior == SCOUT || behavior == SCOUT_IMPROVER) && entrandoEsq ){
 			if(state == EXPLORE_MAP)
 				state = OBSTACLE_AREA;
@@ -439,10 +396,6 @@ public class Drone extends SuperAgent {
 		trace.add(new Choice(decision, new GPSLocation(posX, posY)));
 	}
 
-
-
-
-
 	/**
 	 * Lanza el despachador.
 	 * @author Alberto
@@ -453,7 +406,6 @@ public class Drone extends SuperAgent {
 			@Override
 			public void interrupt(){
 				boolExit=true;
-
 				super.interrupt();
 			}
 			@Override                    
@@ -465,12 +417,10 @@ public class Drone extends SuperAgent {
 					}while(dispatch(msg));
 				}catch(InterruptedException e){
 					if(!boolExit){
-
 						e.printStackTrace();
 					}
-
 				} catch (JSONException e) {
-
+					e.printStackTrace();
 				}
 			}
 		};
@@ -495,6 +445,7 @@ public class Drone extends SuperAgent {
 		}
 
 		send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.DroneMove, "default", null, buildConversationId(), data);	
+		//No se añaden mensajes al log ya que hay demasiados.
 
 		try {
 			answerQueue.take();
@@ -521,21 +472,13 @@ public class Drone extends SuperAgent {
 		}
 
 		send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Notification, "default", null, buildConversationId(), data);
-		//Meter mensaje en el log
 		addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Notification, SubjectLibrary.ConflictInform, conflictiveBox.toString());	
-
-		/*   Quitar comentarios si se pone una respuesta de posibles errores por parte del satélite
-        try {
-                answerQueue.take();
-        } catch (InterruptedException e) {
-                e.printStackTrace();
-        }
-		 */
 	}
 
 	/************************************************************************************************************************************
 	 ******** Comunicación Explorador ********************************************************************************************
 	 ************************************************************************************************************************************/   
+	
 	/**
 	 * @author Ismael
 	 * comunica que esta STRAGGLER
@@ -545,12 +488,12 @@ public class Drone extends SuperAgent {
 		try{
 			ask.put(JSONKeyLibrary.Subject, SubjectLibrary.Straggler);
 			send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Scout, "default", null, buildConversationId(), ask);
-			//Meter mensaje en el log
 			addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Scout, SubjectLibrary.Straggler, "");
 		}catch(JSONException e){
 			e.printStackTrace();
 		}
 	}
+	
 	/**
 	 * @author Ismael
 	 * recepcion del STRAGGLER de quien envió el mensage.
@@ -577,7 +520,6 @@ public class Drone extends SuperAgent {
 			}
 			break;
 		case ACLMessage.FAILURE:
-
 			break;
 		}
 		return receive;
@@ -585,9 +527,8 @@ public class Drone extends SuperAgent {
 
 	/**
 	 * @author Ismael 
+	 * @author Jahiel
 	 * rececpcion de compañeros al mensaje STRAGGLER
-	 * @param who
-	 * @param what
 	 */
 	private void heStragglerReceive(ACLMessage msg){
 		if(state != FINISH_GOAL){
@@ -597,27 +538,18 @@ public class Drone extends SuperAgent {
 			case ACLMessage.INFORM:
 				try {
 					content = new JSONObject(msg.getContent());
-
-
-
 					id = new AgentID(content.getString(JSONKeyLibrary.Straggler));
 				} catch (JSONException e) {
 					e.printStackTrace();
 				}      
 
-				Trace t =  askForDroneTrace(id); // pregunto la traza del drone que ha finalizado para ver si es mejor que la optima 
-				// hasta el momento.
+				Trace t =  askForDroneTrace(id); // pregunto la traza del drone que ha finalizado para ver si es mejor que la optima hasta el momento.				
 				otherTracesDrones.put(id.toString(), t);
-				/**
-				 * Despierto al drone. No incluyo la traza del rezagado puesto que es una traza peligrosa.
-				 * 
-				 * @author Jahiel
-				 */
-
+				
+				//Despierto al drone. No incluyo la traza del rezagado puesto que es una traza peligrosa.
 				this.leaveStandBy();
 				break;
 			case ACLMessage.FAILURE:
-
 				break;
 			}
 		}
@@ -632,7 +564,6 @@ public class Drone extends SuperAgent {
 		try{
 			ask.put(JSONKeyLibrary.Subject, SubjectLibrary.Start);
 			send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Scout, "default", null, buildConversationId(), ask);
-			//Meter mensaje en el log
 			addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Scout, SubjectLibrary.Start, "");
 		}catch(JSONException e){
 			e.printStackTrace();
@@ -644,8 +575,6 @@ public class Drone extends SuperAgent {
 	/**
 	 * @author Ismael
 	 * Funcion de que recibe mensaje de peticion de salida
-	 * @param resId
-	 * @param Mod
 	 */
 	public Object[] askOutReceive(){
 		ACLMessage msg=null;
@@ -716,8 +645,6 @@ public class Drone extends SuperAgent {
 				e.printStackTrace();
 			}
 
-			//System.out.println("\n" + this.getAid().toString() + " is thinking in state " + state);
-
 			if(state == SLEEPING || state == LAGGING){	
 				sendRequestOutput();
 				tempDecision = DECISION_RETHINK;
@@ -725,7 +652,6 @@ public class Drone extends SuperAgent {
 				getStatus();
 
 				preBehavioursSetUp();
-				//System.out.println("Ahora es state = " + state);
 				tempDecision = checkBehaviours();
 			}
 		}while(tempDecision == DECISION_RETHINK);
@@ -738,25 +664,26 @@ public class Drone extends SuperAgent {
 	 * - Si no soy el drone seleccionado no hacer nada y bloquearte.
 	 * - Si soy el seleccionado: cojer el MODO y en funcion del modo que me haya asignado el satelite comportarme de una forma u otra:
 	 *   
-	 *   SLEEPING = 0,   //Estados del drone
-								 GO_TO_POINT_TRACE = 1,
-								 EXPLORE_MAP = 2,
-								 FOLLOW_TRACE = 3,
-								 FORCE_EXPLORATION = 4,
-								 LAGGING = 5,
-								 UNDO_TRACE = 6,
-								 FINISH_GOAL = 7;
+	 *  	SLEEPING = 0,  						Durmiendo.
+	 *		GO_TO_POINT_TRACE = 1,				Ir al punto más cercano de la traza.
+	 *		EXPLORE_MAP = 2,					Explorar el mapa sin forzarla.
+	 *		FOLLOW_TRACE = 3,					Seguir la traza.
+	 *		FORCE_EXPLORATION = 4,				Forzar la exploración.
+	 *		LAGGING = 5, 						Rezagado
+	 *		UNDO_TRACE = 6,						Deshacer la traza.
+	 *		FINISH_GOAL = 7,					Ir directamente al objetivo.
+	 *		OBSTACLE_AREA = 8;					En zona obstáculo.
 	 *   
 	 * @author Jahiel
 	 */
 	public void sendRequestOutput(){
 		int mode = -1;
-		Object[] res;
+		Object[] response;
 		AgentID drone_selected;
 
-		res = askOut();
-		drone_selected = (AgentID)res[0];
-		mode = ((Integer) res[1]).intValue();
+		response = askOut();
+		drone_selected = (AgentID)response[0];
+		mode = ((Integer) response[1]).intValue();
 
 		if(this.getAid().toString().equals((drone_selected.toString()))){
 			behavior = mode;
@@ -778,7 +705,6 @@ public class Drone extends SuperAgent {
 				break;
 			default: break;
 			}
-			//System.out.println("SALGO!!!!!!!!!!!!!!!!!!!: " + behavior);
 		}else{
 			this.enterStandBy();
 		}
@@ -862,8 +788,7 @@ public class Drone extends SuperAgent {
 				enter_force = true;
 				posiOX= (posX + (Math.cos(angle) * distance));
 				posiOY= (posY + (Math.sin(angle)*distance));
-				movingBlock = currentObstacleConflictiveBoxes.get(0).getDecision();  // Se coje la decisión que tomó el otro drone para bloquear
-				// este movimiento
+				movingBlock = currentObstacleConflictiveBoxes.get(0).getDecision();  // Se coje la decisión que tomó el otro drone para bloquear este movimiento
 				otherSideOfTheObstacle = currentObstacleConflictiveBoxes.get(0);
 
 			}else{
@@ -906,8 +831,6 @@ public class Drone extends SuperAgent {
 	protected int checkBehaviours(){
 		List<Movement> listaMovimientos;
 		int tempDecision;
-
-
 
 		listaMovimientos = getMovementList();
 
@@ -1021,19 +944,15 @@ public class Drone extends SuperAgent {
 				AgentID id = null;
 
 				for(int i=0; i<size; i++){
-					//System.out.println("LA TRAZA DE " + currentConflictiveBox.get(i).getDroneID().toString() + " MIDE " + currentConflictiveBox.get(i).getLength());
 					if(currentObstacleConflictiveBoxes.get(i).getLength() < minSize && !currentObstacleConflictiveBoxes.get(i).isDangerous()){
 						minSize = currentObstacleConflictiveBoxes.get(i).getLength();
 						id = currentObstacleConflictiveBoxes.get(i).getDroneID();
 						indexMinBox = i;
 					}
 				}
-
-				//System.out.println("HE ELEGIDO LA DE " + id.toString());
 				optimalTrace = otherTracesDrones.get(id.toString()); // Cambio a la traza que me conduce por el camino mas corto para bordear el obstaculo
 				currentPositionTracking = optimalTrace.getIndex( currentObstacleConflictiveBoxes.get(indexMinBox).getPosInicial());
 			}
-
 
 			return optimalTrace.get(currentPositionTracking).getMove();
 		}else
@@ -1114,7 +1033,7 @@ public class Drone extends SuperAgent {
 	 * @return Decision tomada
 	 */
 	protected int criticalBehaviour(List<Movement> listaMovimientos, Object[] args) {
-		//Si no le queda batería el drone la pide y se queda en standby.
+		//Si no le queda batería el drone la pide.
 		int amount=1;
 		if (battery == 0){
 			askForBattery(amount);
@@ -1128,7 +1047,6 @@ public class Drone extends SuperAgent {
 
 			if(batteryReceived > 0){
 				battery += batteryReceived;
-				//System.out.println("Recibo bateria y ahora tengo: " + battery);
 			}else{
 				return DECISION_END_FAIL;
 			}
@@ -1263,20 +1181,20 @@ public class Drone extends SuperAgent {
 		boolean[] basicond=new boolean[4];
 
 
-		basicond[DECISION_EAST]=         validSqr[5]==Map.LIBRE        && !(validSqr[2]==Map.VISITADO || validSqr[8]==Map.VISITADO);
-		basicond[DECISION_SOUTH]=                 validSqr[7]==Map.LIBRE        && !(validSqr[6]==Map.VISITADO || validSqr[8]==Map.VISITADO);
-		basicond[DECISION_WEST]=         validSqr[3]==Map.LIBRE        && !(validSqr[0]==Map.VISITADO || validSqr[6]==Map.VISITADO);
-		basicond[DECISION_NORTH]=         validSqr[1]==Map.LIBRE        && !(validSqr[0]==Map.VISITADO || validSqr[2]==Map.VISITADO);
+		basicond[DECISION_EAST] = validSqr[5] == Map.LIBRE && !(validSqr[2] == Map.VISITADO || validSqr[8] == Map.VISITADO);
+		basicond[DECISION_SOUTH] = validSqr[7] == Map.LIBRE && !(validSqr[6] == Map.VISITADO || validSqr[8] == Map.VISITADO);
+		basicond[DECISION_WEST] = validSqr[3] == Map.LIBRE && !(validSqr[0] == Map.VISITADO || validSqr[6] == Map.VISITADO);
+		basicond[DECISION_NORTH] = validSqr[1] == Map.LIBRE && !(validSqr[0] == Map.VISITADO || validSqr[2] == Map.VISITADO);
 
 		if(!(basicond[DECISION_EAST] || basicond[DECISION_SOUTH] || basicond[DECISION_WEST] || basicond[DECISION_NORTH])){
-			basicond[DECISION_EAST]=         validSqr[5]==Map.LIBRE        && !(validSqr[2]==Map.VISITADO && validSqr[8]==Map.VISITADO);
-			basicond[DECISION_SOUTH]=                 validSqr[7]==Map.LIBRE        && !(validSqr[6]==Map.VISITADO && validSqr[8]==Map.VISITADO);
-			basicond[DECISION_WEST]=         validSqr[3]==Map.LIBRE        && !(validSqr[0]==Map.VISITADO && validSqr[6]==Map.VISITADO);
-			basicond[DECISION_NORTH]=         validSqr[1]==Map.LIBRE        && !(validSqr[0]==Map.VISITADO && validSqr[2]==Map.VISITADO);
+			basicond[DECISION_EAST] = validSqr[5] == Map.LIBRE && !(validSqr[2] == Map.VISITADO && validSqr[8] == Map.VISITADO);
+			basicond[DECISION_SOUTH] = validSqr[7] == Map.LIBRE && !(validSqr[6] == Map.VISITADO && validSqr[8] == Map.VISITADO);
+			basicond[DECISION_WEST] = validSqr[3] == Map.LIBRE && !(validSqr[0] == Map.VISITADO && validSqr[6] == Map.VISITADO);
+			basicond[DECISION_NORTH] = validSqr[1] == Map.LIBRE && !(validSqr[0] == Map.VISITADO && validSqr[2] == Map.VISITADO);
 		}
 
 		if(state == FORCE_EXPLORATION && !(basicond[DECISION_EAST] || basicond[DECISION_SOUTH] || basicond[DECISION_WEST] || basicond[DECISION_NORTH])){
-			int lastMove = (trace.get(trace.size()-1).getMove()+2)%4;
+			int lastMove = (trace.get(trace.size()-1).getMove() + 2) % 4;
 			basicond[lastMove]=true;
 		}
 
@@ -1308,24 +1226,14 @@ public class Drone extends SuperAgent {
 		return ordenados;
 	}
 
-
-
-
-
-
-
-
-
-
-
 	/************************************************************************************************************************************
 	 ******** Recepcion de mensajes *****************************************************************************************************
 	 ************************************************************************************************************************************/
 
 	/**
 	 * Recibe el mensaje y lo encola. La decision de a que cola mandarlo depende enteramente del protocolo del mensaje (campo protocol).<br>
-	 * Estado actual:<br>
-	 * answerQueue -> SendMeMyStatus, IMoved<br>
+	 * Estado actual:
+	 * answerQueue -> SendMeMyStatus, IMoved
 	 * requestQueue -> BatteryQuery, TraceQuery, DroneReachedGoal, DroneRecharged, BatteryRequested
 	 * @author Jahiel
 	 * @author Alberto
@@ -1345,69 +1253,43 @@ public class Drone extends SuperAgent {
 
 		BlockingQueue<ACLMessage> queue = null;
 
-
-		//Meter mensaje en el log
 		if (!subject.equals(SubjectLibrary.Status) && !subject.equals(SubjectLibrary.IMoved) && !subject.equals(SubjectLibrary.BatteryRequest))
 			addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), subject, "");
 
 		switch(subject){
 
-
-
 		case SubjectLibrary.StragglerNotification:
 			queue=requestQueue;
 			break;
 		case SubjectLibrary.Start:
-			queue=answerQueue;
-			break;
 		case SubjectLibrary.Straggler:
-			queue=answerQueue;
-			break;
 		case SubjectLibrary.Status:
-			queue=answerQueue;
-			break;
 		case SubjectLibrary.IMoved:
 		case SubjectLibrary.End:
-			queue=answerQueue;
-			break;
 		case SubjectLibrary.MapGlobal:
-			queue=answerQueue;
-			break;
 		case SubjectLibrary.DroneBattery:
-			queue = answerQueue;
-			break;
 		case SubjectLibrary.IdAgent:
-			queue = answerQueue;
-			break;
 		case SubjectLibrary.Position:
-
-			queue = answerQueue;
-
-			break;
 		case SubjectLibrary.GoalDistance:
-			queue = answerQueue;
-			break;
 		case SubjectLibrary.Register:
 			queue = answerQueue;
 			break;
 		case SubjectLibrary.BatteryLeft:
 		case SubjectLibrary.Trace:
 		case SubjectLibrary.Steps:
-			if(msg.getPerformativeInt() == ACLMessage.QUERY_REF){
+			if(msg.getPerformativeInt() == ACLMessage.QUERY_REF)
 				queue = requestQueue;
-			}else{
-				queue = answerQueue;
-			}
+			else
+				queue = answerQueue;			
 			break;
 		case SubjectLibrary.YourMovements:
 		case SubjectLibrary.DroneRecharged:
 		case SubjectLibrary.DroneReachedGoal:
 		case SubjectLibrary.AllMovements:
 		case SubjectLibrary.ConflictiveSections:
-
-			if(msg.getPerformativeInt() == ACLMessage.ACCEPT_PROPOSAL){
+			if(msg.getPerformativeInt() == ACLMessage.ACCEPT_PROPOSAL)
 				queue = answerQueue;
-			}else
+			else
 				queue = requestQueue;
 			break;
 		case SubjectLibrary.BatteryRequest:
@@ -1428,16 +1310,15 @@ public class Drone extends SuperAgent {
 	}
 
 	/************************************************************************************************************************************
-	 ******** Protocolo de finalización 
-	 * @throws JSONException *************************************************************************************************
+	 ******** Protocolo de finalización**************************************************************************************************
 	 ************************************************************************************************************************************/
-	/* función que llama al finalizador del satélite.
+	
+	/**
+	 * Función que llama al finalizador del satélite.
 	 * Si la respuesta es wait espera, si es otra finaliza.
 	 * @author Ismael
-	 * @param value valor de decision
 	 */
 	protected void onFinalize() {
-
 		ACLMessage msg=null;	
 
 		try {
@@ -1446,23 +1327,12 @@ public class Drone extends SuperAgent {
 			if(msg.getPerformativeInt()!= ACLMessage.INFORM){
 				throw new RuntimeException("Error en la recepcion del tipo de mensaje");
 			}
-			//System.out.println("Finalizado "+ this.getAid());
 
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 
 	}
-
-
-
-
-
-
-
-
-
-
 
 
 	/************************************************************************************************************************************
@@ -1487,7 +1357,6 @@ public class Drone extends SuperAgent {
 		}
 
 		send(ACLMessage.QUERY_REF, DroneID, ProtocolLibrary.Information, "default", null, buildConversationId(), requestContent);
-		//Meter mensaje en el log
 		addMessageToLog(Log.SENDED, DroneID, ProtocolLibrary.Information, SubjectLibrary.BatteryLeft, "");
 
 		try {
@@ -1530,7 +1399,6 @@ public class Drone extends SuperAgent {
 		}
 
 		send(ACLMessage.QUERY_REF, DroneID, ProtocolLibrary.Information, "default", null, buildConversationId(), requestContent);
-		//Meter mensaje en el log
 		addMessageToLog(Log.SENDED, DroneID, ProtocolLibrary.Information, SubjectLibrary.Trace, "");
 
 		try {
@@ -1543,7 +1411,6 @@ public class Drone extends SuperAgent {
 			try {
 				String trazaJSON = new JSONObject(answer.getContent()).getString("trace");
 				Gson gson = new Gson();
-				//				Type tipoTraza = new TypeToken<Trace>(){}.getType();
 				trazaDelDrone = gson.fromJson(trazaJSON, Trace.class);
 			} catch (JSONException e) {
 				e.printStackTrace();
@@ -1578,7 +1445,6 @@ public class Drone extends SuperAgent {
 		}
 
 		send(ACLMessage.QUERY_REF, DroneID, ProtocolLibrary.Information, "default", null, buildConversationId(), requestContent);
-		//Meter mensaje en el log
 		addMessageToLog(Log.SENDED, DroneID, ProtocolLibrary.Information, SubjectLibrary.Steps, "");
 
 		try {
@@ -1623,7 +1489,6 @@ public class Drone extends SuperAgent {
 		}
 
 		send(ACLMessage.QUERY_REF, chargerID, ProtocolLibrary.Information, "Get-RemainingBattery", null, buildConversationId(), requestContent);
-		//Meter mensaje en el log
 		addMessageToLog(Log.SENDED, chargerID, ProtocolLibrary.Information, SubjectLibrary.ChargerBattery, "");
 
 		try {
@@ -1664,21 +1529,20 @@ public class Drone extends SuperAgent {
 			ask.put(JSONKeyLibrary.Subject, SubjectLibrary.MapGlobal);
 
 			send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information, null, null, buildConversationId(), ask);
-			//Meter mensaje en el log
 			addMessageToLog(Log.SENDED, chargerID, ProtocolLibrary.Information, SubjectLibrary.MapGlobal, "");
 		} catch (JSONException e){
 			e.printStackTrace();
 		}
 	}
+	
 	/**
 	 * @author Ismael
 	 * Recive mapa común.
-	 * @param msg
-	 * @return int[][]
+	 * @param m
 	 */
 	protected void askForMapReceive(Map m){
 		JSONObject content;
-		int H,W;
+		int mapHeight, mapWidth;
 		ACLMessage msg = null;
 		try {
 			msg = answerQueue.take();
@@ -1689,73 +1553,66 @@ public class Drone extends SuperAgent {
 
 		switch(msg.getPerformativeInt()){
 
-		case ACLMessage.NOT_UNDERSTOOD:
-
-			throw new RuntimeException("Fallo: no entendimiento de mensaje");
-
-
-		case ACLMessage.REFUSE:
-			try {
-				content = new JSONObject(msg.getContent());
-				if(! (content.get("reason").equals("FailureCommunication") || content.get("reason").equals("EmptyContent")
-						|| content.get("reason").equals("BadlyStructuredContent")) || content.get("reason").equals("FailureAccess") || content.get("reason").equals("SenderDrone") )
-					throw new RuntimeException("Fallo en la respuesta del satelite");
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
-
-		case ACLMessage.INFORM:
-			try{
-				content = new JSONObject(msg.getContent());
-				H= content.getInt("Height");
-				W= content.getInt("Width");
-				JSONArray data = (JSONArray) content.get("Values");
-
-				for(int i=0,z=0;i<H;i++){
-					for(int j=0;j<W;j++,z++){
-						try {
-							m.setValue(i, j, data.getInt(z));
-						} catch (Exception e) {
-							e.printStackTrace();
+			case ACLMessage.NOT_UNDERSTOOD:
+				throw new RuntimeException("Fallo: no entendimiento de mensaje");
+	
+			case ACLMessage.REFUSE:
+				try {
+					content = new JSONObject(msg.getContent());
+					if(! (content.get("reason").equals("FailureCommunication") || content.get("reason").equals("EmptyContent")
+							|| content.get("reason").equals("BadlyStructuredContent")) || content.get("reason").equals("FailureAccess") || content.get("reason").equals("SenderDrone") )
+						throw new RuntimeException("Fallo en la respuesta del satelite");
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+				break;
+	
+			case ACLMessage.INFORM:
+				try{
+					content = new JSONObject(msg.getContent());
+					mapHeight= content.getInt("Height");
+					mapWidth= content.getInt("Width");
+					JSONArray data = (JSONArray) content.get("Values");
+	
+					for(int i=0,z=0;i<mapHeight;i++){
+						for(int j=0;j<mapWidth;j++,z++){
+							try {
+								m.setValue(i, j, data.getInt(z));
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
 						}
 					}
+	
+				} catch (JSONException e) {
+					e.printStackTrace();
 				}
-
-			} catch (JSONException e) {
-				e.printStackTrace();
+				break;
+			default: 
+				throw new RuntimeException("Fallo en cojer respuesta del satelite");
 			}
-			break;
-		default: 
-			throw new RuntimeException("Fallo en cojer respuesta del satelite");
-		}
-
-
 	}
 
 	/**
-	 * Pide el nombre ID de un nombre.
+	 * Pide el ID de un drone.
 	 * @author Ismael
-	 * @param name
+	 * @param name nombre del drone cuyo ID se pretende saber.
 	 */
 	protected void askForID(String name){
-
 		JSONObject ask = new JSONObject();
 
 		try{
 			ask.put(JSONKeyLibrary.Subject, SubjectLibrary.IdAgent);
 			ask.put(SubjectLibrary.Name, name);
 			send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
-			//Meter mensaje en el log
 			addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Information, SubjectLibrary.IdAgent, name);
 		} catch (JSONException e){
 			e.printStackTrace();
 		}
 	}
+	
 	/**
-	 * @author Ismael
 	 * Recive ID para un nombre
-	 * @param msg
-	 * @return AgentID
 	 */
 	protected AgentID askForIDReceive(){ 
 		JSONObject content= null;
@@ -1771,9 +1628,7 @@ public class Drone extends SuperAgent {
 		switch(msg.getPerformativeInt()){
 
 		case ACLMessage.NOT_UNDERSTOOD:
-
 			throw new RuntimeException("Fallo: no entendimiento de mensaje");
-
 
 		case ACLMessage.REFUSE:
 			try {
@@ -1796,34 +1651,31 @@ public class Drone extends SuperAgent {
 		default: 
 			throw new RuntimeException("Fallo en cojer respuesta del satelite");
 		}
-		//System.out.println("Estoy en el receptor " + id);
 		return id;
 	}
+	
 	/**
 	 * Pide distancia de un drone especifico
 	 * @author Ismael
-	 * @param ID
+	 * @param ID AgentID del drone
 	 */
 	protected void askForGoal(AgentID id){
 		JSONObject ask = new JSONObject();
-
-
-
+		
 		try{
 			ask.put(JSONKeyLibrary.Subject, SubjectLibrary.GoalDistance);
 			ask.put("ID", id);
 			send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), ask);
-			//Meter mensaje en el log
 			addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Information, SubjectLibrary.GoalDistance, id.name);
 		} catch (JSONException e){
 			e.printStackTrace();
 		}
 	}
+	
 	/**
 	 * @author Ismael
 	 * Recibe distancia meta para un agente
-	 * @param msg
-	 * @return
+	 * @return distancia.
 	 */
 	protected double askForGoalReceive(){
 		JSONObject content;
@@ -1837,32 +1689,32 @@ public class Drone extends SuperAgent {
 		}
 
 		switch(msg.getPerformativeInt()){
-
-		case ACLMessage.NOT_UNDERSTOOD:
-
-			throw new RuntimeException("Fallo: no entendimiento de mensaje");
-
-
-		case ACLMessage.REFUSE:
-			try {
-				content = new JSONObject(msg.getContent());
-				if(! (content.get("reason").equals("FailureCommunication") || content.get("reason").equals("EmptyContent")
-						|| content.get("reason").equals("BadlyStructuredContent")) || content.get("reason").equals("FailureAgentID") ||content.get("reason").equals("FailureAccessDistance") )
-					throw new RuntimeException("Fallo en la respuesta del satelite");
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
-
-		case ACLMessage.INFORM:
-			try{
-				content = new JSONObject(msg.getContent());
-				Ggoal = content.getDouble("Distance");
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
-			break;
-		default: 
-			throw new RuntimeException("Fallo en cojer respuesta del satelite");
+	
+			case ACLMessage.NOT_UNDERSTOOD:	
+				throw new RuntimeException("Fallo: no entendimiento de mensaje");	
+	
+			case ACLMessage.REFUSE:
+				try {
+					content = new JSONObject(msg.getContent());
+					if(! (content.get("reason").equals("FailureCommunication") || content.get("reason").equals("EmptyContent")
+							|| content.get("reason").equals("BadlyStructuredContent")) || content.get("reason").equals("FailureAgentID") ||content.get("reason").equals("FailureAccessDistance") )
+						throw new RuntimeException("Fallo en la respuesta del satelite");
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+				break;
+				
+			case ACLMessage.INFORM:
+				try{
+					content = new JSONObject(msg.getContent());
+					Ggoal = content.getDouble("Distance");
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+				break;
+				
+			default: 
+				throw new RuntimeException("Fallo en cojer respuesta del satelite");
 		}
 		return Ggoal;
 	}
@@ -1874,27 +1726,25 @@ public class Drone extends SuperAgent {
 	protected void askPosition(){
 		JSONObject ask = new JSONObject();
 
-
 		try{
 			ask.put(JSONKeyLibrary.Subject, SubjectLibrary.Position);
 			send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information,null, null, buildConversationId(), ask);
-			//Meter mensaje en el log
 			addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Information, SubjectLibrary.Position, "");
 		} catch (JSONException e){
 			e.printStackTrace();
 		}
 	}
+	
 	/**
 	 * @author Ismael
 	 * Recoge posicion solicitada
-	 * @param msg
-	 * @return int[2]
+	 * @return int[2] coordenadas en el mapa del drone.
 	 */
 	protected int[] askPositionReceive(){
 		JSONObject content;
-		int pos[] =new int[2];
-		ACLMessage msg=null;
-		//System.out.println("llego al receive");
+		int pos[] = new int[2];
+		ACLMessage msg = null;
+		
 		try {
 			msg=answerQueue.take();
 		} catch (InterruptedException e1) {
@@ -1902,44 +1752,44 @@ public class Drone extends SuperAgent {
 		}
 
 		switch(msg.getPerformativeInt()){
-
-		case ACLMessage.NOT_UNDERSTOOD:
-
-			throw new RuntimeException("Fallo: no entendimiento de mensaje");
-
-
-		case ACLMessage.REFUSE:
-			try {
-				content = new JSONObject(msg.getContent());
-				if(! (content.get("reason").equals("FailureCommunication") || content.get("reason").equals("EmptyContent")
-						|| content.get("reason").equals("BadlyStructuredContent")) || content.get("reason").equals("FailureAgentID") ||content.get("reason").equals("FailureAccessPossition") )
-					throw new RuntimeException("Fallo en la respuesta del satelite");
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
-
-		case ACLMessage.INFORM:
-			try{
-
-				content = new JSONObject(msg.getContent());
-				JSONObject aux = new JSONObject();
-				aux = content.getJSONObject("Posi");
-				pos[0]= aux.getInt("x");
-				pos[1]= aux.getInt("y");
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
-			break;
-		default: 
-			throw new RuntimeException("Fallo en cojer respuesta del satelite");
+	
+			case ACLMessage.NOT_UNDERSTOOD:	
+				throw new RuntimeException("Fallo: no entendimiento de mensaje");	
+	
+			case ACLMessage.REFUSE:
+				try {
+					content = new JSONObject(msg.getContent());
+					if(! (content.get("reason").equals("FailureCommunication") || content.get("reason").equals("EmptyContent")
+							|| content.get("reason").equals("BadlyStructuredContent")) || content.get("reason").equals("FailureAgentID") ||content.get("reason").equals("FailureAccessPossition") )
+						throw new RuntimeException("Fallo en la respuesta del satelite");
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+				break;
+				
+			case ACLMessage.INFORM:
+				try{
+	
+					content = new JSONObject(msg.getContent());
+					JSONObject aux = new JSONObject();
+					aux = content.getJSONObject("Posi");
+					pos[0]= aux.getInt("x");
+					pos[1]= aux.getInt("y");
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+				break;
+			default: 
+				throw new RuntimeException("Fallo en cojer respuesta del satelite");
 		}
 
 		return pos;
 	}
+	
 	/**
 	 * Pide batería al satelite de un drone ID
 	 * @author Ismael
-	 * @param identidad agente.
+	 * @param id AgentID cuya batería queremos saber.
 	 */
 	protected void askForMyBatterySatellite(AgentID id){
 		JSONObject ask = new JSONObject();
@@ -1947,19 +1797,17 @@ public class Drone extends SuperAgent {
 		try{
 			ask.put(JSONKeyLibrary.Subject, "DroneBattery");
 			ask.put("AgentID", id);
-			//Envio mensaje
 			send(ACLMessage.QUERY_REF, sateliteID, ProtocolLibrary.Information, null, null, buildConversationId(), ask);
-			//Meter mensaje en el log
 			addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Information, SubjectLibrary.DroneBattery, "");
 		} catch (JSONException e){
 			e.printStackTrace();
 		}
 	}
+	
 	/**
 	 * @author Ismael
 	 * Recoge bateria del satelite solicitada para un drone
-	 * @param msg
-	 * @return int
+	 * @return batería del drone por la que hemos preguntado.
 	 */
 	protected int askForMyBatterySatelliteReceive(){
 		JSONObject content;
@@ -1973,32 +1821,30 @@ public class Drone extends SuperAgent {
 		}
 
 		switch(msg.getPerformativeInt()){
-
-		case ACLMessage.NOT_UNDERSTOOD:
-
-			throw new RuntimeException("Fallo: no entendimiento de mensaje");
-
-
-		case ACLMessage.REFUSE:
-			try {
-				content = new JSONObject(msg.getContent());
-				if(! (content.get("reason").equals("FailureCommunication") || content.get("reason").equals("EmptyContent")
-						|| content.get("reason").equals("BadlyStructuredContent")) || content.get("reason").equals("FailureAgentID") ||content.get("reason").equals("FailureLevelBatteryDrone") )
-					throw new RuntimeException("Fallo en la respuesta del satelite");
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
-
-		case ACLMessage.INFORM:
-			try{
-				content = new JSONObject(msg.getContent());
-				bat = content.getInt("Battery");
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
-			break;
-		default: 
-			throw new RuntimeException("Fallo en cojer respuesta del satelite");
+			case ACLMessage.NOT_UNDERSTOOD:
+				throw new RuntimeException("Fallo: no entendimiento de mensaje");
+	
+			case ACLMessage.REFUSE:
+				try {
+					content = new JSONObject(msg.getContent());
+					if(! (content.get("reason").equals("FailureCommunication") || content.get("reason").equals("EmptyContent")
+							|| content.get("reason").equals("BadlyStructuredContent")) || content.get("reason").equals("FailureAgentID") ||content.get("reason").equals("FailureLevelBatteryDrone") )
+						throw new RuntimeException("Fallo en la respuesta del satelite");
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+				break;
+	
+			case ACLMessage.INFORM:
+				try{
+					content = new JSONObject(msg.getContent());
+					bat = content.getInt("Battery");
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+				break;
+			default: 
+				throw new RuntimeException("Fallo en cojer respuesta del satelite");
 		}
 		return bat;
 	}
@@ -2045,7 +1891,6 @@ public class Drone extends SuperAgent {
 	}
 
 
-
 	/**
 	 * Se comunica con el satelite para recibir su status y actualizarlo. Tambien se notifica a todos los agentes 
 	 * subscritos a él que se ha movido.
@@ -2063,13 +1908,6 @@ public class Drone extends SuperAgent {
 		}
 
 		send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Information, "default", null, buildConversationId(), contenido);
-		/** 
-            try {
-                    msg = answerQueue.take();
-            } catch (InterruptedException e) {
-                    e.printStackTrace();
-            }
-		 **/ 
 
 		updateStatus();
 	}
@@ -2136,13 +1974,8 @@ public class Drone extends SuperAgent {
 
 			}else
 				conflictiveBoxReached = false;                 
-			//System.out.println("Alrededores del Dron: ");
-			//System.out.println("|"+surroundings[0]+", "+surroundings[1]+", "+surroundings[2]+"|");
-			//System.out.println("|"+surroundings[3]+", "+surroundings[4]+", "+surroundings[5]+"|");
-			//System.out.println("|"+surroundings[6]+", "+surroundings[7]+", "+surroundings[8]+"|");
 
 		} catch (JSONException ex) {
-			//System.out.println("numeritos");
 			ex.printStackTrace();
 			Logger.getLogger(Drone.class.getName()).log(Level.SEVERE, null, ex);
 		} catch (Exception e) {
@@ -2203,7 +2036,7 @@ public class Drone extends SuperAgent {
 	 * @param amount cantidad que se le pide al cargador.
 	 */
 	protected void askForBattery (int amount){
-		if (battery == 0 && amount > 0 && amount <= 75){ //Comprobación extra
+		if (battery == 0 && amount > 0 && amount <= 75){
 			JSONObject content = new JSONObject();
 			try {
 				//Construcción del JSON
@@ -2238,21 +2071,15 @@ public class Drone extends SuperAgent {
 		}        
 		//not-understood
 		else if (msg.getPerformativeInt() == ACLMessage.NOT_UNDERSTOOD){
-			//System.out.println("onBatteryReceived: recibido not-understood.");
-			//Meter mensaje en el log
 			addMessageToLog(Log.RECEIVED, chargerID, msg.getProtocol(), SubjectLibrary.BatteryRequest, "Not-understood");
 		}
 		//refuse
 		else if (msg.getPerformativeInt() == ACLMessage.REFUSE){
-			//System.out.println("onBatteryReceiver: recibido refuse.");
 			try {
 				JSONObject content = new JSONObject(msg.getContent());
 				String errorReason = content.getString(JSONKeyLibrary.Error);
-				//System.out.println("Batería no recibida. Motivo: " + errorReason);
-				//Meter mensaje en el log
 				addMessageToLog(Log.RECEIVED, chargerID, msg.getProtocol(), SubjectLibrary.BatteryRequest, errorReason);
 			} catch (JSONException e) {
-				//System.out.println("Error JSON al gestionar el refuse en la batería");
 				e.printStackTrace();
 			}
 		}
@@ -2300,7 +2127,6 @@ public class Drone extends SuperAgent {
 
 		send(ACLMessage.SUBSCRIBE, sateliteID, ProtocolLibrary.Subscribe, "confirmation", null,
 				conversationID, content);
-		//Meter mensaje en el log
 		addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Subscribe, SubjectLibrary.DroneReachedGoal, "");
 
 		WaitResponseSubscriber();
@@ -2320,18 +2146,14 @@ public class Drone extends SuperAgent {
 		try {
 			content.put(JSONKeyLibrary.Subject, SubjectLibrary.DroneRecharged);
 		} catch (JSONException e) {
-			// esto nunca pasa porque la clave nunca esta vacía
 			e.printStackTrace();
 		}
-
 
 		conversationID = buildConversationId();
 
 		idsConversationSubscribe.put(SubjectLibrary.DroneRecharged, this.getAid().toString()+"#"+conversationID);
 
-		send(ACLMessage.SUBSCRIBE, chargerID, ProtocolLibrary.Subscribe, "confirmation", null,
-				conversationID, content);
-		//Meter mensaje en el log
+		send(ACLMessage.SUBSCRIBE, chargerID, ProtocolLibrary.Subscribe, "confirmation", null, conversationID, content);
 		addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Subscribe, SubjectLibrary.DroneRecharged, "");
 
 		WaitResponseSubscriber();
@@ -2352,21 +2174,16 @@ public class Drone extends SuperAgent {
 		try {
 			content.put(JSONKeyLibrary.Subject, SubjectLibrary.YourMovements);
 		} catch (JSONException e) {
-			// esto nunca pasa porque la clave nunca esta vacía
 			e.printStackTrace();
 		}
 
 		conversationID = buildConversationId();
 
 		idsConversationSubscribe.put(SubjectLibrary.YourMovements+id.getLocalName(), this.getAid().toString()+"#"+conversationID);
-		send(ACLMessage.SUBSCRIBE, id, ProtocolLibrary.Subscribe, "confirmation", null,
-				conversationID, content);
-		//Meter mensaje en el log
+		send(ACLMessage.SUBSCRIBE, id, ProtocolLibrary.Subscribe, "confirmation", null,	conversationID, content);
 		addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Subscribe, SubjectLibrary.YourMovements, "");
 
 		WaitResponseSubscriber();
-
-
 	}
 
 	/**
@@ -2383,7 +2200,6 @@ public class Drone extends SuperAgent {
 		try {
 			content.put(JSONKeyLibrary.Subject, SubjectLibrary.AllMovements);
 		} catch (JSONException e) {
-			// esto nunca pasa porque la clave nunca esta vacía
 			e.printStackTrace();
 		}
 
@@ -2391,9 +2207,7 @@ public class Drone extends SuperAgent {
 
 		idsConversationSubscribe.put(SubjectLibrary.AllMovements, this.getAid().toString()+"#"+conversationID);
 
-		send(ACLMessage.SUBSCRIBE, sateliteID, ProtocolLibrary.Subscribe, "confirmation", null,
-				conversationID, content);
-		//Meter mensaje en el log
+		send(ACLMessage.SUBSCRIBE, sateliteID, ProtocolLibrary.Subscribe, "confirmation", null,	conversationID, content);
 		addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Subscribe, SubjectLibrary.AllMovements, "");
 
 		WaitResponseSubscriber();
@@ -2413,7 +2227,6 @@ public class Drone extends SuperAgent {
 		try {
 			content.put(JSONKeyLibrary.Subject, SubjectLibrary.ConflictiveSections);
 		} catch (JSONException e) {
-			// esto nunca pasa porque la clave nunca esta vacía
 			e.printStackTrace();
 		}
 
@@ -2421,9 +2234,7 @@ public class Drone extends SuperAgent {
 
 		idsConversationSubscribe.put(SubjectLibrary.ConflictiveSections, this.getAid().toString()+"#"+conversationID);
 
-		send(ACLMessage.SUBSCRIBE, sateliteID, ProtocolLibrary.Subscribe, "confirmation", null,
-				conversationID, content);
-		//Meter mensaje en el log
+		send(ACLMessage.SUBSCRIBE, sateliteID, ProtocolLibrary.Subscribe, "confirmation", null,	conversationID, content);
 		addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Subscribe, SubjectLibrary.ConflictiveSections, "");
 
 		WaitResponseSubscriber();
@@ -2483,7 +2294,6 @@ public class Drone extends SuperAgent {
 		try {
 			content.put(JSONKeyLibrary.Subject, name);
 		} catch (JSONException e) {
-			// nunca se ejecuta porque la clave no es vacía
 			e.printStackTrace();
 		}
 
@@ -2503,9 +2313,7 @@ public class Drone extends SuperAgent {
 			throw new RuntimeException("Fallo en la cancelación: el nombre de la subscripción no existe");
 		}
 
-		send(ACLMessage.CANCEL, destino, ProtocolLibrary.Subscribe, null, null,
-				this.idsConversationSubscribe.get(name), content);
-		//Meter mensaje en el log
+		send(ACLMessage.CANCEL, destino, ProtocolLibrary.Subscribe, null, null,	this.idsConversationSubscribe.get(name), content);
 		addMessageToLog(Log.SENDED, destino, ProtocolLibrary.Subscribe, name, "Cancel subscription");
 	}
 
@@ -2528,16 +2336,11 @@ public class Drone extends SuperAgent {
 			e.printStackTrace();
 		}
 
-		if(subscribers.containsKey(msg.getSender().toString())){
-			throw new RefuseException(ErrorLibrary.AlreadySubscribed);
-		}else{ /*if(teammates.length != 2){      // Esta comprobación pienso que tambien hay que hacerla al mandar la petición.
-            	//System.out.println("REFUSE 2  !!!!!!");
-
-                    throw new RefuseException(ErrorLibrary.MissingAgents);
-            }else{*/
+		if(subscribers.containsKey(msg.getSender().toString()))
+			throw new RefuseException(ErrorLibrary.AlreadySubscribed);		
+		else{
 			subscribers.put(msg.getSender().toString(), msg.getConversationId().toString());
 			send(ACLMessage.ACCEPT_PROPOSAL, msg.getSender(), ProtocolLibrary.Subscribe, null, "confirmation", msg.getConversationId(), content);   
-			//Meter mensaje en el log
 			addMessageToLog(Log.SENDED, msg.getSender(), ProtocolLibrary.Subscribe, subject, "");     
 		}
 
@@ -2554,13 +2357,11 @@ public class Drone extends SuperAgent {
 				content.put("PreviousPosition", new JSONArray(previousPosition));
 				content.put("Decision", decision);
 			} catch (JSONException e) {
-				// nunca sucede porque las claves no son vacias
 				e.printStackTrace();
 			}
 
 			for(String name: subscribers.keySet()){
-				send(ACLMessage.INFORM, new AgentID(name), ProtocolLibrary.Subscribe, null, null,
-						this.subscribers.get(name), content);                         // Con el nombre del agente sacamos la ID-conversation    
+				send(ACLMessage.INFORM, new AgentID(name), ProtocolLibrary.Subscribe, null, null, this.subscribers.get(name), content); // Con el nombre del agente sacamos la ID-conversation    
 			}
 		}
 	}
@@ -2574,7 +2375,6 @@ public class Drone extends SuperAgent {
 	protected void onDroneChargedInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException {
 		// TODO Auto-generated method stub
 		//System.out.println("Informado de CHARGER");
-
 	}
 
 	/**
@@ -2587,7 +2387,6 @@ public class Drone extends SuperAgent {
 	 */
 	protected void onDroneReachedGoalInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException {
 		if(state != FINISH_GOAL){
-			//System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXxx");
 			JSONObject content = null;
 			AgentID id = null;
 
@@ -2603,21 +2402,16 @@ public class Drone extends SuperAgent {
 				throw new FailureException(ErrorLibrary.FailureInformationAccess);
 			}      
 
-			Trace t =  askForDroneTrace(id); // pregunto la traza del drone que ha finalizado para ver si es mejor que la optima 
-			// hasta el momento.
+			Trace t =  askForDroneTrace(id); // pregunto la traza del drone que ha finalizado para ver si es mejor que la optima hasta el momento.
 			otherTracesDrones.put(id.toString(), t);
 
-			if(optimalTrace == null){
-
+			if(optimalTrace == null)
 				optimalTrace = t;
-			}else{
-
-				for(Trace traceAux: otherTracesDrones.values()){ // Me quedo con la traza mas corta de todas
+			else
+				for(Trace traceAux: otherTracesDrones.values()) // Me quedo con la traza mas corta de todas
 					if(optimalTrace.size() > traceAux.size())
 						optimalTrace = traceAux;
-				}
-			}
-
+			
 			this.leaveStandBy(); //Despertamos al drone
 		}
 	}
@@ -2661,7 +2455,6 @@ public class Drone extends SuperAgent {
 		}
 
 		send(ACLMessage.REQUEST, sateliteID, ProtocolLibrary.Registration, "default", null, buildConversationId(), data);   
-		//Meter mensaje en el log
 		addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Registration, SubjectLibrary.Register, "ID:" + this.getAid().toString() + " Name:" + this.getAid().name);     
 
 		try {
@@ -2680,7 +2473,6 @@ public class Drone extends SuperAgent {
 				teammates = new AgentID[n];
 				for(int i=0; i<n; i++){
 					teammates[i] = new AgentID(idsArray.getString(i));
-					//System.out.println(teammates[i]);
 				}
 			}catch(JSONException e){
 				e.printStackTrace();
@@ -2690,16 +2482,8 @@ public class Drone extends SuperAgent {
 		case ACLMessage.REFUSE:
 		case ACLMessage.FAILURE:
 			throw new RuntimeException("Fallo en el registro");
-
 		}
 	}
-
-
-
-
-
-
-
 
 
 	/************************************************************************************************************************************
@@ -2711,7 +2495,7 @@ public class Drone extends SuperAgent {
 	 * Si el JSONKeyLibrary.Subject no esta entre los aceptados envia un mensaje NOT_UNDERSTOOD
 	 * 
 	 * @author Jahiel
-	 * @author Dani
+	 * @author Daniel
 	 * @author Jonay
 	 * @author Ismael
 	 * @param msg Mensaje a analizar
@@ -2721,81 +2505,84 @@ public class Drone extends SuperAgent {
 	protected boolean dispatch(ACLMessage msg) throws JSONException{
 		JSONObject content = new JSONObject(msg.getContent());
 		String subject = content.getString(JSONKeyLibrary.Subject);
-		boolean res = true;
-		JSONObject resp= new JSONObject();
+		boolean continueDispatching = true;
+		JSONObject responseContent= new JSONObject();
 
 		try{
 			switch(subject){
-			case SubjectLibrary.StragglerNotification:
-				heStragglerReceive(msg);
-				break;
-			case SubjectLibrary.BatteryLeft:
-				int batteryLeft = onBatteryQueried(msg);
-				if(batteryLeft < 0|| batteryLeft > 75){
-					throw new RefuseException(ErrorLibrary.UnespectedAmount);
-				}
-				else{
-					resp.put(JSONKeyLibrary.Subject, SubjectLibrary.BatteryLeft);
-					resp.put("EnergyLeft",batteryLeft);
-					send(ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), resp);
-					//Meter mensaje en el log
-					addMessageToLog(Log.SENDED, msg.getSender(), msg.getProtocol(), SubjectLibrary.BatteryLeft, String.valueOf(batteryLeft));   
-				}
-				break;
-			case SubjectLibrary.Trace:
-				Trace trc = onTraceQueried(msg);
-				String traceJSON = traceToStringJSON(trc);
-				resp.put(JSONKeyLibrary.Subject, SubjectLibrary.Trace);
-				resp.put("trace", traceJSON);
-				send(ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), resp);
-				//Meter mensaje en el log
-				addMessageToLog(Log.SENDED, msg.getSender(), msg.getProtocol(), SubjectLibrary.Trace, "");   
-				break;
-			case SubjectLibrary.Steps:
-				int nSteps = onStepsQueried(msg);
-				resp.put(JSONKeyLibrary.Subject, SubjectLibrary.Steps);
-				resp.put("steps", nSteps);
-				send(ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), resp);
-				//Meter mensaje en el log
-				addMessageToLog(Log.SENDED, msg.getSender(), msg.getProtocol(), SubjectLibrary.Steps, String.valueOf(nSteps));   
-				break;
-			case SubjectLibrary.DroneReachedGoal:
-				onDroneReachedGoalInform(msg);
-				break;
-			case SubjectLibrary.DroneRecharged:
-				onDroneChargedInform(msg);
-				break;
-			case SubjectLibrary.YourMovements:
-				if(msg.getPerformativeInt() == ACLMessage.SUBSCRIBE)
-					newSubscription(msg);
-				else
-					onYourMovementsInform(msg);
-				break;
-			case SubjectLibrary.AllMovements:
-				onAllMovementsInform(msg);
-				break;
-			case SubjectLibrary.ConflictiveSections:
-				onConflictiveSectionsInform(msg);
-				break;
-
-
-			default: 
-				sendError(new NotUnderstoodException("Subject no encontrado"), msg);
-				break;
+				case SubjectLibrary.StragglerNotification:
+					heStragglerReceive(msg);
+					break;
+					
+				case SubjectLibrary.BatteryLeft:
+					int batteryLeft = onBatteryQueried(msg);
+					if(batteryLeft < 0|| batteryLeft > 75)
+						throw new RefuseException(ErrorLibrary.UnespectedAmount);					
+					else{
+						responseContent.put(JSONKeyLibrary.Subject, SubjectLibrary.BatteryLeft);
+						responseContent.put("EnergyLeft",batteryLeft);
+						send(ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), responseContent);
+						addMessageToLog(Log.SENDED, msg.getSender(), msg.getProtocol(), SubjectLibrary.BatteryLeft, String.valueOf(batteryLeft));   
+					}
+					break;
+					
+				case SubjectLibrary.Trace:
+					Trace trc = onTraceQueried(msg);
+					String traceJSON = traceToStringJSON(trc);
+					responseContent.put(JSONKeyLibrary.Subject, SubjectLibrary.Trace);
+					responseContent.put("trace", traceJSON);
+					send(ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), responseContent);
+					addMessageToLog(Log.SENDED, msg.getSender(), msg.getProtocol(), SubjectLibrary.Trace, "");   
+					break;
+					
+				case SubjectLibrary.Steps:
+					int nSteps = onStepsQueried(msg);
+					responseContent.put(JSONKeyLibrary.Subject, SubjectLibrary.Steps);
+					responseContent.put("steps", nSteps);
+					send(ACLMessage.INFORM, msg.getSender(), msg.getProtocol(), null, msg.getReplyWith(), msg.getConversationId(), responseContent);
+					addMessageToLog(Log.SENDED, msg.getSender(), msg.getProtocol(), SubjectLibrary.Steps, String.valueOf(nSteps));   
+					break;
+					
+				case SubjectLibrary.DroneReachedGoal:
+					onDroneReachedGoalInform(msg);
+					break;
+					
+				case SubjectLibrary.DroneRecharged:
+					onDroneChargedInform(msg);
+					break;
+					
+				case SubjectLibrary.YourMovements:
+					if(msg.getPerformativeInt() == ACLMessage.SUBSCRIBE)
+						newSubscription(msg);
+					else
+						onYourMovementsInform(msg);
+					break;
+					
+				case SubjectLibrary.AllMovements:
+					onAllMovementsInform(msg);
+					break;
+					
+				case SubjectLibrary.ConflictiveSections:
+					onConflictiveSectionsInform(msg);
+					break;	
+	
+				default: 
+					sendError(new NotUnderstoodException("Subject no encontrado"), msg);
+					break;
 			}
 		}catch(FIPAException fe){
 			System.err.println("Error FIPA");
 			sendError(fe, msg);
 		}catch(IllegalArgumentException e){
 			System.err.println("Error de argumento");
-			res = treatMessageError(msg, e);
+			continueDispatching = treatMessageError(msg, e);
 		}catch(RuntimeException e){
 			e.printStackTrace();
 			System.err.println("Error en ejecución");
-			res = treatRuntimeError(msg, e);
+			continueDispatching = treatRuntimeError(msg, e);
 		}
 
-		return res;
+		return continueDispatching;
 	}
 
 	/**
@@ -2817,16 +2604,14 @@ public class Drone extends SuperAgent {
 		boolean res = true;
 
 		switch(subject){
-		case "BatteryQuery":
-		case "TraceQuery":
-			//TODO
+		case SubjectLibrary.BatteryRequest:
+		case SubjectLibrary.Trace:
 			break;
 		case SubjectLibrary.DroneReachedGoal:
 		case SubjectLibrary.DroneRecharged:
 		case SubjectLibrary.YourMovements:
 		case SubjectLibrary.AllMovements:
 		case SubjectLibrary.ConflictiveSections:
-			//TODO
 			break;
 		default:
 			break;
@@ -2912,7 +2697,6 @@ public class Drone extends SuperAgent {
 	 * @return Valor del surrounding para esa esquina
 	 */
 	private int getCorner(int mov1, int mov2) {
-		//por si las moscas
 		if(mov1 == (mov2 + 2) % 4)
 			return surroundings[4];
 
@@ -2937,7 +2721,6 @@ public class Drone extends SuperAgent {
 	 * @author Ismael
 	 * @return Un array con lo que hay en las posiciones Este, Sur, Oeste y Norte a las que se podría mover, en ese orden.
 	 */
-	// POST DIAGRAMA DE CLASES
 	private int[] getValidMovements() {
 		int movimientosLibres[] = new int[4];
 
@@ -2990,10 +2773,6 @@ public class Drone extends SuperAgent {
 			int lastMove = trace.get(trace.size()-1).getMove();
 			if(!enter_force)
 				movimientosLibres = blockMovement(movimientosLibres, (lastMove+2)%4, false);
-			//System.out.println("Movimientos libres: ");
-			//System.out.println("|"+movimientosLibres[0]+", "+movimientosLibres[1]+", "+movimientosLibres[2]+"|");
-			//System.out.println("|"+movimientosLibres[3]+", "+movimientosLibres[4]+", "+movimientosLibres[5]+"|");
-			//System.out.println("|"+movimientosLibres[6]+", "+movimientosLibres[7]+", "+movimientosLibres[8]+"|");
 		}
 
 		int[] movs = {5,7,3,1};
@@ -3020,29 +2799,29 @@ public class Drone extends SuperAgent {
 		int index, indexWall1, indexWall2;
 
 		switch(movement){
-		case DECISION_NORTH:
-			index = 1;
-			indexWall1 = 0;
-			indexWall2 = 2;
-			break;
-		case DECISION_WEST:
-			index = 3;
-			indexWall1 = 0;
-			indexWall2 = 6;
-			break;
-		case DECISION_EAST:
-			index = 5;
-			indexWall1 = 2;
-			indexWall2 = 8;
-			break;
-		case DECISION_SOUTH:
-			index = 7;
-			indexWall1 = 6;
-			indexWall2 = 8;
-			break;
-		default:
-			index = indexWall1 = indexWall2 = -1;
-			break;
+			case DECISION_NORTH:
+				index = 1;
+				indexWall1 = 0;
+				indexWall2 = 2;
+				break;
+			case DECISION_WEST:
+				index = 3;
+				indexWall1 = 0;
+				indexWall2 = 6;
+				break;
+			case DECISION_EAST:
+				index = 5;
+				indexWall1 = 2;
+				indexWall2 = 8;
+				break;
+			case DECISION_SOUTH:
+				index = 7;
+				indexWall1 = 6;
+				indexWall2 = 8;
+				break;
+			default:
+				index = indexWall1 = indexWall2 = -1;
+				break;
 		}
 
 		mov[index] = Map.VISITADO;
@@ -3058,6 +2837,7 @@ public class Drone extends SuperAgent {
 	}
 	/**
 	 * Getter del mapa, usado para el visualizador.
+	 * @author Daniel
 	 * @return el mapa del drone.
 	 */
 	public Map getDroneMap() {
@@ -3069,7 +2849,6 @@ public class Drone extends SuperAgent {
 	 */
 	@Override
 	public void finalize() {
-		//System.out.println("Agente " + this.getName() + " ha finalizado");
 		practica.util.ImgMapConverter.mapToImg("src/maps/miresultado"+this.getAid().name+".png", droneMap);
 		dispatcher.interrupt();
 		super.finalize();
