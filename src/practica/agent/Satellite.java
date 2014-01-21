@@ -695,7 +695,7 @@ public class Satellite extends SuperAgent {
 			//Actualizar mapa del visualizador si lo está usando
 			if (usingVisualizer){
 				visualizer.updateMap();
-				//visualizer.setDroneBattery(msg.getSender(), findStatus(msg.getSender()).getBattery());
+				visualizer.addUsedBattery(msg.getSender());
 			}
 			
 			JSONObject o;
@@ -1112,8 +1112,8 @@ public class Satellite extends SuperAgent {
 
 					// Se pide la bateria restante que le queda al cargador
 					batteryInCharger = askBattery();
-					if (usingVisualizer)
-						visualizer.setChargetBattery(batteryInCharger);
+					//if (usingVisualizer)
+						//visualizer.setChargerBattery(batteryInCharger);
 				
 
 					// Se comprueba si pueden llegar todos los drones.

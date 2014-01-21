@@ -434,8 +434,8 @@ public class Charger extends SuperAgent {
 			givenBattery = requestedBattery;	
 			battery -= givenBattery; 
 			//Actualizar el visualizador
-			//if (usingVisualizer)
-				//visualizer.setChargetBattery(battery);
+			if (usingVisualizer)
+				visualizer.setChargerBattery(battery);
 
 			JSONObject sendContent = new JSONObject();
 			
