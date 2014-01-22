@@ -16,7 +16,10 @@ public class Choice {
     private static final int WEST = 2;
     private static final int SOUTH = 1;
     private static final int EAST = 0;
-	
+	private static final int END_SUCCESS = -1;
+	private static final int END_FAIL = -2;					
+	private static final int RETHINK = -4;			
+	private static final int ENTER_LAGGING = -5;
 	
 	/**
 	 * Constructor de Choice que recibe dos parámetros.
@@ -78,7 +81,16 @@ public class Choice {
 			return "E";
 		case WEST:
 			return "O";
+		case END_SUCCESS:
+			return "-END_SUCCESS-";
+		case END_FAIL:
+			return "-END_FAIL-";
+		case RETHINK:
+			return "-RETHINK-";
+		case ENTER_LAGGING:
+			return "-LAG-";
 		default:
+			System.out.println(move);
 			throw new RuntimeException("Encontrada decisión no válida");
 		}
 	}
