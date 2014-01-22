@@ -478,7 +478,7 @@ public class Drone extends SuperAgent {
 	
 	/**
 	 * @author Ismael
-	 * comunica que esta STRAGGLER
+	 * Comunica que esta STRAGGLER
 	 */
 	public void iStraggler(){
 		JSONObject ask = new JSONObject();
@@ -493,11 +493,11 @@ public class Drone extends SuperAgent {
 	
 	/**
 	 * @author Ismael
-	 * recepcion del STRAGGLER de quien envió el mensage.
-	 * @return String
+	 * Recepcion del STRAGGLER de quien envió el mensage.
+	 * 
 	 */
-	public String iStragglerReceive(){
-		String receive=null;
+	public void iStragglerReceive(){
+		
 		ACLMessage msg=null;
 
 		try {
@@ -508,18 +508,13 @@ public class Drone extends SuperAgent {
 
 		switch(msg.getPerformativeInt()){
 		case ACLMessage.INFORM:
-			try{
-				JSONObject content= new JSONObject(msg.getContent());
-				receive = content.getString(JSONKeyLibrary.Subject);		   
-
-			}catch(JSONException e){
-				e.printStackTrace();
-			}
+			System.out.println("Recibido mensaje correctamente Straggler");
 			break;
 		case ACLMessage.FAILURE:
+			sendError(new FIPAException("Error en recepción del mensaje Straggler"),msg);
 			break;
 		}
-		return receive;
+		
 	}
 
 	/**

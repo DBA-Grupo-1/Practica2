@@ -4,8 +4,10 @@ package practica.util;
 /**
  * 
  * @author Ismael
- * Clase Par para tratar los datos como un todo (mas tarde modificado a una tupla de 3 elementos) para contol de distancia al objetivo
- * si esta en meta o no, y second (que por desgracia ya no me acuerdo)
+ * Clase asociada al los movimientos que realiza el dron, compuesta por tres elementos y tratada como tupla
+ * first: distancia al objetivo.
+ * second: movimiento realizado.
+ * third: he llegado o no al objetivo.
  */
 public class Movement{
 	private float first;
