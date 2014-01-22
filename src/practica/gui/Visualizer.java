@@ -225,10 +225,11 @@ public class Visualizer extends JFrame {
 		for (int i = 0; i < notReachedNames.size(); i++){
 			if (i != notReachedNames.size() - 1)
 				condolences += (notReachedNames.get(i) + ", ");
-			else 
+			else {
 				if (notReachedNames.size() > 1)
 					condolences += "and ";
 				condolences += (notReachedNames.get(i) + ".");
+			}
 		}	
 		
 		//Construyo el mensaje que se mostrará
