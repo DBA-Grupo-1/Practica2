@@ -140,8 +140,8 @@ public class Visualizer extends JFrame {
 		}
 		initialize();
 		launcher = l;
-		//setBounds(100, 100, 520, 590);
-		setBounds(100, 100, 800, 600);
+		setBounds(100, 100, 520, 590);
+		//setBounds(100, 100, 800, 600);
 		buildLogArray();
 		setVisible(true);	
 	}
@@ -236,6 +236,9 @@ public class Visualizer extends JFrame {
 			finalMessage += (congratulations + "\n");
 		if (!notReachedNames.isEmpty())
 			finalMessage += condolences;
+		
+		//Deshabilito controles
+		btnLaunchExplorer.setVisible(false);
 		
 		//Lanzo el mensaje
 		JOptionPane.showMessageDialog(null, finalMessage, "Results", JOptionPane.DEFAULT_OPTION);
@@ -442,11 +445,11 @@ public class Visualizer extends JFrame {
 		btnLaunchExplorer = new JButton("Launch");
 		btnLaunchExplorer.setVisible(false);
 		btnLaunchExplorer.addActionListener(new BtnLaunchExplorerActionListener());
-		btnLaunchExplorer.setBounds(10, 522, 85, 29);
+		btnLaunchExplorer.setBounds(10, 522, 103, 29);
 		getContentPane().add(btnLaunchExplorer);
 		{
 			infoPanel = new JPanel();
-			infoPanel.setBounds(98, 522, 500, 29);
+			infoPanel.setBounds(112, 522, 486, 29);
 			getContentPane().add(infoPanel);
 			infoPanel.setLayout(new GridLayout(2, 6, 0, 0));
 		}
