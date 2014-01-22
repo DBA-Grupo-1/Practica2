@@ -8,7 +8,7 @@ package practica.lib;
 public class SubjectLibrary {
 	// Subscripciones
 	public static final String DroneRecharged = "DroneRecharged";
-	public static final String DroneReachedGoal = "DroneReachedGoal";
+	public static final String DroneStopped = "A drone stopped it's movement";
 	public static final String YourMovements = "YourMovements";
 	public static final String AllMovements = "AllMovements"; 
 	public static final String ConflictiveSections = "ConflictiveSections";

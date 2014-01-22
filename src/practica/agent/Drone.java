@@ -1288,7 +1288,7 @@ public class Drone extends SuperAgent {
 			break;
 		case SubjectLibrary.YourMovements:
 		case SubjectLibrary.DroneRecharged:
-		case SubjectLibrary.DroneReachedGoal:
+		case SubjectLibrary.DroneStopped:
 		case SubjectLibrary.AllMovements:
 		case SubjectLibrary.ConflictiveSections:
 			if(msg.getPerformativeInt() == ACLMessage.ACCEPT_PROPOSAL)
@@ -2120,17 +2120,17 @@ public class Drone extends SuperAgent {
 		String conversationID;
 
 		try {
-			content.put(JSONKeyLibrary.Subject, SubjectLibrary.DroneReachedGoal);
+			content.put(JSONKeyLibrary.Subject, SubjectLibrary.DroneStopped);
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
 
 		conversationID = buildConversationId();
-		idsConversationSubscribe.put(SubjectLibrary.DroneReachedGoal, this.getAid().toString()+"#"+conversationID);
+		idsConversationSubscribe.put(SubjectLibrary.DroneStopped, this.getAid().toString()+"#"+conversationID);
 
 		send(ACLMessage.SUBSCRIBE, sateliteID, ProtocolLibrary.Subscribe, "confirmation", null,
 				conversationID, content);
-		addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Subscribe, SubjectLibrary.DroneReachedGoal, "");
+		addMessageToLog(Log.SENDED, sateliteID, ProtocolLibrary.Subscribe, SubjectLibrary.DroneStopped, "");
 
 		WaitResponseSubscriber();
 	}
@@ -2301,7 +2301,7 @@ public class Drone extends SuperAgent {
 		}
 
 		switch(name){
-		case SubjectLibrary.DroneReachedGoal:
+		case SubjectLibrary.DroneStopped:
 		case SubjectLibrary.AllMovements:
 		case SubjectLibrary.ConflictiveSections:
 			destino = sateliteID;
@@ -2357,6 +2357,7 @@ public class Drone extends SuperAgent {
 	 * @param Y Posición Y actual del drone en el mapa
 	 * @param decision Decisión tomada por el drone para moverse.
 	 */
+	@SuppressWarnings("unused")
 	private void sendInformYourMovement(int X, int Y, int decision){
 		JSONObject content = new JSONObject();
 
@@ -2383,12 +2384,11 @@ public class Drone extends SuperAgent {
 	 * @throws RuntimeException En caso de error en el procesamiento del mensaje (comportamiento del drone ante el mensaje).
 	 */
 	protected void onDroneChargedInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException {
-		// TODO Auto-generated method stub
-		//System.out.println("Informado de CHARGER");
+		System.out.println("Informado de CHARGER");
 	}
 
 	/**
-	 * Metodo llamado por el dispatcher para tratar el informe de la subscripción "ReachedGoal":
+	 * Metodo llamado por el dispatcher para tratar el informe de la subscripción "DroneStopped":
 	 *  
 	 *   El drone pregunta la traza al drone que ha detenido su movimiento y es que ha probocado el envio de este mensaje.
 	 * Almacena dicha traza y actualiza su traza óptima hasta el momento. (se queda con la más corta). Por ultimo
@@ -2399,7 +2399,7 @@ public class Drone extends SuperAgent {
 	 * @throws IllegalArgumentException En caso de error en el mensaje original (performativa equivocada, content erroneo...).
 	 * @throws RuntimeException En caso de error en el procesamiento del mensaje (comportamiento del drone ante el mensaje).
 	 */
-	protected void onDroneReachedGoalInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException {
+	protected void onDroneStoppedInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException {
 		if(state != FINISH_GOAL){
 			JSONObject content = null;
 			AgentID id = null;
@@ -2431,17 +2431,14 @@ public class Drone extends SuperAgent {
 	}
 
 	protected void onYourMovementsInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException{
-		// TODO
 		System.out.println("Informado de YOURMOVEMENTs");
 	}
 
 	protected void onAllMovementsInform(ACLMessage msg) throws IllegalArgumentException, RuntimeException, FIPAException{
-		// TODO
 		System.out.println("Informado de ALLMOVEMENT");
 	}
 
 	protected void onConflictiveSectionsInform(ACLMessage msg)throws IllegalArgumentException, RuntimeException, FIPAException{
-		// TODO
 		System.out.println("Informado de CONFLICTIVE");
 	}
 
@@ -2557,8 +2554,8 @@ public class Drone extends SuperAgent {
 					addMessageToLog(Log.SENDED, msg.getSender(), msg.getProtocol(), SubjectLibrary.Steps, String.valueOf(nSteps));   
 					break;
 					
-				case SubjectLibrary.DroneReachedGoal:
-					onDroneReachedGoalInform(msg);
+				case SubjectLibrary.DroneStopped:
+					onDroneStoppedInform(msg);
 					break;
 					
 				case SubjectLibrary.DroneRecharged:
@@ -2621,7 +2618,7 @@ public class Drone extends SuperAgent {
 		case SubjectLibrary.BatteryRequest:
 		case SubjectLibrary.Trace:
 			break;
-		case SubjectLibrary.DroneReachedGoal:
+		case SubjectLibrary.DroneStopped:
 		case SubjectLibrary.DroneRecharged:
 		case SubjectLibrary.YourMovements:
 		case SubjectLibrary.AllMovements:
@@ -2651,7 +2648,7 @@ public class Drone extends SuperAgent {
 		boolean res = true;
 
 		switch(subject){ 
-		case SubjectLibrary.DroneReachedGoal:
+		case SubjectLibrary.DroneStopped:
 		case SubjectLibrary.DroneRecharged:
 		case SubjectLibrary.YourMovements:
 		case SubjectLibrary.AllMovements:

@@ -122,7 +122,7 @@ public class Satellite extends SuperAgent {
 		answerQueue = new LinkedBlockingQueue<ACLMessage>();
 
 		subscriptions = new HashMap<String, HashMap<String, String>>();		
-		subscriptions.put("DroneReachedGoal", new HashMap<String, String>());
+		subscriptions.put(SubjectLibrary.DroneStopped, new HashMap<String, String>());
 		subscriptions.put("AllMovements", new HashMap<String, String>());
 		subscriptions.put("ConflictiveSections", new HashMap<String, String>());
 
@@ -671,7 +671,7 @@ public class Satellite extends SuperAgent {
 					findStatus(droneID).setGoalReached(true);
 					countDronesReachedGoal++;
 
-					sendInformSubscribeFinalize(msg);
+					sendInformSubscribeStopped(msg);
 					finalize++;
 					if(finalize==this.maxDrones){
 						onFinalize();
@@ -763,28 +763,28 @@ public class Satellite extends SuperAgent {
 	}
 
 	/**
-	 * Se notifica a los subscriptores de que un drone a llegado a la meta.
+	 * Se notifica a los subscriptores de que un drone se ha parado.
 	 * 
 	 * @author Jahiel
 	 * @param msg
 	 */
-	private void sendInformSubscribeFinalize(ACLMessage msg){
+	private void sendInformSubscribeStopped(ACLMessage msg){
 		JSONObject contentSub = new JSONObject();
 		String sender = msg.getSender().toString();
 
 		try {
-			contentSub.put(JSONKeyLibrary.Subject, SubjectLibrary.DroneReachedGoal);
+			contentSub.put(JSONKeyLibrary.Subject, SubjectLibrary.DroneStopped);
 			contentSub.put(JSONKeyLibrary.DroneID, sender);
 
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
 
-		for(String name: this.subscriptions.get(SubjectLibrary.DroneReachedGoal).keySet()){
+		for(String name: this.subscriptions.get(SubjectLibrary.DroneStopped).keySet()){
 			if(!sender.equals(name)){
 				send(ACLMessage.INFORM, new AgentID(name), ProtocolLibrary.Subscribe, null, null, 
-						this.subscriptions.get(SubjectLibrary.DroneReachedGoal).get(name), contentSub);
-				addMessageToLog(Log.SENDED, msg.getSender(), msg.getProtocol(), SubjectLibrary.DroneReachedGoal, msg.getSender().name);	
+						this.subscriptions.get(SubjectLibrary.DroneStopped).get(name), contentSub);
+				addMessageToLog(Log.SENDED, msg.getSender(), msg.getProtocol(), SubjectLibrary.DroneStopped, msg.getSender().name);	
 			}
 		}
 
@@ -888,7 +888,7 @@ public class Satellite extends SuperAgent {
 
 				laggingDrones.add(msg.getSender());
 
-				sendInformSubscribeFinalize(msg);
+				sendInformSubscribeStopped(msg);
 
 				break;
 
