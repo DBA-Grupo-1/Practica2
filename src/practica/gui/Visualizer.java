@@ -216,7 +216,8 @@ public class Visualizer extends JFrame {
 			else {
 				if (reachedNames.size() > 1)
 					congratulations += "and ";
-				congratulations += (reachedNames.get(i) + "!!");
+				else 
+					congratulations += (reachedNames.get(i) + "!!");
 			}
 			
 		}
@@ -228,7 +229,8 @@ public class Visualizer extends JFrame {
 			else 
 				if (notReachedNames.size() > 1)
 					condolences += "and ";
-				condolences += (notReachedNames.get(i) + ".");
+				else 
+					condolences += (notReachedNames.get(i) + ".");
 		}	
 		
 		//Construyo el mensaje que se mostrará
