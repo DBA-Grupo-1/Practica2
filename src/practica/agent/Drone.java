@@ -508,7 +508,7 @@ public class Drone extends SuperAgent {
 
 		switch(msg.getPerformativeInt()){
 		case ACLMessage.INFORM:
-			System.out.println("Recibido mensaje correctamente Straggler");
+			//System.out.println("Recibido mensaje correctamente Straggler");
 			break;
 		case ACLMessage.FAILURE:
 			sendError(new FIPAException("Error en recepción del mensaje Straggler"),msg);
