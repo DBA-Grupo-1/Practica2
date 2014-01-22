@@ -36,6 +36,17 @@ import es.upv.dsic.gti_ia.architecture.RefuseException;
 import es.upv.dsic.gti_ia.core.ACLMessage;
 import es.upv.dsic.gti_ia.core.AgentID;
 
+/**
+ * 
+ *   Este agente es el nexo de unión de todos los demás agentes. Los drones lo utilizan de dos maneras:
+ *   
+ * 	- Repositorio de información. El satélite guarda información del estado de todos los drones y un mapa común con las casillas visitadas y anotaciones sobre obstáculos a bordear. También notifica a los drones cuando otro drone ha llegado al objetivo o se ha parado.
+ * 	- Herramienta de coordinación. Los drones contactan con el satélite para coordinarse sobre quién debería salir a continuación y de qué manera debería recorrer el mapa.
+ *
+ * @author Jahiel
+ * @author Ismael 
+ * @author Daniel
+ */
 public class Satellite extends SuperAgent {
 	private final int LIMIT_DRONES_SCOUT = 1;						//Número máximo de drones que explorarán por libre antes de mejorar trazas.
 	private final int LIMIT_DRONES_SCOUTIMPROVER = 2;				//Número máximo de drones que intentaran mejorar trazas anteriores.
@@ -488,9 +499,7 @@ public class Satellite extends SuperAgent {
 	 */
 	public void finalize() {
 		ImgMapConverter.mapToImg("src/maps/resutado.png", mapSeguimiento);
-		if(startType != -1){
 
-		}
 	}
 
 	/**
@@ -895,7 +904,8 @@ public class Satellite extends SuperAgent {
 	/**
 	 * Se devuelve la de la traza óptima desde la que partirán los drones para seguir la traza. Esta posición es el comienzo de cuando el drone
 	 * inicia la bajada por primera vez. En caso de no existir tal punto (el goal se encuantra en un punto (x, 0) de devuelve el punto final de la traza.
-	 * @Jahiel 
+	 * 
+	 * @author Jahiel 
 	 * @return Punto de partida.
 	 */
 	public int getInitialPosition(Trace t){
@@ -910,11 +920,14 @@ public class Satellite extends SuperAgent {
 	}
 
 	/**
+	 * Se localiza al drone más cerca al objetivo si sigue la traza óptima. Tabien se tiene en cuenta
+	 * el numero de pasos que un drone debe emplear para situarse en dicha traza si no se encuentra en ella.
 	 * 
-	 * @param optimalTrace
-	 * @return
+	 * Nota: se tiene en cuenta a los rezagados
 	 * @author Jahiel
 	 * @author Alberto
+	 * @param optimalTrace
+	 * @return
 	 */
 	private int findNearestDrone(Trace optimalTrace){
 		int dist = 99999;
@@ -943,6 +956,7 @@ public class Satellite extends SuperAgent {
 	 * en cuenta a los drones que aun no han salido en caso contrario se tiene en cuenta a todos los drones (rezagados o drones que aun no
 	 * han salido).
 	 * 
+	 * Nota: "No" se tiene en cuenta a los rezagados
 	 * @author Jahiel
 	 * @param rescueStragglers
 	 * @return
@@ -964,7 +978,19 @@ public class Satellite extends SuperAgent {
 	}
 
 	/**
-	 * Rutina de tratamiento para la petición de salida por parte de los drones.
+	 * Rutina de tratamiento para la petición de salida por parte de los drones. Se informa a los drones
+	 * de cual es el drone elegido y cual será su comportamiento.
+	 * 
+	 *  - Primero se comprueba si todos los drones llegarán al objetivo siguiendo la traza óptima
+	 *  hasta el momento, en tal caso el drone elegido tendrá un comportamiento FOLLOWER.
+	 *  - Si la condición anterior falla se comprueba aun faltan drones Exploradores por salir. En
+	 *  tal caso se da salida al drone con un comportamiento Scout.
+	 *  - Si ya han salido todos los drones Exploradores se da paso al drone más cercano al objetivo,
+	 *  inclullendo a los rezagados. Y su comportamiento será:
+	 *    - Si hay batería para que alcance el objetivo -> Follower.
+	 *    - En caso contrario -> Free que implica plena libertad para moverse he intentar llegar al objetivo
+	 *    sin tener que perder el tiempo situandose en la traza óptima.
+	 *    
 	 * @author Jahiel
 	 * @param msg
 	 */
@@ -1453,6 +1479,11 @@ public class Satellite extends SuperAgent {
 	}
 
 	/**
+	 * Protocolo de finalización del satelite. Informa a los drones que deben finalizar su ejecución en los siguientes casos:
+	 * 
+	 *  - Todos los drones ha llegado al objetivo.
+	 *  - Algún drone a finalizado incorrectamente (Decisión_droneX = END_FAIL).
+	 * 
 	 * @author Jahiel 
 	 * @author Ismael 
 	 * Protocolo de finalizacion
@@ -1483,6 +1514,7 @@ public class Satellite extends SuperAgent {
 
 	/**
 	 * Busca la casilla conflictiva que representa la zona obstaculo en la que se quedo rezagado un drone.
+	 * 
 	 * @author Jahiel
 	 * @author Alberto
 	 * @param id Identificador del drone que quedo rezagado

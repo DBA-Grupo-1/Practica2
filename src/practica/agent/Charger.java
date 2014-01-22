@@ -26,7 +26,9 @@ import es.upv.dsic.gti_ia.core.AgentID;
  * 
  * @author jahiel
  * @author Dani
- * No documento la clase porque pronto cambiara todo
+ * 
+ *    Agente encargado de guardar el nivel de bateria que podran usar los drones. Es el encargado de 
+ *  manejar dicho nivel y por tanto es el unico agente capaz de repartir o asignar batería.
  * 
  */
 public class Charger extends SuperAgent {
@@ -145,7 +147,7 @@ public class Charger extends SuperAgent {
 	}
 
 	/**
-	 * Metodo execute del agente. Aquie se añade la lógica de ejecución para el agente Cargador.
+	 * Metodo execute del agente. Aqui se añade la lógica de ejecución para el agente Cargador.
 	 * La secuencia de acciones es:
 	 * - Sacar un mensaje de la cola de peticiones.
 	 * - En función de su protocolo se procesa de una forma u otra.
@@ -384,8 +386,8 @@ public class Charger extends SuperAgent {
 
 	/**
 	 * Método encargado del tratamiento de la petición de bateria. 
-	 *   Heuristicas Base inicial: se otorga el nivel de batería que se a solicitado el Drone, con una carga máxima de 75U y
-	 *   una carga mínima de 1U.
+	 *   Heuristicas : se otorga una única unidad de carga independientemente de lo que pidan
+	 *   los drones.
 	 * @author Jahiel   
 	 * @author Dani
 	 * @param msg
@@ -465,11 +467,10 @@ public class Charger extends SuperAgent {
 	}
 
 	/**
-	 * Se recibe trata la petición de subscripción. Se rechaza si ocurre lo siguiente:
+	 * Se recibe y trata la petición de subscripción. Se rechaza si ocurre lo siguiente:
 	 *  - AlreadySubscribe: ya se encuentra subscrito a este tipo de subscripción.
 	 * 
 	 * @author Jahiel
-	 * @author Daniel
 	 * @param msg Mensaje recibido de petición de subscripción
 	 * @throws RefuseException 
 	 * @throws NotUnderstoodException
@@ -507,7 +508,6 @@ public class Charger extends SuperAgent {
 	 * Se informa a todos los drones subscritos que ha habido una recarga.
 	 * 
 	 * @author Jahiel
-	 * @author Daniel
 	 */
 	private void sendInformSubscribeReached(AgentID droneRecharged, int levelRecharge){
 		JSONObject content = new JSONObject();
@@ -542,6 +542,7 @@ public class Charger extends SuperAgent {
 
 	/**
 	 * Metodo llamado cuando un mensaje pide las cantidad de cargas totales que se le ha dado a un agente.
+	 * @author Andres
 	 * @param agentID
 	 * @return Número de cargas totales que ha recibido un agente
 	 */
@@ -551,7 +552,8 @@ public class Charger extends SuperAgent {
 	}
 
 	/**
-	 * Metodo llamado cuando un mensaje pide las cargas de un agente de manera detallada.
+	 * Metodo llamado cuando un mensaje pide las cargas de unagente de manera detallada.
+	 * @author Andres
 	 * @param agentID
 	 * @return Lista con las cargas detalladas que ha recibido un agente
 	 */

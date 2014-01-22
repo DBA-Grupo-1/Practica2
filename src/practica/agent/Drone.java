@@ -64,6 +64,10 @@ import es.upv.dsic.gti_ia.core.AgentID;
  *   Ahora podemos detener la ejecucion (la parte del think) de nuestro drone sin complicaciones debidas a la sincronizacion. Es util para evitar que el drone no avance hasta que se procese un mensaje importante
  *    o cuando queremos que espere a un evento determinado. 
  *
+ * @author Alberto
+ * @author Ismael
+ * @author Daniel
+ * @author Jahiel
  */
 public class Drone extends SuperAgent {
 	private static final int SLEEPING = 0,  	//Durmiendo.
@@ -279,6 +283,11 @@ public class Drone extends SuperAgent {
 	}
 
 	/**
+	 *  Se determina a que punto del mapa se dirigirá el drone una vez que a salido de bordear
+	 *  una zona obstáculo:
+	 *  - Si el objetivo está mas cerca que ir hacia un punto de la traza optima para seguirla
+	 *  entonces el drone se dirigirá hacia el objetivo.
+	 *  - En caso contrario se dirige hacia el punto más cercano de la traza optima hasta el momento.
 	 * 
 	 * @author Jahiel
 	 */
@@ -384,6 +393,7 @@ public class Drone extends SuperAgent {
 
 		}
 	}
+	
 	/**
 	 * Actualiza la traza del drone con la nueva decision.
 	 * @author Jonay
@@ -520,7 +530,7 @@ public class Drone extends SuperAgent {
 	/**
 	 * @author Ismael 
 	 * @author Jahiel
-	 * rececpcion de compañeros al mensaje STRAGGLER
+	 * Rececpcion de compañeros al mensaje STRAGGLER
 	 */
 	private void heStragglerReceive(ACLMessage msg){
 		if(state != FINISH_GOAL){
@@ -654,18 +664,9 @@ public class Drone extends SuperAgent {
 
 	/**
 	 * Se realiza el tratamiento de la petición de salida:
-	 * - Si no soy el drone seleccionado no hacer nada y bloquearte.
-	 * - Si soy el seleccionado: cojer el MODO y en funcion del modo que me haya asignado el satelite comportarme de una forma u otra:
-	 *   
-	 *  	SLEEPING = 0,  						Durmiendo.
-	 *		GO_TO_POINT_TRACE = 1,				Ir al punto más cercano de la traza.
-	 *		EXPLORE_MAP = 2,					Explorar el mapa sin forzarla.
-	 *		FOLLOW_TRACE = 3,					Seguir la traza.
-	 *		FORCE_EXPLORATION = 4,				Forzar la exploración.
-	 *		LAGGING = 5, 						Rezagado
-	 *		UNDO_TRACE = 6,						Deshacer la traza.
-	 *		FINISH_GOAL = 7,					Ir directamente al objetivo.
-	 *		OBSTACLE_AREA = 8;					En zona obstáculo.
+	 * - Si no soy el drone seleccionado no hacer nada y me bloquearé.
+	 * - Si soy el seleccionado: cojer el MODO y en funcion del modo que me haya asignado el satelite
+	 *  comportarme de una forma u otra.
 	 *   
 	 * @author Jahiel
 	 */
@@ -705,8 +706,10 @@ public class Drone extends SuperAgent {
 	}
 
 	/**
-	 * Se devuelve la de la traza óptima desde la que partirán los drones para seguir la traza. Esta posición es el comienzo de cuando el drone
-	 * inicia la bajada por primera vez. En caso de no existir tal punto (el goal se encuantra en un punto (x, 0) se devuelve el punto final de la traza.
+	 * Se devuelve el punto inicial desde el cual los drones empezarán a seguir la traza óptima
+	 * hasta el momento.
+	 * 
+	 *  Nota: En caso de no existir tal punto el goal se encuantra en un punto (x, 0) se devuelve el punto final de la traza.
 	 * @Jahiel 
 	 * @return Punto de partida.
 	 */
@@ -722,11 +725,12 @@ public class Drone extends SuperAgent {
 	}
 
 	/**
-	 * Realiza cualquier tipo de actualizacion del estado del drone antes de comprobar los comportamientos. Si la comprobacion 
-	 * de los comportamientos se ejecuta de nuevo debido a un RETHINK esta funcion se evalua de nuevo.
+	 * Se realizan dos funciones:
+	 * - Comprobar si se debe efectuar algún cambio de estado.
+	 * - Actualizar los datos del drones en funcion de su estado actual y su comportamiento. De esta
+	 * forma se prepara al drone antes de que inicie algun comportamiento y tome la decisión oportuna.
 	 * 
-	 *  posiOX= (posX + (Math.cos(angle) * distance));
-    	     	   posiOY= (posY + (Math.sin(angle)*distance));
+	 * @author jahiel
 	 */
 	protected void preBehavioursSetUp() {  
 		switch(state){
@@ -857,9 +861,11 @@ public class Drone extends SuperAgent {
 
 	/**
 	 * Comprueba si el drone debe terminar su ejecucion. Es llamado antes de criticalBehaviour.
+	 *
 	 * Nota: la comprobacion de que se ha alcanzado el objetivo se comprueba en el think, separado de los comportamientos. En esta funcion se deben comprobar
 	 * las condiciones de parada en otros casos.
 	 * @author Alberto
+	 * @author Jahiel
 	 * @param listaMovimientos Lista de movimientos a analizar
 	 * @param args Argumentos adicionales
 	 * @return Decision tomada. Debe ser END_FAIL o NO_DEC
@@ -877,7 +883,7 @@ public class Drone extends SuperAgent {
 	}
 
 	/**
-	 * Primer comportamiento intermedio del drone. Es el segundo en ejecutarse al recorrer los comportamientos:
+	 * Primer comportamiento intermedio del drone. Es el segundo en ejecutarse:
 	 *   Se comprueba si el drone debe entrar en modo rezagado.
 	 * 
 	 * @author Jahiel
@@ -921,7 +927,7 @@ public class Drone extends SuperAgent {
 	 *     Si el drone está en el estado FOLLOW_TRACE se sigue la traza óptima. Si además se encuentra en una casilla conflictiva
 	 *   se cambia a la traza cuyo camino implique bordear el obstáculo por el camino más corto.
 	 *   
-	 *   Nota: si está en el estado FOLLOW_TRACE y además se encuentra con situado sobre una casilla conflictiva da igual el modo que tenga asignado, deberá
+	 *   Nota: si está en el estado FOLLOW_TRACE y además se encuentra situado sobre una casilla conflictiva no se tiene en cuenta el modo que tenga asignado y deberá
 	 *   escojer el lado óptimo. Si su modo es SCOUT_IMPROVER deberá igualmente elegir el lado óptima sin pensar en si debe mejorarlo o no
 	 *   puesto que si hubiera tenido que mejorarlo su estado habría cambiado de FOLLOW_TRACE -> FORCE_EXPLORATION.
 	 *  
@@ -1022,7 +1028,6 @@ public class Drone extends SuperAgent {
 	 * Comportamiento critico del drone. Es el primero en ejecutarse al recorrer los comportamientos.
 	 * @author Dani
 	 * @author Ismael
-	 * @author Jahiel
 	 * @param listaMovimientos Lista de movimientos a analizar
 	 * @param args Argumentos adicionales
 	 * @return Decision tomada
@@ -2090,7 +2095,7 @@ public class Drone extends SuperAgent {
 	 ************************************************************************************************************************************/
 
 	/**
-	 * Realiza las subscripciones del drone. El drone se subscribe a:
+	 * Realiza las subscripciones del drone. El drone se puede subscribir a:
 	 * 
 	 * - DroneReachedGoal: un drone a llegado al Goal. 
 	 * - DroneRecharged: La recarga de otro drone. 
@@ -2098,6 +2103,7 @@ public class Drone extends SuperAgent {
 	 * - AllMovements: a los movimientos de todos los drones. 
 	 * - ConflictiveSections: a las casillas conflictivas. 
 	 * 
+	 * Nota: en este caso o por defecto solo se subscribe a droneReachedGoal.
 	 * @author Jahiel
 	 */
 	protected void subscribe() {            
@@ -2105,8 +2111,7 @@ public class Drone extends SuperAgent {
 	}
 
 	/**
-	 * Se subscribe a la llegada de un drone al objetivo.
-	 * Se te informa del drone que ha finalizado exitosamente.
+	 * Se subscribe a cuando un drone alcanza el objetivo o entra en estado rezagado.
 	 * 
 	 * @author Jahiel
 	 */
@@ -2321,7 +2326,6 @@ public class Drone extends SuperAgent {
 	 * - MissingAgent: aun no está todos los agentes registrados en el satélite.
 	 * 
 	 * @author Jahiel
-	 * @author Daniel
 	 * @param msg Mesaje de subscripción recibido
 	 */
 	public void newSubscription(ACLMessage msg)throws RefuseException{
@@ -2344,7 +2348,15 @@ public class Drone extends SuperAgent {
 
 	}
 
-	@SuppressWarnings("unused")
+	/**
+	 * Se manda la información de la decisión tomada por el drone a los drones que están subscritos
+	 * a él para cuando se mueva.
+	 * 
+	 * @author jahiel
+	 * @param X Posición X actual del drone en el mapa
+	 * @param Y Posición Y actual del drone en el mapa
+	 * @param decision Decisión tomada por el drone para moverse.
+	 */
 	private void sendInformYourMovement(int X, int Y, int decision){
 		JSONObject content = new JSONObject();
 
@@ -2376,7 +2388,11 @@ public class Drone extends SuperAgent {
 	}
 
 	/**
-	 * Metodo llamado por el dispatcher para tratar el informe de que otro drone a llegado a la meta.
+	 * Metodo llamado por el dispatcher para tratar el informe de la subscripción "ReachedGoal":
+	 *  
+	 *   El drone pregunta la traza al drone que ha detenido su movimiento y es que ha probocado el envio de este mensaje.
+	 * Almacena dicha traza y actualiza su traza óptima hasta el momento. (se queda con la más corta). Por ultimo
+	 * sale del modo StandBye para realizar la petición de salida.  
 	 * 
 	 * @author jahiel
 	 * @param msg Mensaje original
@@ -2762,7 +2778,7 @@ public class Drone extends SuperAgent {
 	}
 
 	/**
-	 * Se comprueba cual es el movimiento a bloquear y dicha casilla se pone como Visitada para forzar al drone a no dirigirse
+	 * Se comprueba cual es el movimiento a bloquear y dicha casilla (y las casillas que hacen esquina con ella) se pone como Visitada para forzar al drone a no dirigirse
 	 * hacia esa casilla.
 	 * @author Jahiel
 	 * @author Alberto
@@ -2807,6 +2823,7 @@ public class Drone extends SuperAgent {
 
 		return mov;
 	}
+	
 	/**
 	 * Getter del mapa, usado para el visualizador.
 	 * @author Daniel
