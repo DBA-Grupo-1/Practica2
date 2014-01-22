@@ -36,30 +36,30 @@ import es.upv.dsic.gti_ia.core.ACLMessage;
 import es.upv.dsic.gti_ia.core.AgentID;
 
 public class Satellite extends SuperAgent {
-	private final int  LIMIT_DRONES_SCOUT = 1,
-						LIMIT_DRONES_SCOUTIMPROBER = 2;
-	
-	private SharedMap mapOriginal;						//Mapa original a partir del cual transcurre todo.
-	private SharedMap mapSeguimiento;						//Mapa que se va actualizando a medida que los drones se muevan.
-	private double goalPosX;						//Coordenada X del objetivo.
-	private double goalPosY;						//Cordenada Y del objetivo.
-	private AgentID [] drones;						//Array que contiene las IDs de los drones.
-	private DroneStatus [] droneStuses;				//Array que contiene los estados de los drones.
-	private int maxDrones;							//Número máximo de drones que acepta el satélite.
-	private int connectedDrones;					//Número de drones conectados.
-	private LinkedBlockingQueue<ACLMessage> requestQueue, answerQueue;		//Cola de mensajes
-	private Visualizer visualizer;					//Visualizador.
-	private boolean usingVisualizer;				//Variable para controlar si se está usando el visualizador.
-	private boolean exit;							//Variable para controlar la terminación de la ejecución del satélite.
-	private static List<Integer> posXIniciales;
-	private int finalize;
-	private int n_requestStart;
-	private HashMap<String, HashMap<String, String>> subscriptions;  // <tipoSubcripcion, < IDAgent, ID-combersation>>
-	private AgentID cargador;			//Añadida variable para que el satelite se comunique con el cargador
-	private int countDronesReachedGoal;
-	private int droneScout, droneScout_Improber;    //Contador de exploradores y exploradores mejoradores
-	private ArrayList<AgentID> dronesLagger;
-	private int tipoComienzo;
+	private final int LIMIT_DRONES_SCOUT = 1;						//Número máximo de drones que explorarán por libre antes de mejorar trazas.
+	private final int LIMIT_DRONES_SCOUTIMPROVER = 2;				//Número máximo de drones que intentaran mejorar trazas anteriores.
+	private SharedMap mapOriginal;									//Mapa original a partir del cual transcurre todo.
+	private SharedMap mapSeguimiento;								//Mapa que se va actualizando a medida que los drones se muevan.
+	private double goalPosX;										//Coordenada X del objetivo.
+	private double goalPosY;										//Cordenada Y del objetivo.
+	private AgentID [] drones;										//Array que contiene las IDs de los drones.
+	private DroneStatus [] droneStuses;								//Array que contiene los estados de los drones.
+	private int maxDrones;											//Número máximo de drones que acepta el satélite.
+	private int connectedDrones;									//Número de drones conectados.
+	private LinkedBlockingQueue<ACLMessage> requestQueue;			//Cola de mensajes de peticiones al satélite.
+	private LinkedBlockingQueue<ACLMessage> answerQueue;			//Cola de mensajes de respuestas de peticiones del satélite.
+	private Visualizer visualizer;									//Visualizador.
+	private boolean usingVisualizer;								//Variable para controlar si se está usando el visualizador.
+	private boolean exit;											//Variable para controlar la terminación de la ejecución del satélite.
+	private static List<Integer> posXIniciales;						//Lista de posiciones iniciales de los drones.
+	private int finalizedDrones;									//Número de drones que han terminado.				
+	private int requestStartPetitions;								//Número de peticiones de salida recibidas.
+	private HashMap<String, HashMap<String, String>> subscriptions; //<tipoSubcripcion, < IDAgent, ID-conversation>>
+	private AgentID charger;										//Cargador
+	private int countDronesReachedGoal;								//Número de drones que han llegado al objetivo.
+	private int droneScout, droneScoutImprover;    					//Contador de exploradores y exploradores mejoradores
+	private ArrayList<AgentID> laggingDrones;						//Número de drones rezagados.
+	private int startType;											//Tipo de comienzo.				
 	
 	/**
 	 * Constructor
@@ -72,15 +72,14 @@ public class Satellite extends SuperAgent {
 	 */
 	public Satellite(AgentID sat,AgentID charger, Map map, int maxDrones) throws Exception{
 		//Inicialización de atributos.
-		this(sat,charger,map,maxDrones,-1); // Llamada al constructor principal con el parámetro que falta
+		this(sat,charger,map,maxDrones,-1);
 	}
 	
 	/**
 	 * Constructor
 	 * @author Jahiel
 	 * @author Dani
-	 * FIXME otros autores añadiros.
-	 * @author Ismael (añadida variable charger)
+	 * @author Ismael
 	 * @author Jonay
 	 * @param sat ID del satélite.
 	 * @param charger ID del cargador.
@@ -92,25 +91,31 @@ public class Satellite extends SuperAgent {
 		//Inicialización de atributos.
 		super(sat);
 		countDronesReachedGoal=0;
-		cargador=charger;
-		exit = false;
+		finalizedDrones=0;
+		requestStartPetitions = 0;
+		droneScout = droneScoutImprover = 0;
+		connectedDrones = 0;			
+		
+		this.charger=charger;
+		
 		mapOriginal = new SharedMap(map);
 		mapSeguimiento = new SharedMap(map);
+		
 		drones = new AgentID [maxDrones];
 		droneStuses = new DroneStatus [maxDrones];
 		this.maxDrones = maxDrones;
-		connectedDrones = 0;	
-		//TODO cambiar a PriorityBlockingQueue.
+		
 		requestQueue = new LinkedBlockingQueue<ACLMessage>();
 		answerQueue = new LinkedBlockingQueue<ACLMessage>();
+		
 		subscriptions =new HashMap<String, HashMap<String, String>>();
 		subscriptions.put("DroneReachedGoal", new HashMap<String, String>());
 		subscriptions.put("AllMovements", new HashMap<String, String>());
 		subscriptions.put("ConflictiveSections", new HashMap<String, String>());
-		finalize=0;
-		n_requestStart = 0;
-		droneScout = droneScout_Improber = 0;
-		dronesLagger = new ArrayList<AgentID>();
+		
+		laggingDrones = new ArrayList<AgentID>();		
+
+		exit = false;
 
 		//Calcular la posición del objetivo.
 		//Se suman todas las posiciones que contienen un objetivo y se halla la media.
@@ -133,11 +138,12 @@ public class Satellite extends SuperAgent {
 		for(int i=0; i<maxDrones; i++)
 			posXIniciales.add(new Integer(i*5));
 		
-		this.tipoComienzo = tipoComienzo;
+		this.startType = tipoComienzo;
 	}
 
 	/**
 	 * Constructor con un visualizador
+	 * @author Jonay
 	 * @param sat 			ID del satélite.
 	 * @param charger		ID del cargador.
 	 * @param mapa 			mapa que se usará.
@@ -176,66 +182,42 @@ public class Satellite extends SuperAgent {
 	 */
 	public void onMessage (ACLMessage msg){	
 		try{
-		JSONObject content;
-		String subject = null;
-		BlockingQueue<ACLMessage> queue = null;
-		
-		try{
-			content = new JSONObject(msg.getContent());
-			subject = content.getString(JSONKeyLibrary.Subject);
-		}
-		catch (JSONException e){
-			e.printStackTrace();
-		}
-		
-		switch(subject)
-		{
-			case SubjectLibrary.ChargerBattery:
-			case SubjectLibrary.Charge:
-			case SubjectLibrary.DetailedCharges:
-			case SubjectLibrary.Trace:
-			case SubjectLibrary.Steps:
-			case SubjectLibrary.BatteryLeft:
-				queue = answerQueue;
-				break;
+			JSONObject content;
+			String subject = null;
+			BlockingQueue<ACLMessage> queue = null;
 			
-			default:
-				queue = requestQueue;
-		}
-		
-		try {
-			//System.out.println(msg.getPerformative() + " " + msg.getContent());
+			try{
+				content = new JSONObject(msg.getContent());
+				subject = content.getString(JSONKeyLibrary.Subject);
+			}
+			catch (JSONException e){
+				e.printStackTrace();
+			}
 			
-			queue.put(msg);
-			//System.out.println("mensaje recibido!");	
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}	
-		}catch(RuntimeException e){
+			switch(subject)
+			{
+				case SubjectLibrary.ChargerBattery:
+				case SubjectLibrary.Charge:
+				case SubjectLibrary.DetailedCharges:
+				case SubjectLibrary.Trace:
+				case SubjectLibrary.Steps:
+				case SubjectLibrary.BatteryLeft:
+					queue = answerQueue;
+					break;
+				
+				default:
+					queue = requestQueue;
+					break;
+			}
+			
+			try {			
+				queue.put(msg);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}	
+		} catch(RuntimeException e){
 			e.printStackTrace();
 		}
-	}
-
-
-	/**
-	 * Se crea un mensaje del tipo FAIL para informar de algun fallo al agente dron.
-	 * @author Jahiel
-	 * FIXME Este método ahora mismo creo que no se debe de usar. No lo borro, sino que dejo comentada la línea del send para que el programa compile.
-	 * @author Dani.
-	 * @param dron 			Identificador del agente dron.
-	 * @param cad_error 	Cadena descriptiva del error producido.
-	 */
-	private void sendError(String protocol, AgentID dron, String cad_error) {
-		JSONObject error = new JSONObject();
-
-		try {
-			error.put("fail", cad_error);
-		} catch (JSONException e) {
-			e.printStackTrace(); // esta excepcion nunca va a suceder porque la clave siempre es fail aun asi hay que capturarla y por eso no se lo comunico al dron
-		}
-		System.err.println("Agente " + this.getName() + " " + cad_error);
-
-		//send(ACLMessage.FAILURE, "", dron, error);
 	}
 	
 	/**
@@ -284,7 +266,6 @@ public class Satellite extends SuperAgent {
 	/**
 	 * Este método obtiene los valores de las celdas en las 9 casillas que rodean el drone 
 	 * (incluyendo en la que se encuentra el drone)
-	 * FIXME autores añadiros.
 	 * @return Array de enteros con las inmediaciones del drone.
 	 */
 	private int[] getSurroundings(DroneStatus status){
@@ -412,40 +393,35 @@ public class Satellite extends SuperAgent {
 		}
 
 
-		String decisionString = ""; //Para guardar el log.
-		
 		switch (decision) {
 			case Drone.DECISION_EAST: // Este
 				x = gps.getPositionX() + 1;
 				y = gps.getPositionY();
-				decisionString = "East";
-				break;
+			break;
 	
 			case Drone.DECISION_SOUTH: // Sur
 				x = gps.getPositionX();
 				y = gps.getPositionY() + 1;
-				decisionString = "South";
-				break;
+			break;
 	
 			case Drone.DECISION_WEST: // Oeste
 				x = gps.getPositionX() - 1;
 				y = gps.getPositionY();
-				decisionString = "West";
-				break;
+			break;
 	
 			case Drone.DECISION_NORTH: // Norte
 				x = gps.getPositionX();
 				y = gps.getPositionY() - 1;
-				decisionString = "North";
-				break;
+			break;
+			
 			case Drone.DECISION_END_SUCCESS:
-        		//Meter mensaje en el log
             	addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), SubjectLibrary.IMoved, "Success! ^_^ ");
 				return true;
+				
 			case Drone.DECISION_END_FAIL:
-        		//Meter mensaje en el log
             	addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), SubjectLibrary.IMoved, "Fail u_u");
 				return true;
+				
 			default:
 				return false;
 		}
@@ -458,7 +434,6 @@ public class Satellite extends SuperAgent {
 		try {
 			gps.setPositionX(x);
 			gps.setPositionY(y);
-			//droneStatus.setLocation(gps);
 			mapSeguimiento.setValue(x, y, Map.VISITADO, droneID);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -472,22 +447,19 @@ public class Satellite extends SuperAgent {
 	 * Hebra de ejecución del satélite. 
 	 * @author Jahiel
 	 * @author Dani
-	 * FIXME otros autores añadiros.
 	 */
 	@Override
 	protected void execute() {
 		ACLMessage proccesingMessage = null;
-		//System.out.println("Agente " + this.getName() + " en ejecución");
-		try{
-		
-		while (!exit) {		
+		System.out.println("Agente " + this.getName() + " en ejecución");
+		try{		
+			while (!exit) {		
+				//Se atienden las peticiones.
 				try {
 					proccesingMessage = (ACLMessage) requestQueue.take();
 				} catch (InterruptedException e) {
-					//System.out.println("¡Cola vacía!");
 					e.printStackTrace();
 				}
-				//System.out.println("Procesando mensaje: protocolo " + proccesingMessage.getProtocol());
 				
 				try{
 					switch (proccesingMessage.getProtocol()){
@@ -496,7 +468,6 @@ public class Satellite extends SuperAgent {
 					case ProtocolLibrary.Information : onInformation (proccesingMessage); break;
 					case ProtocolLibrary.DroneMove : onDroneMoved(proccesingMessage); break;
 					case ProtocolLibrary.Subscribe : onSubscribe(proccesingMessage);break;
-					//case ProtocolLibrary.Finalize : onFinalize(); break;
 					case ProtocolLibrary.Reload : onReload(proccesingMessage); break;
 					case ProtocolLibrary.Scout: onStart(proccesingMessage); break;
 					case ProtocolLibrary.Notification : onNotification(proccesingMessage);break;
@@ -509,7 +480,7 @@ public class Satellite extends SuperAgent {
 				} catch (JSONException e) {
 					e.printStackTrace();
 				}
-		}
+			}
 		}catch(RuntimeException e){
 			e.printStackTrace();
 		}
@@ -521,9 +492,9 @@ public class Satellite extends SuperAgent {
 	 * @author Jahiel
 	 */
 	public void finalize() {
-		//System.out.println("Agente " + this.getName() + " ha finalizado");
+		System.out.println("Agente " + this.getName() + " ha finalizado");
 		ImgMapConverter.mapToImg("src/maps/resutado.png", mapSeguimiento);
-		if(tipoComienzo != -1){
+		if(startType != -1){
 			
 		}
 	}
@@ -550,13 +521,11 @@ public class Satellite extends SuperAgent {
 	 */
 	public void onRegister (ACLMessage msg){
 		try{
-			//System.out.println("Recibido registro de: " + msg.getSender().toString());
-			//Meter mensaje en el log
 			addMessageToLog(Log.RECEIVED, msg.getSender(), msg.getProtocol(), SubjectLibrary.Register, "");
 			drones[connectedDrones] = msg.getSender();
 			GPSLocation location;
 			
-			if(tipoComienzo == -1){ // Comienzo de drones no especificado, se pone aleatorio
+			if(startType == -1){ // Comienzo de drones no especificado, se pone aleatorio
 				Random r=new Random();
 				int randomPos = r.nextInt(posXIniciales.size());
 				location = new GPSLocation(posXIniciales.get(randomPos).intValue(), 0);
@@ -581,7 +550,6 @@ public class Satellite extends SuperAgent {
 					content.put("ids", idsList);
 					content.put(JSONKeyLibrary.Subject, SubjectLibrary.Register);
 					send(ACLMessage.INFORM, drones[i], "Register", null, msg.getReplyWith(), msg.getConversationId(), content);
-					//Meter mensaje en el log
 					addMessageToLog(Log.SENDED, msg.getSender(), msg.getProtocol(), SubjectLibrary.Register, "You are registered!");
 				}
 			}
@@ -601,15 +569,15 @@ public class Satellite extends SuperAgent {
 	
 	private int obtenerPosicion(String name) {
 		if(name.equals("Drone0")){
-			return tipoComienzo;
+			return startType;
 		} else if (name.equals("Drone1")){
-			return (tipoComienzo +1)%5;
+			return (startType +1)%5;
 		} else if (name.equals("Drone2")){
-			return (tipoComienzo +2)%5;
+			return (startType +2)%5;
 		} else if (name.equals("Drone3")){
-			return (tipoComienzo +3)%5;
+			return (startType +3)%5;
 		} else  if ((name.equals("Drone4"))){
-			return (tipoComienzo +4)%5;
+			return (startType +4)%5;
 		}
 		
 		return 0; // Aquí no debería llegar si hay 5 drones
@@ -706,8 +674,8 @@ public class Satellite extends SuperAgent {
 					countDronesReachedGoal++;
 					
 					sendInformSubscribeFinalize(msg);
-					finalize++;
-					if(finalize==this.maxDrones){
+					finalizedDrones++;
+					if(finalizedDrones==this.maxDrones){
 						onFinalize();
 					}
 				}else if(o.getInt(JSONKeyLibrary.Decision) == Drone.DECISION_END_FAIL){
@@ -958,7 +926,7 @@ public class Satellite extends SuperAgent {
 				//Meter mensaje en el log
 				addMessageToLog(Log.SENDED, msg.getSender(), msg.getProtocol(), SubjectLibrary.Straggler, "");	
 				
-				dronesLagger.add(msg.getSender());
+				laggingDrones.add(msg.getSender());
 				
 				sendInformSubscribeFinalize(msg);
 				
@@ -1064,10 +1032,10 @@ public class Satellite extends SuperAgent {
 			ArrayList<DroneStatus> dronesWithoutLeaving = new ArrayList<DroneStatus>();
 			int batteryInCharger = 0, index = 0, behavior;
 
-			n_requestStart++;
+			requestStartPetitions++;
 
-			if(n_requestStart == drones.length - countDronesReachedGoal){
-				n_requestStart = 0;
+			if(requestStartPetitions == drones.length - countDronesReachedGoal){
+				requestStartPetitions = 0;
 				// Se calcula que drones han acabado y se coje la traza optima (la mas corta). Se coje solo el tamaño de la traza
 				// desde el punto de partida hasta el final.
 
@@ -1129,12 +1097,12 @@ public class Satellite extends SuperAgent {
  
 						if(droneScout < LIMIT_DRONES_SCOUT)
 							behavior = Drone.SCOUT;
-						else if(droneScout_Improber < LIMIT_DRONES_SCOUTIMPROBER){
+						else if(droneScoutImprover < LIMIT_DRONES_SCOUTIMPROVER){
 							behavior = Drone.SCOUT_IMPROVER;
-							droneScout_Improber++;
+							droneScoutImprover++;
 						}else{
 							behavior = Drone.FOLLOWER;
-							if(!dronesLagger.isEmpty())
+							if(!laggingDrones.isEmpty())
 								rescueStragglers = true;
 						}
 						
@@ -1146,7 +1114,7 @@ public class Satellite extends SuperAgent {
 						if(rescueStragglers){
 							int pos = 0; // posición del drone rezagado elegido
 
-							for(AgentID id: dronesLagger){
+							for(AgentID id: laggingDrones){
 								if(droneStuses[index].getId().toString().equals(id.toString())){
 									for(ConflictiveBox box: conflictiveList){
 										if(box.isDangerous() && box.getDroneID().toString().equals(id.toString()) 
@@ -1179,7 +1147,7 @@ public class Satellite extends SuperAgent {
 									pos++;
 								*/
 							if(find)
-								dronesLagger.remove(pos); // lo sacamos de la lista puesto que ya no será rezagado
+								laggingDrones.remove(pos); // lo sacamos de la lista puesto que ya no será rezagado
 						}
 					}
 				}else{
@@ -1510,9 +1478,9 @@ public class Satellite extends SuperAgent {
 			e.printStackTrace();
 		}
 		
-		send(ACLMessage.QUERY_REF, cargador, ProtocolLibrary.Information, "Get-RemainingBattery", null, buildConversationId(), requestContent);
+		send(ACLMessage.QUERY_REF, charger, ProtocolLibrary.Information, "Get-RemainingBattery", null, buildConversationId(), requestContent);
 		//Meter mensaje en el log
-		addMessageToLog(Log.SENDED, cargador, ProtocolLibrary.Information, SubjectLibrary.ChargerBattery , "");	
+		addMessageToLog(Log.SENDED, charger, ProtocolLibrary.Information, SubjectLibrary.ChargerBattery , "");	
 		
 		try {
 			answer = answerQueue.take();
@@ -1609,9 +1577,9 @@ public class Satellite extends SuperAgent {
 					//Meter mensaje en el log
 					addMessageToLog(Log.SENDED, droneStuses[i].getId(), ProtocolLibrary.Finalize, SubjectLibrary.End , "End");	
 				}
-				send(ACLMessage.INFORM,cargador,ProtocolLibrary.Finalize,"default",null,buildConversationId(), res);
+				send(ACLMessage.INFORM,charger,ProtocolLibrary.Finalize,"default",null,buildConversationId(), res);
 				//Meter mensaje en el log
-				addMessageToLog(Log.SENDED, cargador, ProtocolLibrary.Finalize, SubjectLibrary.End , "End");
+				addMessageToLog(Log.SENDED, charger, ProtocolLibrary.Finalize, SubjectLibrary.End , "End");
 				//System.out.println("FINALIZADO SATELITE ");
 				
 				if (usingVisualizer)
