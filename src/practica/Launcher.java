@@ -25,7 +25,6 @@ import es.upv.dsic.gti_ia.core.AgentsConnection;
  * @author Ismael
  */
 public class Launcher {
-	
 	private AgentID id_satelite; 		//ID del satélite.
 	private AgentID id_charger;			//ID del cargador.
 	private Satellite satellite;		//Satélite
@@ -36,7 +35,9 @@ public class Launcher {
 	private String mapName;				//Nombre del mapa
 	private static int droneAmount;		//Número de drones que se lanzarán
 	private static AgentID[] droneIDs;	//Vector de IDs de los drones para pasárselo al visualizador
-	private static String directorio;	//Directorio de trabajo 
+	private static String directorio;	//Directorio de trabajo
+	
+	public static String droneNames[] = {"Alberto","Daniel","Jonay","Ismael","Jahiel"};
 	
 	/**
 	 * @author Jahiel
@@ -89,7 +90,7 @@ public class Launcher {
         	charger = new Charger(id_charger, 500*droneAmount, id_satelite, visualizer);
         	charger.setLog(visualizer.getLogs()[1]);
         	for(int i=0; i<droneAmount; i++){
-            	drones[i] = new Drone(new AgentID("Drone" + i), map.getWidth(), map.getHeight(), id_satelite, id_charger);
+            	drones[i] = new Drone(new AgentID(droneNames[i]), map.getWidth(), map.getHeight(), id_satelite, id_charger);
             	droneIDs[i] = drones[i].getAid();	
             	drones[i].setLog(visualizer.getLogs()[i+2]);
         	}
@@ -167,7 +168,7 @@ public class Launcher {
         	satellite = new Satellite(id_satelite,id_charger, map, droneAmount);
         	charger = new Charger(id_charger, 500*droneAmount, id_satelite);
         	for(int i=0; i<droneAmount; i++){
-            	drones[i] = new Drone(new AgentID("Drone" + i), map.getWidth(), map.getHeight(), id_satelite, id_charger);
+            	drones[i] = new Drone(new AgentID(droneNames[i]), map.getWidth(), map.getHeight(), id_satelite, id_charger);
             	droneIDs[i] = drones[i].getAid();	
         	}
         	System.out.println("MAIN : Iniciando agentes...");

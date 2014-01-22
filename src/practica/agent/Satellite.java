@@ -12,6 +12,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import practica.Launcher;
 import practica.gui.Log;
 import practica.gui.Visualizer;
 import practica.lib.ErrorLibrary;
@@ -598,17 +599,23 @@ public class Satellite extends SuperAgent {
 		}
 	}
 	
-	
+	/**
+	 * Método que obtiene la posición en la que debe comenzar un drone según su nombre y las
+	 * anteriores ejecuciones del mapa
+	 * @param name El nombre del drone del que queremos obtener cuál debe ser su posición
+	 * @return la posición entre 0 y 4 de orden del drone.
+	 */
 	private int obtenerPosicion(String name) {
-		if(name.equals("Drone0")){
+		// Compruebo los nombres para posicionarlos, incluyo también los nombres "DroneX" por si aún se usan
+		if(name.equals(Launcher.droneNames[0]) || name.equals("Drone0")){ 
 			return tipoComienzo;
-		} else if (name.equals("Drone1")){
+		} else if (name.equals(Launcher.droneNames[1]) || name.equals("Drone1")){
 			return (tipoComienzo +1)%5;
-		} else if (name.equals("Drone2")){
+		} else if (name.equals(Launcher.droneNames[2]) || name.equals("Drone2")){
 			return (tipoComienzo +2)%5;
-		} else if (name.equals("Drone3")){
+		} else if (name.equals(Launcher.droneNames[3]) || name.equals("Drone3")){
 			return (tipoComienzo +3)%5;
-		} else  if ((name.equals("Drone4"))){
+		} else  if (name.equals(Launcher.droneNames[4]) || name.equals("Drone4")){
 			return (tipoComienzo +4)%5;
 		}
 		
