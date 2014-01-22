@@ -1414,7 +1414,7 @@ public class Satellite extends SuperAgent {
 	 * @return la traza del drone
 	 */
 	private Trace askForDroneTrace(AgentID DroneID){
-		Trace trazaDelDrone = null;	
+		Trace droneTrace = null;	
 		JSONObject requestContent = new JSONObject();
 		ACLMessage answer=null;
 
@@ -1437,7 +1437,7 @@ public class Satellite extends SuperAgent {
 			try {
 				String trazaJSON = new JSONObject(answer.getContent()).getString("trace");
 				Gson gson = new Gson();
-				trazaDelDrone = gson.fromJson(trazaJSON, Trace.class);
+				droneTrace = gson.fromJson(trazaJSON, Trace.class);
 			} catch (JSONException e) {
 				e.printStackTrace();
 			}
@@ -1450,7 +1450,7 @@ public class Satellite extends SuperAgent {
 			}
 		}
 
-		return trazaDelDrone;
+		return droneTrace;
 	}
 
 	/**
