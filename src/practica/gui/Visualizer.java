@@ -46,7 +46,7 @@ import java.awt.Insets;
 public class Visualizer extends JFrame {
 	private static final long serialVersionUID = 1L;
 	private boolean paused = true;
-	private JComboBox<String> mapSelector;
+	private JComboBox mapSelector;
 	private JButton btnLoadMap;
 	private JButton btnLaunchExplorer;
 	private JLabel miniMap;
@@ -140,8 +140,8 @@ public class Visualizer extends JFrame {
 		}
 		initialize();
 		launcher = l;
-		setBounds(100, 100, 535, 590);
-		//setBounds(100, 100, 800, 600);
+		//setBounds(100, 100, 520, 590);
+		setBounds(100, 100, 800, 600);
 		buildLogArray();
 		setVisible(true);	
 	}
@@ -176,14 +176,18 @@ public class Visualizer extends JFrame {
 		}
 		
 		//Las posiciono
-		
-		infoPanel.add(new JLabel("Drone names"));
+		JLabel used = new JLabel ("Used");
+		used.setHorizontalAlignment(SwingConstants.CENTER);
+		infoPanel.add(used);
 		
 		for (int i = 0; i < droneIDs.length; i++){
 			infoPanel.add(droneNamesLabels[i]);
 		}
 		
-		infoPanel.add(new JLabel("Used battery"));
+
+		JLabel battery = new JLabel ("battery");
+		battery.setHorizontalAlignment(SwingConstants.CENTER);
+		infoPanel.add(battery);
 		
 		for (int i = 0; i < droneIDs.length; i++){
 			infoPanel.add(labelDroneUsedBattery[i]);
@@ -323,7 +327,7 @@ public class Visualizer extends JFrame {
 		File f = new File ("src/maps");
 		String [] mapNames = f.list();
 		getContentPane().setLayout(null);
-		mapSelector = new JComboBox<String> (mapNames);
+		mapSelector = new JComboBox (mapNames);
 		mapSelector.setSelectedIndex(-1);
 		mapSelector.addActionListener(new MapSelectorActionListener());
 		
@@ -334,7 +338,7 @@ public class Visualizer extends JFrame {
 		btnLoadMap = new JButton("Load map");
 		btnLoadMap.addActionListener(new BtnLoadMapActionListener());
 		btnLoadMap.setEnabled(false);
-		btnLoadMap.setBounds(200, 10, 96, 23);
+		btnLoadMap.setBounds(200, 10, 120, 23);
 		getContentPane().add(btnLoadMap);
 		{
 			tabbedPane = new JTabbedPane(JTabbedPane.TOP);
@@ -442,14 +446,14 @@ public class Visualizer extends JFrame {
 		getContentPane().add(btnLaunchExplorer);
 		{
 			infoPanel = new JPanel();
-			infoPanel.setBounds(98, 522, 531, 29);
+			infoPanel.setBounds(98, 522, 500, 29);
 			getContentPane().add(infoPanel);
 			infoPanel.setLayout(new GridLayout(2, 6, 0, 0));
 		}
 		{
 			chargerBatteryPanel = new JPanel();
 			chargerBatteryPanel.setVisible(false);
-			chargerBatteryPanel.setBounds(641, 522, 133, 29);
+			chargerBatteryPanel.setBounds(610, 522, 164, 29);
 			getContentPane().add(chargerBatteryPanel);
 			GridBagLayout gbl_chargerBatteryPanel = new GridBagLayout();
 			gbl_chargerBatteryPanel.columnWidths = new int[]{90, 38, 0};
